@@ -1,9 +1,11 @@
+
 plugins {
     alias(libs.plugins.kotlin.jvm)
     `java-library`
+    `maven-publish`
 }
 
-group = "com.ecommercedemo"
+group = "com.github.aronvaupel"
 version = "1.0.0"
 
 repositories {
@@ -13,6 +15,7 @@ repositories {
 dependencies {
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.17.0")
     implementation("com.google.guava:guava:33.2.1-jre")
+    implementation("io.github.cdimascio:java-dotenv:5.2.2")
     implementation("io.jsonwebtoken:jjwt:0.9.1")
     implementation("jakarta.persistence:jakarta.persistence-api:3.0.0")
     implementation("jakarta.servlet:jakarta.servlet-api:5.0.0")
@@ -36,4 +39,37 @@ java {
 
 tasks.named<Test>("test") {
     useJUnitPlatform()
+}
+
+fun loadEnv(): Map<String, String> {
+    val envFile = file("${rootProject.projectDir}/.env")
+    if (!envFile.exists()) {
+        throw GradleException(".env file not found")
+    }
+
+    return envFile.readLines()
+        .filter { it.isNotBlank() && !it.startsWith("#") }
+        .map { it.split("=", limit = 2) }
+        .associate { it[0] to it.getOrElse(1) { "" } }
+}
+
+publishing {
+    publications {
+        create<MavenPublication>("gpr") {
+            from(components["java"])
+            groupId = "com.github.aronvaupel"
+            artifactId = "commons"
+            version = "1.0.0"
+        }
+    }
+    repositories {
+        maven {
+            url = uri("https://maven.pkg.github.com/aronvaupel/Commons")
+            credentials {
+                val env = loadEnv()
+                username = env["GITHUB_USERNAME"] ?: ""
+                password = env["GITHUB_TOKEN"] ?: ""
+            }
+        }
+    }
 }
