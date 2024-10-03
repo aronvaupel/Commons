@@ -34,4 +34,8 @@ abstract class BaseEntity {
     fun onUpdate() {
         updatedAt = LocalDateTime.now()
     }
+
+    fun getCustomProperties(): MutableSet<CustomProperty<Any>> {
+        return customProperties
+    }
 }
