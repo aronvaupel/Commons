@@ -1,16 +1,13 @@
 package com.ecommercedemo.model
 
-import jakarta.persistence.Column
-import jakarta.persistence.GeneratedValue
-import jakarta.persistence.Id
-import jakarta.persistence.MappedSuperclass
-import jakarta.persistence.PrePersist
-import jakarta.persistence.PreUpdate
+import com.ecommercedemo.model.embedded.CustomProperty
+import jakarta.persistence.*
 import java.time.LocalDateTime
 import java.util.UUID
 
 
 @MappedSuperclass
+@Suppress("unused")
 abstract class BaseEntity {
 
     @Id
@@ -22,6 +19,10 @@ abstract class BaseEntity {
 
     @Column(nullable = false)
     var updatedAt: LocalDateTime = LocalDateTime.now()
+
+    @ElementCollection
+    @Column(name = "custom_property", columnDefinition = "jsonb")
+    val customProperties: MutableSet<CustomProperty<Any>> = mutableSetOf()
 
     @PrePersist
     fun onCreate() {

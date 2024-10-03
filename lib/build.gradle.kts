@@ -29,6 +29,7 @@ dependencies {
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
     implementation("org.springframework.boot:spring-boot-starter-security:3.3.4")
     implementation("org.springframework.boot:spring-boot-starter-web:3.3.4")
+    implementation("org.springframework.boot:spring-boot-starter-validation:3.3.4")
 }
 
 java {
