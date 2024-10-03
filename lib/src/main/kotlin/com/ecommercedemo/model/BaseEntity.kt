@@ -22,7 +22,7 @@ abstract class BaseEntity {
 
     @ElementCollection
     @Column(name = "custom_property", columnDefinition = "jsonb")
-    val customProperties: MutableSet<CustomProperty<Any>> = mutableSetOf()
+    lateinit var customProperties: MutableSet<CustomProperty<Any>>
 
     @PrePersist
     fun onCreate() {
@@ -33,9 +33,5 @@ abstract class BaseEntity {
     @PreUpdate
     fun onUpdate() {
         updatedAt = LocalDateTime.now()
-    }
-
-    fun getCustomProperties(): MutableSet<CustomProperty<Any>> {
-        return customProperties
     }
 }
