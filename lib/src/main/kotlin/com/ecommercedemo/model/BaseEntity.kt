@@ -1,6 +1,5 @@
 package com.ecommercedemo.model
 
-import com.ecommercedemo.model.embedded.CustomProperty
 import jakarta.persistence.*
 import java.time.LocalDateTime
 import java.util.UUID
@@ -19,10 +18,6 @@ abstract class BaseEntity {
 
     @Column(nullable = false)
     var updatedAt: LocalDateTime = LocalDateTime.now()
-
-    @ElementCollection
-    @Column(name = "custom_property", columnDefinition = "jsonb")
-    lateinit var customProperties: MutableSet<CustomProperty<Any>>
 
     @PrePersist
     fun onCreate() {
