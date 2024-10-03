@@ -6,7 +6,7 @@ plugins {
 }
 
 group = "com.github.aronvaupel"
-version = "1.0.0"
+version = "1.0.1"
 
 repositories {
     mavenCentral()
@@ -60,7 +60,7 @@ publishing {
             from(components["java"])
             groupId = "com.github.aronvaupel"
             artifactId = "commons"
-            version = "1.0.0"
+            version = project.version.toString()
         }
     }
     repositories {
