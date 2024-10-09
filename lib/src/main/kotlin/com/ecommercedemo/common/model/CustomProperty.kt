@@ -15,7 +15,7 @@ abstract class CustomProperty<V : Any>(
     @GeneratedValue(generator = "uuid")
     val id: UUID,
     @ValidEntityClassName
-    private val entityClassName: String,
+    val entityClassName: String,
     var key: String,
     var value: V
 ) {
