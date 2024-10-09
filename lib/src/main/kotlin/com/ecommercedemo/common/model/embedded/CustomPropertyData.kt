@@ -27,7 +27,7 @@ class CustomPropertyData<V : Any>(
     }
 
     companion object {
-        inline fun <reified V : Any> serialize(entity: String, key: String, value: V): CustomPropertyData<V> {
+        inline fun <reified V : Any> serialize(entity: String, key: String, value: V?): CustomPropertyData<V> {
             val jsonValue = JsonbConverter.convertToDatabaseColumn(value)
             val objectMapper = ObjectMapper()
             val typedValue: V = objectMapper.readValue(jsonValue, object : TypeReference<V>() {})
