@@ -1,15 +1,14 @@
 package com.ecommercedemo.common.model
 
 import com.ecommercedemo.common.validation.classname.ValidEntityClassName
-import jakarta.persistence.*
+import jakarta.persistence.GeneratedValue
+import jakarta.persistence.Id
+import jakarta.persistence.MappedSuperclass
 import java.util.*
 import kotlin.reflect.KClass
 
 @Suppress("unused")
 @MappedSuperclass
-@Table(
-    uniqueConstraints = [UniqueConstraint(columnNames = ["entityClassName", "key"])]
-)
 abstract class CustomProperty<V : Any>(
     @Id
     @GeneratedValue(generator = "uuid")
