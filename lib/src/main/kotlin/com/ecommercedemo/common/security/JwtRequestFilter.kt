@@ -1,4 +1,4 @@
-package com.ecommercedemo.security
+package com.ecommercedemo.common.security
 
 import jakarta.servlet.FilterChain
 import jakarta.servlet.http.HttpServletRequest

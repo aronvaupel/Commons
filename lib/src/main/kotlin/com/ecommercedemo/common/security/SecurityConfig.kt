@@ -1,4 +1,4 @@
-package com.ecommercedemo.security
+package com.ecommercedemo.common.security
 
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration

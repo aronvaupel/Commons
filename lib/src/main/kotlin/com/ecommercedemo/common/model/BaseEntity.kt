@@ -1,6 +1,6 @@
-package com.ecommercedemo.model
+package com.ecommercedemo.common.model
 
-import com.ecommercedemo.model.embedded.CustomPropertyData
+import com.ecommercedemo.common.model.embedded.CustomPropertyData
 import jakarta.persistence.*
 import java.time.LocalDateTime
 import java.util.*

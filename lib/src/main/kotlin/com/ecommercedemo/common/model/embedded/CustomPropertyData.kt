@@ -1,4 +1,4 @@
-package com.ecommercedemo.model.embedded
+package com.ecommercedemo.common.model.embedded
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import jakarta.persistence.Embeddable

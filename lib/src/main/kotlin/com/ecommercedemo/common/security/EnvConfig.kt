@@ -1,4 +1,4 @@
-package com.ecommercedemo.security
+package com.ecommercedemo.common.security
 
 import io.github.cdimascio.dotenv.Dotenv
 import jakarta.annotation.PostConstruct
