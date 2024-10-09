@@ -19,8 +19,10 @@ class CustomPropertyData(
         return value?.let { ObjectMapper().readValue(it, T::class.java) }
     }
 
-    fun <T> serialize(entity: String, key: String, value: T): CustomPropertyData {
-        return CustomPropertyData(entity, key, ObjectMapper().writeValueAsString(value))
+    companion object {
+        fun <T> serialize(entity: String, key: String, value: T): CustomPropertyData {
+            return CustomPropertyData(entity, key, ObjectMapper().writeValueAsString(value))
+        }
     }
 
 }
