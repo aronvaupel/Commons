@@ -10,8 +10,8 @@ class CustomPropertyData(
     @field:NotBlank(message = "Entity is mandatory")
     val entity: String,
     @field:NotBlank(message = "Key is mandatory")
-    val key: String,
-    val value: String?
+    var key: String,
+    var value: String?
 ) {
     constructor() : this("", "", null)
 
