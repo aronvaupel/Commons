@@ -1,11 +1,11 @@
 package com.ecommercedemo.common.model
 
+import com.ecommercedemo.common.util.JsonbConverter
 import com.ecommercedemo.common.validation.classname.ValidEntityClassName
-import jakarta.persistence.GeneratedValue
-import jakarta.persistence.Id
-import jakarta.persistence.MappedSuperclass
+import jakarta.persistence.*
 import java.util.*
 import kotlin.reflect.KClass
+
 
 @Suppress("unused")
 @MappedSuperclass
@@ -16,6 +16,8 @@ abstract class CustomProperty<V : Any>(
     @ValidEntityClassName
     val entityClassName: String,
     var key: String,
+    @Convert(converter = JsonbConverter::class)
+    @Column(columnDefinition = "jsonb")
     var value: V
 ) {
     private val entity: KClass<*>

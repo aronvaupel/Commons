@@ -6,13 +6,14 @@ plugins {
 }
 
 group = "com.github.aronvaupel"
-version = "1.0.21"
+version = "1.0.22"
 
 repositories {
     mavenCentral()
 }
 
 dependencies {
+    implementation("com.vladmihalcea:hibernate-types-52:2.16.2")
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.17.0")
     implementation("com.google.guava:guava:33.2.1-jre")
     implementation("io.github.cdimascio:java-dotenv:5.2.2")
