@@ -1,5 +1,6 @@
 package com.ecommercedemo.common.model
 
+import com.ecommercedemo.common.validation.classname.ValidEntityClassName
 import jakarta.persistence.GeneratedValue
 import jakarta.persistence.Id
 import jakarta.persistence.MappedSuperclass
@@ -12,6 +13,7 @@ abstract class CustomProperty<V: Any> (
     @Id
     @GeneratedValue(generator = "uuid")
     val id: UUID,
+    @ValidEntityClassName
     private val entityClassName: String,
     var key: String,
     var value: V
