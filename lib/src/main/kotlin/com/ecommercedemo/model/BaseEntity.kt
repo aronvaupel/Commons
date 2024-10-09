@@ -1,9 +1,9 @@
 package com.ecommercedemo.model
 
-import com.ecommercedemo.model.embedded.CustomProperty
+import com.ecommercedemo.model.embedded.CustomPropertyData
 import jakarta.persistence.*
 import java.time.LocalDateTime
-import java.util.UUID
+import java.util.*
 import kotlin.reflect.KClass
 
 
@@ -22,15 +22,15 @@ abstract class BaseEntity {
     var updatedAt: LocalDateTime = LocalDateTime.now()
 
     @ElementCollection
-    @CollectionTable(name = "custom_properties", joinColumns = [JoinColumn(name = "base_entity_id")])
+    @CollectionTable(name = "custom_property_data", joinColumns = [JoinColumn(name = "base_entity_id")])
     @Column(name = "custom_property", columnDefinition = "jsonb")
-    lateinit var customProperties: MutableSet<CustomProperty>
+    lateinit var customProperties: MutableSet<CustomPropertyData>
 
-    fun addCustomProperty(property: CustomProperty) {
+    fun addCustomProperty(property: CustomPropertyData) {
         customProperties.add(property)
     }
 
-    fun getCustomPropertiesForEntity(entity: KClass<*>): List<CustomProperty> {
+    fun getCustomPropertiesForEntity(entity: KClass<*>): List<CustomPropertyData> {
         return customProperties.filter { it.entity == entity.qualifiedName }
     }
 
