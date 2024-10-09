@@ -6,25 +6,30 @@ plugins {
 }
 
 group = "com.github.aronvaupel"
-version = "1.0.23"
+version = "1.0.24"
 
 repositories {
     mavenCentral()
 }
 
 dependencies {
-    implementation("com.vladmihalcea:hibernate-types-52:2.16.2")
+    implementation("com.fasterxml.jackson.module:jackson-module-jakarta-xmlbind-annotations:2.15.2")
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.17.0")
     implementation("com.google.guava:guava:33.2.1-jre")
+    implementation("com.vladmihalcea:hibernate-types-60:2.16.2")
     implementation("io.github.cdimascio:java-dotenv:5.2.2")
+    implementation("io.hypersistence:hypersistence-utils-hibernate-63:3.8.3")
     implementation("io.jsonwebtoken:jjwt:0.9.1")
     implementation("jakarta.persistence:jakarta.persistence-api:3.0.0")
     implementation("jakarta.servlet:jakarta.servlet-api:5.0.0")
+    implementation("javax.xml.bind:jaxb-api:2.3.1")
     // This dependency is used internally, and not exposed to consumers on their own compile classpath.
     implementation(libs.guava)
     testImplementation(libs.junit.jupiter)
     api(libs.commons.math3)
     implementation("org.apache.commons:commons-math3:3.6.1")
+    implementation("org.glassfish.jaxb:jaxb-runtime:2.3.1")
+    implementation("org.hibernate:hibernate-core:6.6.1.Final")
     implementation("org.jetbrains.kotlin:kotlin-reflect")
     testImplementation("org.junit.jupiter:junit-jupiter:5.10.3")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
