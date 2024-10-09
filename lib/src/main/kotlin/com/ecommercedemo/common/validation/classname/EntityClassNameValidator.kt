@@ -7,8 +7,8 @@ object EntityClassNameValidator : ConstraintValidator<ValidEntityClassName, Stri
 
     override fun isValid(value: String, context: ConstraintValidatorContext?): Boolean {
         return try {
-            Class.forName(value)
-            true
+            val className = Class.forName(value).simpleName
+            className == value
         } catch (e: ClassNotFoundException) {
             false
         }

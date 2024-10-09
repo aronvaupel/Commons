@@ -20,4 +20,7 @@ abstract class CustomProperty<V: Any> (
     ) {
     val entity: KClass<*>
         get() = Class.forName(entityClassName).kotlin
+
+    val simpleEntityName: String
+        get() = entity.simpleName ?: "Unknown"
 }
