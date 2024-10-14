@@ -8,7 +8,8 @@ import java.sql.PreparedStatement
 import java.sql.ResultSet
 import java.sql.Types
 
-class JsonbUserType <T : Any>(private val clazz: Class<T>): UserType<Any> {
+@Suppress("UNCHECKED_CAST")
+class JsonbUserType <T : Any>: UserType<T> {
 
     private val objectMapper = ObjectMapper()
 
@@ -16,20 +17,19 @@ class JsonbUserType <T : Any>(private val clazz: Class<T>): UserType<Any> {
         return Types.OTHER
     }
 
-    @Suppress("UNCHECKED_CAST")
-    override fun returnedClass(): Class<Any> = clazz as Class<Any>
+    override fun returnedClass(): Class<T> = Any::class.java as Class<T>
 
     override fun nullSafeGet(
         p0: ResultSet?,
         p1: Int,
         p2: SharedSessionContractImplementor?,
         p3: Any?
-    ): Any? {
+    ): T? {
         val json = p0?.getString(p1)
         return if (json != null) objectMapper.readValue(json, returnedClass()) else null
     }
 
-    override fun nullSafeSet(st: PreparedStatement, value: Any?, index: Int, session: SharedSessionContractImplementor?) {
+    override fun nullSafeSet(st: PreparedStatement, value: T?, index: Int, session: SharedSessionContractImplementor?) {
         if (value == null) {
             st.setNull(index, Types.OTHER)
         } else {
@@ -37,7 +37,7 @@ class JsonbUserType <T : Any>(private val clazz: Class<T>): UserType<Any> {
         }
     }
 
-    override fun deepCopy(value: Any?): Any? {
+    override fun deepCopy(value: T?): T? {
         return if (value == null) null else objectMapper.readValue(objectMapper.writeValueAsString(value), returnedClass())
     }
 
@@ -45,23 +45,23 @@ class JsonbUserType <T : Any>(private val clazz: Class<T>): UserType<Any> {
         return true
     }
 
-    override fun disassemble(value: Any?): Serializable {
+    override fun disassemble(value: T?): Serializable {
         return deepCopy(value) as Serializable
     }
 
-    override fun assemble(cached: Serializable?, owner: Any?): Any? {
-        return deepCopy(cached)
+    override fun assemble(cached: Serializable?, owner: Any?): T? {
+        return deepCopy(cached as T?)
     }
 
-    override fun replace(original: Any?, target: Any?, owner: Any?): Any? {
+    override fun replace(original: T?, target: T?, owner: Any?): T? {
         return deepCopy(original)
     }
 
-    override fun equals(x: Any?, y: Any?): Boolean {
+    override fun equals(x: T?, y: T?): Boolean {
         return x == y
     }
 
-    override fun hashCode(x: Any?): Int {
+    override fun hashCode(x: T?): Int {
         return x?.hashCode() ?: 0
     }
 }
