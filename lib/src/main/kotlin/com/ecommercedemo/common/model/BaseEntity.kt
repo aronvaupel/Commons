@@ -10,7 +10,6 @@ import kotlin.reflect.KClass
 @MappedSuperclass
 @Suppress("unused", "JpaQlInspection", "JpaDataSourceORMInspection")
 abstract class BaseEntity {
-
     @Id
     @GeneratedValue(generator = "UUID")
     val id: UUID = UUID.randomUUID()
