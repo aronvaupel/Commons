@@ -17,6 +17,7 @@ abstract class CustomProperty{
     val entityClassName: String = Any::class.qualifiedName!!
     var key: String = ""
     @Convert(converter = JsonbConverter::class)
+    @Column(columnDefinition = "jsonb")
     var value: String? = null
 
     private val entity: KClass<*>
