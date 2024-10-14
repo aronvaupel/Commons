@@ -1,17 +1,15 @@
 package com.ecommercedemo.common.model
 
-import com.ecommercedemo.common.util.JsonbConverter
-import com.ecommercedemo.common.util.JsonbUserType
+import com.ecommercedemo.common.util.jackson.JsonbConverter
 import com.ecommercedemo.common.validation.classname.ValidEntityClassName
 import jakarta.persistence.*
-import org.hibernate.annotations.Type
 import java.util.*
 import kotlin.reflect.KClass
 
 
 @Suppress("unused")
 @MappedSuperclass
-abstract class CustomProperty<V : Any>(
+abstract class CustomProperty(
     @Id
     @GeneratedValue(generator = "uuid")
     val id: UUID,
@@ -19,8 +17,7 @@ abstract class CustomProperty<V : Any>(
     val entityClassName: String,
     var key: String,
     @Convert(converter = JsonbConverter::class)
-    @Type(value = JsonbUserType::class)
-    var value: V
+    var value: String
 ) {
     private val entity: KClass<*>
         get() = Class.forName(entityClassName).kotlin

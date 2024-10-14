@@ -24,13 +24,13 @@ abstract class BaseEntity {
     @ElementCollection
     @CollectionTable(name = "custom_property_data", joinColumns = [JoinColumn(name = "base_entity_id")])
     @Column(name = "custom_property", columnDefinition = "jsonb")
-    lateinit var customProperties: MutableSet<CustomPropertyData<*>>
+    lateinit var customProperties: MutableSet<CustomPropertyData>
 
-    fun addCustomProperty(property: CustomPropertyData<*>) {
+    fun addCustomProperty(property: CustomPropertyData) {
         customProperties.add(property)
     }
 
-    fun getCustomPropertiesForEntity(entity: KClass<*>): List<CustomPropertyData<*>> {
+    fun getCustomPropertiesForEntity(entity: KClass<*>): List<CustomPropertyData> {
         return customProperties.filter { it.entity == entity.qualifiedName }
     }
 
