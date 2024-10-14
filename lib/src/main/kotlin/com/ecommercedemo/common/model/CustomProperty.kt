@@ -1,8 +1,10 @@
 package com.ecommercedemo.common.model
 
 import com.ecommercedemo.common.util.JsonbConverter
+import com.ecommercedemo.common.util.JsonbUserType
 import com.ecommercedemo.common.validation.classname.ValidEntityClassName
 import jakarta.persistence.*
+import org.hibernate.annotations.Type
 import java.util.*
 import kotlin.reflect.KClass
 
@@ -17,7 +19,7 @@ abstract class CustomProperty<V : Any>(
     val entityClassName: String,
     var key: String,
     @Convert(converter = JsonbConverter::class)
-    @Column(columnDefinition = "jsonb")
+    @Type(value = JsonbUserType::class)
     var value: V
 ) {
     private val entity: KClass<*>
