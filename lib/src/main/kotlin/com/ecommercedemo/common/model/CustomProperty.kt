@@ -12,13 +12,13 @@ import kotlin.reflect.KClass
 abstract class CustomProperty{
     @Id
     @GeneratedValue(generator = "uuid")
-    val id: UUID = UUID.randomUUID()
+    open val id: UUID = UUID.randomUUID()
     @ValidEntityClassName
-    val entityClassName: String = Any::class.qualifiedName!!
-    var key: String = ""
+    open val entityClassName: String = Any::class.qualifiedName!!
+    open var key: String = ""
     @Convert(converter = JsonbConverter::class)
     @Column(columnDefinition = "jsonb")
-    var value: String? = null
+    open var value: String? = null
 
     private val entity: KClass<*>
         get() = Class.forName(entityClassName).kotlin
