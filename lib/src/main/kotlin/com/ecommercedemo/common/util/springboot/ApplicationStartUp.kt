@@ -13,7 +13,10 @@ class ApplicationStartup(
 
     @PostConstruct
     fun init() {
+        println("Scanning for entities...")
         val entityNames = entityScanner.getEntityNames()
-        redisService.createKafkaTopicNames(entityNames)
+        println("Adding Kafka topic names to Redis...")
+        redisService.addKafkaTopicNames(entityNames)
+        println("Entities scanned and Kafka topic names added to Redis.")
     }
 }

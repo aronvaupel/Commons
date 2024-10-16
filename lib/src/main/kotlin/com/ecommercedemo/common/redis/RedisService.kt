@@ -1,15 +1,29 @@
 package com.ecommercedemo.common.redis
 
-import org.springframework.data.redis.core.RedisTemplate
+import org.springframework.data.redis.core.StringRedisTemplate
 import org.springframework.stereotype.Service
 
 @Service
 class RedisService(
-    private val redisTemplate: RedisTemplate<String, Any>
+    private val redisTemplate: StringRedisTemplate
 ) {
 
-    fun createKafkaTopicNames(entityNames: List<String>) {
-        println("Setting Kafka topic names in Redis")
-        redisTemplate.opsForValue().set("kafka-topic-names", entityNames)
+    fun getKafkaTopicNames(): List<String> {
+        return redisTemplate.opsForList().range("kafka-topic-names", 0, -1) ?: emptyList()
+    }
+
+    fun addKafkaTopicNames(topicNames: List<String>) {
+        redisTemplate.execute { connection ->
+            connection.multi()
+            val existingTopicNames = redisTemplate.opsForList().range("kafka-topic-names", 0, -1) ?: mutableListOf()
+
+            topicNames.forEach { topicName ->
+                if (!topicName.contains("downstream", ignoreCase = true) && topicName != "CustomProperty" && !existingTopicNames.contains(topicName)) {
+                    redisTemplate.opsForList().rightPush("kafka-topic-names", topicName)
+                }
+            }
+
+            connection.exec()
+        }
     }
 }
