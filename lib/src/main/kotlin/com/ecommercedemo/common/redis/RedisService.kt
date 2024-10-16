@@ -18,7 +18,7 @@ class RedisService(
             val existingTopicNames = redisTemplate.opsForList().range("kafka-topic-names", 0, -1) ?: mutableListOf()
 
             topicNames.forEach { topicName ->
-                if (!topicName.contains("downstream", ignoreCase = true) && topicName != "CustomProperty" && !existingTopicNames.contains(topicName)) {
+                if (!topicName.contains("downstream", ignoreCase = true) && !topicName.contains("customproperty", ignoreCase = true) && !existingTopicNames.contains(topicName)) {
                     redisTemplate.opsForList().rightPush("kafka-topic-names", topicName)
                 }
             }
