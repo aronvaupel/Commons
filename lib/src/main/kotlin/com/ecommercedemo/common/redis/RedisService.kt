@@ -9,6 +9,7 @@ class RedisService(
 ) {
 
     fun createKafkaTopicNames(entityNames: List<String>) {
+        println("Setting Kafka topic names in Redis")
         redisTemplate.opsForValue().set("kafka-topic-names", entityNames)
     }
 }
