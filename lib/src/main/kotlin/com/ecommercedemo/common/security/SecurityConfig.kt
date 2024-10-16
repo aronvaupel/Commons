@@ -1,8 +1,8 @@
 package com.ecommercedemo.common.security
 
 import org.springframework.context.annotation.Bean
+import org.springframework.context.annotation.ComponentScan
 import org.springframework.context.annotation.Configuration
-import org.springframework.context.annotation.Lazy
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity
 import org.springframework.security.config.http.SessionCreationPolicy
@@ -11,6 +11,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 
 @Configuration
 @EnableWebSecurity
+@ComponentScan(basePackages = ["com.ecommercedemo.common.security"])
 open class SecurityConfig(private val jwtRequestFilter: JwtRequestFilter) {
 
     @Bean
@@ -26,11 +27,5 @@ open class SecurityConfig(private val jwtRequestFilter: JwtRequestFilter) {
             }
         http.addFilterBefore(jwtRequestFilter, UsernamePasswordAuthenticationFilter::class.java)
         return http.build()
-    }
-
-    @Bean
-    @Lazy
-    open fun jwtRequestFilter(): JwtRequestFilter {
-        return JwtRequestFilter()
     }
 }
