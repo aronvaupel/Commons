@@ -13,17 +13,21 @@ class RedisService(
     }
 
 
-    fun addKafkaTopicNames(topicNames: List<String>) {
+    fun addKafkaTopicNames(upstreamEntityNames: List<String>) {
         redisTemplate.execute { connection ->
             connection.multi()
             val existingTopicNames = redisTemplate.opsForList().range("kafka-topic-names", 0, -1) ?: mutableListOf()
-            topicNames.forEach { topicName ->
-                if (!topicName.contains("downstream", ignoreCase = true) && !topicName.contains("customproperty", ignoreCase = true) && !existingTopicNames.contains(topicName)) {
+            upstreamEntityNames.forEach { topicName ->
+                if (!existingTopicNames.contains(topicName)) {
                     redisTemplate.opsForList().rightPush("kafka-topic-names", topicName)
-                }
+                } else throw IllegalArgumentException("Topic name $topicName already exists in Redis.")
             }
 
             connection.exec()
         }
+    }
+
+    fun isRegistrationComplete(): Boolean {
+        return redisTemplate.opsForValue().get("kafka-topic-names-complete") == "true"
     }
 }

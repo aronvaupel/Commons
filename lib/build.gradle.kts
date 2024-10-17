@@ -6,7 +6,7 @@ plugins {
 }
 
 group = "com.github.aronvaupel"
-version = "1.0.42"
+version = "1.1.0"
 
 repositories {
     mavenCentral()

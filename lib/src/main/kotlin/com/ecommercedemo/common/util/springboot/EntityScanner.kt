@@ -9,11 +9,19 @@ class EntityScanner(
     @PersistenceUnit private val entityManagerFactory: EntityManagerFactory,
 ) {
 
-    fun getEntityNames(): List<String> {
+    private fun getEntityNames(filterCondition: (String) -> Boolean): List<String> {
         val entityManager = entityManagerFactory.createEntityManager()
         val metamodel = entityManager.metamodel
         return metamodel.entities
             .map { it.name }
-            .filter { !it.contains("downstream", ignoreCase = true) }
+            .filter(filterCondition)
+    }
+
+    fun getUpstreamEntityNames(): List<String> {
+        return getEntityNames { !it.startsWith("_", ignoreCase = true) }
+    }
+
+    fun getDownstreamEntityNames(): List<String> {
+        return getEntityNames { it.startsWith("_", ignoreCase = true) }
     }
 }
