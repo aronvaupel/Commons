@@ -2,13 +2,14 @@ package com.ecommercedemo.common.kafka
 
 import com.ecommercedemo.common.redis.RedisService
 import com.ecommercedemo.common.util.springboot.EntityScanner
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.annotation.Bean
 import org.springframework.kafka.annotation.KafkaListener
 import org.springframework.stereotype.Service
 
 @Service
 class DynamicTopicListener(
-    private val eventHandler: IEventHandler<EntityEvent>,
+    @Autowired(required = false) private val eventHandler: IEventHandler<EntityEvent>?,
     private val redisService: RedisService,
     private val entityScanner: EntityScanner
 ) {
@@ -17,16 +18,21 @@ class DynamicTopicListener(
     @KafkaListener(topics = ["#{@dynamicTopics}"], groupId = "\${kafka.group-id}")
     fun listen(event: EntityEvent) {
         println("Received event from Kafka: $event")
-        eventHandler.handle(event)  // Delegate the processing to the handler
+        eventHandler?.handle(event)  // Delegate the processing to the handler
     }
 
     // Provide dynamic topics to the listener
     @Bean
     fun dynamicTopics(): List<String> {
         waitForTopicRegistrationCompletion()  // Wait for all services to finish topic registration
-        val downstreamTopics = entityScanner.getDownstreamEntityNames()
-        validateTopics(downstreamTopics)  // Validate topics before proceeding
-        return downstreamTopics
+        val relevantTopics = entityScanner.getDownstreamEntityNames()
+        validateTopics(relevantTopics)  // Validate topics before proceeding
+        if (relevantTopics.isEmpty()) {
+            println("No need to listen for any topics.")
+        } else {
+            println("Listening for topics: $relevantTopics")
+        }
+        return relevantTopics
     }
 
     // Wait for Redis to confirm that topic registration is complete
