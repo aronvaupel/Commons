@@ -7,7 +7,7 @@ import org.springframework.stereotype.Service
 
 @Service
 class EntityEventProducer(
-    private val kafkaTemplate: KafkaTemplate<String, EntityEvent>,
+    private val kafkaTemplate: KafkaTemplate<String, Any>,
     private val redisService: RedisService
 ) {
 
