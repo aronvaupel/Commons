@@ -18,10 +18,10 @@ class DynamicTopicListener(
 ) {
 
     // Listen to Kafka topics and validate topics before processing events
-    @KafkaListener(topics = ["#{@dynamicTopics}"], groupId = "\${kafka.group-id}")
+    @KafkaListener(topics = ["#{@dynamicTopicListener.dynamicTopics()}"], groupId = "\${kafka.group-id}")
     fun listen(event: EntityEvent) {
         println("Received event from Kafka: $event")
-        eventHandler?.handle(event)  // Delegate the processing to the handler
+        eventHandler?.handle(event)  ?: println("No handler available for this event.")
     }
 
     // Provide dynamic topics to the listener
