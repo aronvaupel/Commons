@@ -15,7 +15,7 @@ class DynamicTopicListener(
     private val eventHandler: IEventHandler<EntityEvent>?,  // Optional event handler
     private val redisService: RedisService,
     private val entityScanner: EntityScanner,
-    private val kafkaListenerContainerFactory: ConcurrentKafkaListenerContainerFactory<String, EntityEvent>
+    private val kafkaListenerContainerFactory: ConcurrentKafkaListenerContainerFactory<String, Any>
 ) {
 
     @PostConstruct
