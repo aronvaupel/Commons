@@ -2,9 +2,11 @@ package com.ecommercedemo.common.util.springboot
 
 import jakarta.persistence.EntityManagerFactory
 import jakarta.persistence.PersistenceUnit
+import org.springframework.boot.autoconfigure.condition.ConditionalOnClass
 import org.springframework.stereotype.Component
 
 @Component
+@ConditionalOnClass(EntityManagerFactory::class)
 class EntityScanner(
     @PersistenceUnit private val entityManagerFactory: EntityManagerFactory,
 ) {
