@@ -3,13 +3,16 @@ package com.ecommercedemo.common.kafka
 import com.ecommercedemo.common.redis.RedisService
 import com.ecommercedemo.common.util.springboot.EntityScanner
 import jakarta.annotation.PostConstruct
+import jakarta.persistence.EntityManagerFactory
 import org.apache.kafka.clients.consumer.ConsumerRecord
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean
 import org.springframework.context.annotation.Lazy
 import org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory
 import org.springframework.stereotype.Service
 
 @Service
+@ConditionalOnBean(EntityManagerFactory::class)
 class DynamicTopicListener(
     @Autowired(required = false) @Lazy
     private val eventHandler: IEventHandler<EntityEvent>?,  // Optional event handler
