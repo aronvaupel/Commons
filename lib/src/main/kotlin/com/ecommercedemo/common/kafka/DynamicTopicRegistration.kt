@@ -22,8 +22,8 @@ class DynamicTopicRegistration(
     @Value("\${kafka.default.replication-factor:1}")
     private val defaultReplicationFactor: Int = 1
 
-
     fun declareKafkaTopics(upstreamEntityNames: List<String>) {
+        redisService.registerAsTopics(upstreamEntityNames)
         upstreamEntityNames.forEach { topicName ->
             val topic: NewTopic = TopicBuilder.name(topicName)
                 .partitions(defaultPartitions)

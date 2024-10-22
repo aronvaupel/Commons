@@ -13,7 +13,7 @@ import org.springframework.stereotype.Service
 
 @Service
 @ConditionalOnBean(EntityManagerFactory::class)
-class DynamicTopicListener(
+class ListenerManager(
     private val redisService: RedisService,
     private val entityScanner: EntityScanner,
     private val kafkaListenerContainerFactory: ConcurrentKafkaListenerContainerFactory<String, Any>,
@@ -43,6 +43,7 @@ class DynamicTopicListener(
                }
             }
         }
+        println("Warning: no producers found for topics: ${downstreamEntities - kafkaTopics.topics.keys}")
     }
 
 
