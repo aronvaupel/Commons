@@ -19,7 +19,7 @@ class RedisService(
     @Value("\${spring.application.name}") private val serviceName: String
 ) {
 
-    @ConditionalOnBean(EntityManagerFactory::class)
+    @ConditionalOnExpression("'\${spring.kafka.bootstrap-servers:}' != ''")
     fun registerAsTopics(upstreamEntities: List<String>) {
         val kafkaRegistry = getKafkaRegistry()
         upstreamEntities.forEach { entity ->

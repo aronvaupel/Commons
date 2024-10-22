@@ -3,16 +3,15 @@ package com.ecommercedemo.common.kafka
 import com.ecommercedemo.common.redis.RedisService
 import com.ecommercedemo.common.util.springboot.EntityScanner
 import jakarta.annotation.PostConstruct
-import jakarta.persistence.EntityManagerFactory
 import org.apache.kafka.clients.consumer.ConsumerRecord
-import org.springframework.boot.autoconfigure.condition.ConditionalOnBean
+import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression
 import org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory
 import org.springframework.kafka.listener.MessageListenerContainer
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Service
 
 @Service
-@ConditionalOnBean(EntityManagerFactory::class)
+@ConditionalOnExpression("'\${spring.kafka.bootstrap-servers:}' != ''")
 class ListenerManager(
     private val redisService: RedisService,
     private val entityScanner: EntityScanner,
