@@ -5,66 +5,60 @@ import com.ecommercedemo.common.util.springboot.EntityScanner
 import jakarta.annotation.PostConstruct
 import jakarta.persistence.EntityManagerFactory
 import org.apache.kafka.clients.consumer.ConsumerRecord
-import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean
-import org.springframework.context.annotation.Lazy
 import org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory
+import org.springframework.kafka.listener.MessageListenerContainer
+import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Service
 
 @Service
 @ConditionalOnBean(EntityManagerFactory::class)
 class DynamicTopicListener(
-    @Autowired(required = false) @Lazy
-    private val eventHandler: IEventHandler<EntityEvent>?,  // Optional event handler
     private val redisService: RedisService,
     private val entityScanner: EntityScanner,
-    private val kafkaListenerContainerFactory: ConcurrentKafkaListenerContainerFactory<String, Any>
+    private val kafkaListenerContainerFactory: ConcurrentKafkaListenerContainerFactory<String, Any>,
 ) {
+    private val listenerContainers = mutableMapOf<String, MessageListenerContainer>()
+    private lateinit var downstreamEntities: List<String>
 
     @PostConstruct
     fun init() {
-        val topics = resolveDynamicTopics()
-        if (topics.isNotEmpty()) {
-            registerKafkaListeners(topics)
-        }
+        downstreamEntities = entityScanner.getDownstreamEntityNames()
+        manageListeners()
     }
 
-    // Dynamically register Kafka listeners for the resolved topics
-    private fun registerKafkaListeners(topics: List<String>) {
-        topics.forEach { topic ->
-            val listenerContainer = kafkaListenerContainerFactory.createContainer(topic)
-            listenerContainer.setupMessageListener { message: ConsumerRecord<String, EntityEvent> ->
-                println("Received event from Kafka: ${message.value()}")
-                eventHandler?.handle(message.value()) ?: println("No handler available for this event.")
-            }
-            listenerContainer.start()  // Start the container directly without using KafkaListenerEndpointRegistry
-            println("Registered Kafka listener for topic: $topic")
-        }
-    }
-
-    // Dynamically resolve topics
-    private fun resolveDynamicTopics(): List<String> {
-        waitForTopicRegistrationCompletion()
-        val relevantTopics = entityScanner.getDownstreamEntityNames()
-        validateTopics(relevantTopics)
-        return relevantTopics
-    }
-
-    private fun waitForTopicRegistrationCompletion() {
-        while (!redisService.isRegistrationComplete()) {
-            println("Waiting for Kafka topic registration to complete...")
-            Thread.sleep(1000)
-        }
-        println("Kafka topic registration is complete.")
-    }
-
-    private fun validateTopics(topics: List<String>) {
-        val registeredTopics = redisService.getKafkaTopicNames()
-        topics.forEach { topic ->
-            if (!registeredTopics.contains(topic)) {
-                throw IllegalStateException("Expected topic $topic is not registered in Kafka.")
+    @Scheduled(fixedRate = 30000)
+    fun manageListeners() {
+        val kafkaTopics = redisService.getKafkaRegistry()
+        downstreamEntities.forEach { entity ->
+            val topicDetails = kafkaTopics.topics[entity]
+            if (topicDetails != null) {
+                if (!listenerContainers.containsKey(entity)) {
+                    createKafkaListener(entity)
+                    redisService.registerConsumer(entity)
+                }
+            } else {
+               if (listenerContainers.contains(entity)) {
+                   stopKafkaListener(entity)
+               }
             }
         }
-        println("All required topics are registered in Kafka.")
+    }
+
+
+    private fun createKafkaListener(topic: String) {
+        val listenerContainer = kafkaListenerContainerFactory.createContainer(topic)
+        listenerContainer.setupMessageListener { message: ConsumerRecord<String, Any> ->
+            println("Received message from topic $topic: ${message.value()}")
+        }
+        listenerContainer.start()
+        listenerContainers[topic] = listenerContainer
+        println("Kafka listener started for topic: $topic")
+    }
+
+    private fun stopKafkaListener(topic: String) {
+        listenerContainers[topic]?.stop()
+        listenerContainers.remove(topic)
+        println("Kafka listener stopped for topic: $topic")
     }
 }

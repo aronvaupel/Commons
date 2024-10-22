@@ -21,9 +21,9 @@ class EntityEventProducer(
         properties: List<ChangedProperty>? = null
     ) {
         val topic = entityClass.simpleName
-        val topics = redisService.getKafkaTopicNames()
+        val kafkaRegistry = redisService.getKafkaRegistry()
 
-        if (topics.contains(topic)) {
+        if (kafkaRegistry.topics.containsKey(topic)) {
             val event = EntityEvent(
                 id = id,
                 type = entityEventType,

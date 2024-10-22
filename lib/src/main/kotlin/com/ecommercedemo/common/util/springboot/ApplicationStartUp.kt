@@ -1,5 +1,6 @@
 package com.ecommercedemo.common.util.springboot
 
+import com.ecommercedemo.common.kafka.DynamicTopicListener
 import com.ecommercedemo.common.kafka.DynamicTopicRegistration
 import com.ecommercedemo.common.redis.RedisService
 import jakarta.annotation.PostConstruct
@@ -18,7 +19,7 @@ class ApplicationStartup(
     @PostConstruct
     fun init() {
         val upstreamEntityNames = entityScanner.getUpstreamEntityNames()
+        redisService.registerAsTopics(upstreamEntityNames)
         dynamicTopicRegistration.declareKafkaTopics(upstreamEntityNames)
-        redisService.addKafkaTopicNames(upstreamEntityNames)
     }
 }
