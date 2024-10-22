@@ -20,10 +20,12 @@ class EntityScanner(
     }
 
     fun getUpstreamEntityNames(): List<String> {
+        println("Scanning for upstream entities")
         return getEntityNames { !it.startsWith("_", ignoreCase = true) }
     }
 
     fun getDownstreamEntityNames(): List<String> {
+        println("Scanning for downstream entities")
         return getEntityNames { it.startsWith("_", ignoreCase = true) }
     }
 }

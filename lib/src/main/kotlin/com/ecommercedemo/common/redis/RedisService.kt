@@ -55,8 +55,8 @@ class RedisService(
 
     @ConditionalOnBean(EntityManagerFactory::class)
     fun registerConsumer(downstreamEntity: String) {
-        val kafkaTopics = getKafkaRegistry()
-        val topicDetails = kafkaTopics.topics[downstreamEntity]
+        val kafkaRegistry = getKafkaRegistry()
+        val topicDetails = kafkaRegistry.topics[downstreamEntity]
 
         when {
             topicDetails == null -> throw Exception("Topic $downstreamEntity does not exist.")
@@ -71,7 +71,7 @@ class RedisService(
             }
         }
 
-        saveKafkaRegistry(kafkaTopics)
+        saveKafkaRegistry(kafkaRegistry)
     }
 
     fun getKafkaRegistry(): KafkaTopicRegistry {
