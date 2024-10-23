@@ -1,14 +1,14 @@
 package com.ecommercedemo.common.util.springboot
 
 import jakarta.persistence.EntityManagerFactory
-import jakarta.persistence.PersistenceUnit
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass
 import org.springframework.stereotype.Component
 
 @Component
 @ConditionalOnClass(name = ["jakarta.persistence.EntityManagerFactory"])
 class EntityScanner(
-    @PersistenceUnit private val entityManagerFactory: EntityManagerFactory,
+    @Autowired private val entityManagerFactory: EntityManagerFactory,
 ) {
     private fun getEntityNames(filterCondition: (String) -> Boolean): List<String> {
         val entityManager = entityManagerFactory.createEntityManager()
