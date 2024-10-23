@@ -6,9 +6,9 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Component
 
 @Component
-class ApplicationStartup(
-    @Autowired private val dynamicTopicRegistration: DynamicTopicRegistration,
-    @Autowired private val entityScanner: EntityScanner,
+class ApplicationStartup @Autowired constructor(
+    private val dynamicTopicRegistration: DynamicTopicRegistration,
+    private val entityScanner: EntityScanner,
 ) {
 
     @PostConstruct

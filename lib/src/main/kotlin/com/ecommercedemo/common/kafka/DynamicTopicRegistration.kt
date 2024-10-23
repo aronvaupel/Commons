@@ -2,13 +2,14 @@ package com.ecommercedemo.common.kafka
 
 import com.ecommercedemo.common.redis.RedisService
 import org.apache.kafka.clients.admin.NewTopic
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.kafka.config.TopicBuilder
 import org.springframework.kafka.core.KafkaAdmin
 import org.springframework.stereotype.Service
 
 @Service
-class DynamicTopicRegistration(
+class DynamicTopicRegistration @Autowired constructor(
     private val redisService: RedisService,
     private val kafkaAdmin: KafkaAdmin
 ) {
