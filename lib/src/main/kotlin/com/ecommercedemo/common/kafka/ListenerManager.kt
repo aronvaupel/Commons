@@ -3,8 +3,10 @@ package com.ecommercedemo.common.kafka
 import com.ecommercedemo.common.redis.RedisService
 import com.ecommercedemo.common.util.springboot.EntityScanner
 import jakarta.annotation.PostConstruct
+import jakarta.persistence.EntityManagerFactory
 import org.apache.kafka.clients.consumer.ConsumerRecord
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean
 import org.springframework.context.annotation.DependsOn
 import org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory
 import org.springframework.kafka.listener.MessageListenerContainer
@@ -12,6 +14,7 @@ import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Service
 
 @Service
+@ConditionalOnBean(EntityManagerFactory::class)
 @DependsOn("entityScanner")
 class ListenerManager @Autowired constructor(
     private val redisService: RedisService,
@@ -29,9 +32,7 @@ class ListenerManager @Autowired constructor(
 
     @Scheduled(fixedRate = 30000, initialDelay = 10000)
     fun manageListeners() {
-        if (downstreamEntities.isEmpty()) {
-            println("No downstream entities found. No listeners to manage.")
-        }
+        if (downstreamEntities.isEmpty()) println("No downstream entities found. No listeners to manage.")
         val kafkaTopics = redisService.getKafkaRegistry()
         downstreamEntities.forEach { entity ->
             val topicDetails = kafkaTopics.topics[entity]
@@ -46,6 +47,7 @@ class ListenerManager @Autowired constructor(
                }
             }
         }
+        if ((downstreamEntities - kafkaTopics.topics.keys).isNotEmpty())
         println("Warning: no producers found for topics: ${downstreamEntities - kafkaTopics.topics.keys}")
     }
 

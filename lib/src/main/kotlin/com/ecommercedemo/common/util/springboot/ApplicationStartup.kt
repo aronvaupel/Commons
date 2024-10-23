@@ -2,10 +2,13 @@ package com.ecommercedemo.common.util.springboot
 
 import com.ecommercedemo.common.kafka.DynamicTopicRegistration
 import jakarta.annotation.PostConstruct
+import jakarta.persistence.EntityManagerFactory
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean
 import org.springframework.stereotype.Component
 
 @Component
+@ConditionalOnBean(EntityManagerFactory::class)
 class ApplicationStartup @Autowired constructor(
     private val dynamicTopicRegistration: DynamicTopicRegistration,
     private val entityScanner: EntityScanner,
