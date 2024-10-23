@@ -7,8 +7,8 @@ import org.springframework.stereotype.Component
 
 @Component
 @ConditionalOnClass(name = ["jakarta.persistence.EntityManagerFactory"])
-class EntityScanner(
-    @Autowired private val entityManagerFactory: EntityManagerFactory,
+class EntityScanner @Autowired constructor(
+    private val entityManagerFactory: EntityManagerFactory,
 ) {
     private fun getEntityNames(filterCondition: (String) -> Boolean): List<String> {
         val entityManager = entityManagerFactory.createEntityManager()
