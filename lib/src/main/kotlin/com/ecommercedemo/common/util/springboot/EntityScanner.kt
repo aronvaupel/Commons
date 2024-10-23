@@ -4,9 +4,11 @@ import jakarta.persistence.EntityManagerFactory
 import jakarta.persistence.PersistenceUnit
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass
 import org.springframework.context.annotation.DependsOn
+import org.springframework.context.annotation.Lazy
 import org.springframework.stereotype.Component
 
 @Component
+@Lazy
 @ConditionalOnClass(name = ["jakarta.persistence.EntityManagerFactory"])
 @DependsOn("entityManagerFactory")
 class EntityScanner(
