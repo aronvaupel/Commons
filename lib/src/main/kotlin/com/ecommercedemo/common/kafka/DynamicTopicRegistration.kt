@@ -13,9 +13,6 @@ class DynamicTopicRegistration @Autowired constructor(
     private val redisService: RedisService,
     private val kafkaAdmin: KafkaAdmin
 ) {
-    init {
-        println("DynamicTopicRegistration bean created")
-    }
 
     @Value("\${kafka.default.partitions:1}")
     private val defaultPartitions: Int = 1

@@ -10,9 +10,6 @@ class ApplicationStartup @Autowired constructor(
     private val dynamicTopicRegistration: DynamicTopicRegistration,
     private val entityScanner: EntityScanner,
 ) {
-    init {
-        println("ApplicationStartup bean created")
-    }
 
     @PostConstruct
     fun init() {
