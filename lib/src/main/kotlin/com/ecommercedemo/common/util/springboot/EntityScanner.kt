@@ -7,7 +7,7 @@ import org.springframework.context.annotation.DependsOn
 import org.springframework.stereotype.Component
 
 @Component
-@ConditionalOnClass(name = ["javax.persistence.EntityManagerFactory"])
+@ConditionalOnClass(name = ["jakarta.persistence.EntityManagerFactory"])
 @DependsOn("entityManagerFactory")
 class EntityScanner(
     @PersistenceUnit private val entityManagerFactory: EntityManagerFactory,
