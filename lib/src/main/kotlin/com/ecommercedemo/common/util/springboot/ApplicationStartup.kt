@@ -11,7 +11,6 @@ import org.springframework.stereotype.Component
 
 @Component
 @ConditionalOnClass(name = ["jakarta.persistence.EntityManagerFactory"])
-@DependsOn("entityManagerFactory")
 class ApplicationStartup @Autowired constructor(
     private val dynamicTopicRegistration: DynamicTopicRegistration,
     private val entityScanner: EntityScanner,
