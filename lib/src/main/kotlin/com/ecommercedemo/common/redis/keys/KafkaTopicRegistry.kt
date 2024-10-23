@@ -4,5 +4,5 @@ import com.ecommercedemo.common.redis.values.TopicDetails
 import com.fasterxml.jackson.annotation.JsonProperty
 
 data class KafkaTopicRegistry(
-    @JsonProperty("kafka-topic-registry") val topics: MutableMap<String, TopicDetails>
+    @JsonProperty("kafka-topic-registry") val topics: MutableMap<String, TopicDetails> = mutableMapOf()
 )
