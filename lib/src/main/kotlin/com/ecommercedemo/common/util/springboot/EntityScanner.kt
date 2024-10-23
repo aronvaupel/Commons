@@ -10,6 +10,9 @@ import org.springframework.stereotype.Component
 class EntityScanner(
     @PersistenceUnit private val entityManagerFactory: EntityManagerFactory,
 ) {
+    init {
+        println("EntityScanner bean created")
+    }
 
     private fun getEntityNames(filterCondition: (String) -> Boolean): List<String> {
         val entityManager = entityManagerFactory.createEntityManager()
