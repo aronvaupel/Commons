@@ -1,14 +1,11 @@
 package com.ecommercedemo.common.kafka
 
 import com.ecommercedemo.common.redis.RedisService
-import jakarta.persistence.EntityManagerFactory
 import org.hibernate.validator.constraints.UUID
-import org.springframework.boot.autoconfigure.condition.ConditionalOnBean
 import org.springframework.kafka.core.KafkaTemplate
 import org.springframework.stereotype.Service
 
 @Service
-@ConditionalOnBean(EntityManagerFactory::class)
 class EntityEventProducer(
     private val kafkaTemplate: KafkaTemplate<String, Any>,
     private val redisService: RedisService

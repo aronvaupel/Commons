@@ -4,11 +4,8 @@ import com.ecommercedemo.common.redis.keys.KafkaTopicRegistry
 import com.ecommercedemo.common.redis.values.Microservice
 import com.ecommercedemo.common.redis.values.TopicDetails
 import com.fasterxml.jackson.databind.ObjectMapper
-import jakarta.persistence.EntityManagerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
-import org.springframework.boot.autoconfigure.condition.ConditionalOnBean
-import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression
 import org.springframework.data.redis.core.StringRedisTemplate
 import org.springframework.stereotype.Service
 
@@ -19,7 +16,6 @@ class RedisService(
     @Value("\${spring.application.name}") private val serviceName: String
 ) {
 
-    @ConditionalOnExpression("'\${spring.kafka.bootstrap-servers:}' != ''")
     fun registerAsTopics(upstreamEntities: List<String>) {
         val kafkaRegistry = getKafkaRegistry()
         upstreamEntities.forEach { entity ->
@@ -41,7 +37,6 @@ class RedisService(
         saveKafkaRegistry(kafkaRegistry)
     }
 
-    @ConditionalOnExpression("'\${spring.application.name}' == 'gateway-service'")
     @Suppress("unused")
     fun deregisterProducer(serviceName: String) {
         val kafkaTopics = getKafkaRegistry()
@@ -53,7 +48,6 @@ class RedisService(
         saveKafkaRegistry(kafkaTopics)
     }
 
-    @ConditionalOnBean(EntityManagerFactory::class)
     fun registerConsumer(downstreamEntity: String) {
         val kafkaRegistry = getKafkaRegistry()
         val topicDetails = kafkaRegistry.topics[downstreamEntity]

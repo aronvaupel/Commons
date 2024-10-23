@@ -3,13 +3,11 @@ package com.ecommercedemo.common.kafka
 import com.ecommercedemo.common.redis.RedisService
 import org.apache.kafka.clients.admin.NewTopic
 import org.springframework.beans.factory.annotation.Value
-import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression
 import org.springframework.kafka.config.TopicBuilder
 import org.springframework.kafka.core.KafkaAdmin
 import org.springframework.stereotype.Service
 
 @Service
-@ConditionalOnExpression("'\${spring.kafka.bootstrap-servers:}' != ''")
 class DynamicTopicRegistration(
     private val redisService: RedisService,
     private val kafkaAdmin: KafkaAdmin
