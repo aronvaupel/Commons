@@ -6,7 +6,7 @@ plugins {
 }
 
 group = "com.github.aronvaupel"
-version = "1.3.22"
+version = "1.3.23"
 
 repositories {
     mavenCentral()
@@ -19,7 +19,6 @@ dependencies {
     implementation("io.github.cdimascio:java-dotenv:5.2.2")
     implementation("io.hypersistence:hypersistence-utils-hibernate-63:3.8.3")
     implementation("io.jsonwebtoken:jjwt:0.9.1")
-    implementation("jakarta.persistence:jakarta.persistence-api:3.0.0")
     implementation("jakarta.servlet:jakarta.servlet-api:5.0.0")
     implementation("javax.xml.bind:jaxb-api:2.3.1")
     // This dependency is used internally, and not exposed to consumers on their own compile classpath.
