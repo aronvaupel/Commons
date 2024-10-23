@@ -12,13 +12,13 @@ import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Service
 
 @Service
-@DependsOn("entityScanner")
+//@DependsOn("entityScanner")
 class ListenerManager @Autowired constructor(
-    private val redisService: RedisService,
-    private val entityScanner: EntityScanner,
-    private val kafkaListenerContainerFactory: ConcurrentKafkaListenerContainerFactory<String, Any>,
+    //private val redisService: RedisService,
+    //private val entityScanner: EntityScanner,
+    //private val kafkaListenerContainerFactory: ConcurrentKafkaListenerContainerFactory<String, Any>,
 ) {
-    private val listenerContainers = mutableMapOf<String, MessageListenerContainer>()
+    /*private val listenerContainers = mutableMapOf<String, MessageListenerContainer>()
     private lateinit var downstreamEntities: List<String>
 
     @PostConstruct
@@ -61,5 +61,5 @@ class ListenerManager @Autowired constructor(
         listenerContainers[topic]?.stop()
         listenerContainers.remove(topic)
         println("Kafka listener stopped for topic: $topic")
-    }
+    }*/
 }
