@@ -5,10 +5,11 @@ import jakarta.annotation.PostConstruct
 import jakarta.persistence.EntityManagerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean
+import org.springframework.boot.autoconfigure.condition.ConditionalOnClass
 import org.springframework.stereotype.Component
 
 @Component
-@ConditionalOnBean(EntityManagerFactory::class)
+@ConditionalOnClass(name = ["javax.persistence.EntityManagerFactory"])
 class ApplicationStartup @Autowired constructor(
     private val dynamicTopicRegistration: DynamicTopicRegistration,
     private val entityScanner: EntityScanner,
