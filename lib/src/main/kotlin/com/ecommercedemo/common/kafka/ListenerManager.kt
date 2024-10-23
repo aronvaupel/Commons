@@ -25,7 +25,7 @@ class ListenerManager @Autowired constructor(
         manageListeners()
     }
 
-    @Scheduled(fixedRate = 30000)
+    @Scheduled(fixedRate = 30000, initialDelay = 10000)
     fun manageListeners() {
         val kafkaTopics = redisService.getKafkaRegistry()
         downstreamEntities.forEach { entity ->
