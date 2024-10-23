@@ -2,9 +2,11 @@ package com.ecommercedemo.common.util.springboot
 
 import jakarta.persistence.EntityManagerFactory
 import jakarta.persistence.PersistenceUnit
+import org.springframework.context.annotation.DependsOn
 import org.springframework.stereotype.Component
 
 @Component
+@DependsOn("entityManagerFactory")
 class EntityScanner(
     @PersistenceUnit private val entityManagerFactory: EntityManagerFactory,
 ) {

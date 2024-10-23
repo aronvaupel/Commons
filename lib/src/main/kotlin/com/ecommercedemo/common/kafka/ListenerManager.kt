@@ -5,12 +5,14 @@ import com.ecommercedemo.common.util.springboot.EntityScanner
 import jakarta.annotation.PostConstruct
 import org.apache.kafka.clients.consumer.ConsumerRecord
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.context.annotation.DependsOn
 import org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory
 import org.springframework.kafka.listener.MessageListenerContainer
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Service
 
 @Service
+@DependsOn("entityScanner")
 class ListenerManager @Autowired constructor(
     private val redisService: RedisService,
     private val entityScanner: EntityScanner,
