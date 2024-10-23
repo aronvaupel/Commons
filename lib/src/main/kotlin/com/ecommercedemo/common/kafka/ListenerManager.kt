@@ -29,6 +29,9 @@ class ListenerManager @Autowired constructor(
 
     @Scheduled(fixedRate = 30000, initialDelay = 10000)
     fun manageListeners() {
+        if (downstreamEntities.isEmpty()) {
+            println("No downstream entities found. No listeners to manage.")
+        }
         val kafkaTopics = redisService.getKafkaRegistry()
         downstreamEntities.forEach { entity ->
             val topicDetails = kafkaTopics.topics[entity]
