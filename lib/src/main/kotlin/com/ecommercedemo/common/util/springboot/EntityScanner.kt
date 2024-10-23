@@ -6,7 +6,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnClass
 import org.springframework.stereotype.Component
 
 @Component
-@ConditionalOnClass(name = ["org.springframework.web.bind.annotation.RestController"])
+@ConditionalOnClass(name = ["org.springframework.data.jpa.repository.JpaRepository"])
 class EntityScanner @Autowired constructor(
     private val entityManagerFactory: EntityManagerFactory,
 ) {

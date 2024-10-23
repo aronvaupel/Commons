@@ -13,7 +13,7 @@ import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Service
 
 @Service
-@ConditionalOnClass(name = ["org.springframework.web.bind.annotation.RestController"])
+@ConditionalOnClass(name = ["org.springframework.data.jpa.repository.JpaRepository"])
 @DependsOn("entityScanner")
 class ListenerManager @Autowired constructor(
     private val redisService: RedisService,
