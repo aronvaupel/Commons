@@ -6,7 +6,7 @@ plugins {
 }
 
 group = "com.github.aronvaupel"
-version = "1.3.25"
+version = "1.3.26"
 
 repositories {
     mavenCentral()
@@ -16,7 +16,7 @@ dependencies {
     implementation("com.fasterxml.jackson.module:jackson-module-jakarta-xmlbind-annotations:2.15.2")
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.17.0")
     implementation("com.google.guava:guava:33.2.1-jre")
-    implementation("io.github.cdimascio:java-dotenv:5.2.2")
+    implementation ("io.github.cdimascio:dotenv-kotlin:6.2.2")
     implementation("io.hypersistence:hypersistence-utils-hibernate-63:3.8.3")
     implementation("io.jsonwebtoken:jjwt:0.9.1")
     implementation("jakarta.servlet:jakarta.servlet-api:5.0.0")
