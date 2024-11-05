@@ -5,8 +5,8 @@ import jakarta.validation.ConstraintValidatorContext
 
 object ExcludeSpecialCharactersValidator : ConstraintValidator<ExcludeSpecialCharacters, String?> {
     override fun isValid(value: String?, context: ConstraintValidatorContext): Boolean {
-        if (value == null) return true // Allow null values
-        val allowedPattern = "^[a-zA-Z0-9\\s\\-\\,\\/\\.\\(\\)]*\$"
-        return value.matches(allowedPattern.toRegex())
+        if (value == null) return true
+        val allowedPattern = Regex("^[a-zA-Z0-9\\s\\-,/.()]*$")
+        return value.matches(allowedPattern)
     }
 }

@@ -6,7 +6,7 @@ plugins {
 }
 
 group = "com.github.aronvaupel"
-version = "1.3.33"
+version = "1.3.34"
 
 repositories {
     mavenCentral()
@@ -33,7 +33,9 @@ dependencies {
     implementation("org.jetbrains.kotlin:kotlin-reflect")
     testImplementation("org.junit.jupiter:junit-jupiter:5.10.3")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+    //Fixme
     implementation("org.springframework.boot:spring-boot-starter-data-redis:3.3.4")
+    //Fixme
     implementation("org.springframework.boot:spring-boot-starter-security:3.3.4")
     implementation("org.springframework.boot:spring-boot-starter-web:3.3.4")
     implementation("org.springframework.boot:spring-boot-starter-validation:3.3.4")
