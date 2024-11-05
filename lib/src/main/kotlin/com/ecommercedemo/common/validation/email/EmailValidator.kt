@@ -20,8 +20,7 @@ class EmailValidator : ConstraintValidator<ValidEmail, String> {
             return false
         }
 
-        val emailPattern = Regex("^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$")
-
+        val emailPattern = Regex("^[A-Za-z0-9._%+-]+@[A-Za-z0-9-]+(\\.[A-Za-z0-9-]+)+\\.[A-Za-z]{2,}$")
         if (!email.matches(emailPattern)) {
             context.disableDefaultConstraintViolation()
             context.buildConstraintViolationWithTemplate("Email must be a valid format")
