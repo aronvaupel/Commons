@@ -1,11 +1,14 @@
 package com.ecommercedemo.common.validation.email
 
-import jakarta.validation.constraints.Email
-import jakarta.validation.constraints.NotBlank
-import jakarta.validation.constraints.Size
+import jakarta.validation.Constraint
+import jakarta.validation.Payload
+import kotlin.reflect.KClass
 
-
-@Email(message = "Email should be valid")
-@NotBlank(message = "Email is mandatory")
-@Size(max = 100, message = "Email must be less than 100 characters")
-annotation class ValidEmail
+@Target(AnnotationTarget.FIELD, AnnotationTarget.VALUE_PARAMETER)
+@Retention(AnnotationRetention.RUNTIME)
+@Constraint(validatedBy = [EmailValidator::class])
+annotation class ValidEmail(
+    val message: String = "Invalid email format",
+    val groups: Array<KClass<*>> = [],
+    val payload: Array<KClass<out Payload>> = []
+)
