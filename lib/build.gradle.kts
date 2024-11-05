@@ -6,7 +6,7 @@ plugins {
 }
 
 group = "com.github.aronvaupel"
-version = "1.3.29"
+version = "1.3.30"
 
 repositories {
     mavenCentral()
@@ -20,6 +20,7 @@ dependencies {
     implementation("io.hypersistence:hypersistence-utils-hibernate-63:3.8.3")
     implementation("io.jsonwebtoken:jjwt:0.9.1")
     implementation("jakarta.servlet:jakarta.servlet-api:5.0.0")
+    implementation ("jakarta.validation:jakarta.validation-api:3.0.2")
     implementation("javax.xml.bind:jaxb-api:2.3.1")
     // This dependency is used internally, and not exposed to consumers on their own compile classpath.
     implementation(libs.guava)
@@ -28,6 +29,7 @@ dependencies {
     implementation("org.apache.commons:commons-math3:3.6.1")
     implementation("org.glassfish.jaxb:jaxb-runtime:2.3.1")
     implementation("org.hibernate:hibernate-core:6.6.1.Final")
+    implementation ("org.hibernate.validator:hibernate-validator:8.0.0.Final")
     implementation("org.jetbrains.kotlin:kotlin-reflect")
     testImplementation("org.junit.jupiter:junit-jupiter:5.10.3")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
