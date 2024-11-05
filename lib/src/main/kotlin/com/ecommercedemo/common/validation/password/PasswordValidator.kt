@@ -1,4 +1,4 @@
-package com.ecommercedemo.userservice.validation.password
+package com.ecommercedemo.common.validation.password
 
 import jakarta.validation.ConstraintValidator
 import jakarta.validation.ConstraintValidatorContext

@@ -1,4 +1,4 @@
-package com.ecommercedemo.userservice.validation.dateofbirth
+package com.ecommercedemo.common.validation.dateofbirth
 
 import jakarta.validation.ConstraintValidator
 import jakarta.validation.ConstraintValidatorContext

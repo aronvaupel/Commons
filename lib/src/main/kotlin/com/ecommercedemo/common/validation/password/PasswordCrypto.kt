@@ -1,4 +1,4 @@
-package com.ecommercedemo.userservice.validation.password
+package com.ecommercedemo.common.validation.password
 
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
 

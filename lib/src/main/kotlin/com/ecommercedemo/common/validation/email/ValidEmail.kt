@@ -1,4 +1,4 @@
-package com.ecommercedemo.userservice.validation.email
+package com.ecommercedemo.common.validation.email
 
 import jakarta.validation.constraints.Email
 import jakarta.validation.constraints.NotBlank

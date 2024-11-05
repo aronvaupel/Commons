@@ -1,4 +1,4 @@
-package com.ecommercedemo.userservice.validation.userrole
+package com.ecommercedemo.common.validation.userrole
 
 enum class UserRole {
     GUEST,

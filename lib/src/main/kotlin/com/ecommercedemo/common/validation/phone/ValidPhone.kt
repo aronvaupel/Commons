@@ -1,4 +1,4 @@
-package com.ecommercedemo.userservice.validation.phone
+package com.ecommercedemo.common.validation.phone
 
 import jakarta.validation.Constraint
 import jakarta.validation.Payload

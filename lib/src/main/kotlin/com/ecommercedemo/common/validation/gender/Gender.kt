@@ -1,4 +1,4 @@
-package com.ecommercedemo.userservice.validation.gender
+package com.ecommercedemo.common.validation.gender
 
 enum class Gender {
     MALE, FEMALE, OTHER, UNKNOWN

@@ -1,4 +1,4 @@
-package com.ecommercedemo.userservice.validation.specialcharacters
+package com.ecommercedemo.common.validation.specialcharacters
 
 import jakarta.validation.ConstraintValidator
 import jakarta.validation.ConstraintValidatorContext

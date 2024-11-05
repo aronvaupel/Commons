@@ -1,8 +1,7 @@
-package com.ecommercedemo.userservice.validation.password
+package com.ecommercedemo.common.validation.password
 
 import jakarta.validation.Constraint
 import jakarta.validation.Payload
-import jakarta.validation.constraints.NotBlank
 import kotlin.reflect.KClass
 
 
