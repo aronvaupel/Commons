@@ -1,6 +1,7 @@
 package com.ecommercedemo.common.kafka
 
-import org.hibernate.validator.constraints.UUID
+import java.util.*
+
 
 data class EntityEvent(
     val id: UUID,

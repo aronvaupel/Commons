@@ -1,9 +1,10 @@
 package com.ecommercedemo.common.kafka
 
 import com.ecommercedemo.common.redis.RedisService
-import org.hibernate.validator.constraints.UUID
+
 import org.springframework.kafka.core.KafkaTemplate
 import org.springframework.stereotype.Service
+import java.util.*
 
 @Service
 class EntityEventProducer(
