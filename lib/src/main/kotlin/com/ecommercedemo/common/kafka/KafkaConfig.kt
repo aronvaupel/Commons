@@ -37,7 +37,7 @@ open class KafkaConfig {
         return factory
     }
 
-    private fun kafkaProperties(): Map<String, Any> {
+    open fun kafkaProperties(): Map<String, Any> {
         return mapOf(
             ProducerConfig.BOOTSTRAP_SERVERS_CONFIG to "kafka:9092",
             ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG to StringSerializer::class.java,
