@@ -9,19 +9,25 @@ class EntityChangeTracker<T : BaseEntity> {
 
     fun getChangedProperties(entityBefore: T?, entityAfter: T): MutableMap<String, Any?> {
         val changedProperties = mutableMapOf<String, Any?>()
-        val properties = entityAfter::class.memberProperties.filterIsInstance<KProperty1<T, *>>()
 
-        properties.forEach { property ->
-            property.isAccessible = true
-            val oldValue = entityBefore?.let { property.get(it) }
-            val newValue = property.get(entityAfter)
+        // Get properties for both entities
+        val newProperties = entityAfter::class.memberProperties.filterIsInstance<KProperty1<T, *>>()
+        val oldProperties = entityBefore?.let { it::class.memberProperties.filterIsInstance<KProperty1<T, *>>() } ?: newProperties
 
-            println("Checking property: ${property.name}, Old Value: $oldValue, New Value: $newValue") // Debug log
+        // Compare properties individually
+        newProperties.forEach { newProperty ->
+            newProperty.isAccessible = true
+            val oldProperty = oldProperties.find { it.name == newProperty.name }
+            oldProperty?.isAccessible = true
 
+            val oldValue = entityBefore?.let { oldProperty?.get(it) }
+            val newValue = newProperty.get(entityAfter)
+
+            // Log and detect changes
+            println("Checking property: ${newProperty.name}, Old Value: $oldValue, New Value: $newValue")
             if (oldValue != newValue) {
-                changedProperties[property.name] = newValue
-                println("Detected change for property: ${property.name}") // Log detected changes
-
+                changedProperties[newProperty.name] = newValue
+                println("Detected change for property: ${newProperty.name}")
             }
         }
 
