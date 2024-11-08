@@ -10,27 +10,27 @@ class EntityChangeTracker<T : BaseEntity> {
     fun getChangedProperties(entityBefore: T?, entityAfter: T): MutableMap<String, Any?> {
         val changedProperties = mutableMapOf<String, Any?>()
 
-        // Get properties for both entities
-        val newProperties = entityAfter::class.memberProperties.filterIsInstance<KProperty1<T, *>>()
-        val oldProperties = entityBefore?.let { it::class.memberProperties.filterIsInstance<KProperty1<T, *>>() } ?: newProperties
+        val oldValues = entityBefore?.let { snapshotProperties(it) } ?: emptyMap()
+        val newValues = snapshotProperties(entityAfter)
 
-        // Compare properties individually
-        newProperties.forEach { newProperty ->
-            newProperty.isAccessible = true
-            val oldProperty = oldProperties.find { it.name == newProperty.name }
-            oldProperty?.isAccessible = true
+        newValues.forEach { (propertyName, newValue) ->
+            val oldValue = oldValues[propertyName]
+            println("Checking property: $propertyName, Old Value: $oldValue, New Value: $newValue")
 
-            val oldValue = entityBefore?.let { oldProperty?.get(it) }
-            val newValue = newProperty.get(entityAfter)
-
-            // Log and detect changes
-            println("Checking property: ${newProperty.name}, Old Value: $oldValue, New Value: $newValue")
             if (oldValue != newValue) {
-                changedProperties[newProperty.name] = newValue
-                println("Detected change for property: ${newProperty.name}")
+                changedProperties[propertyName] = newValue
+                println("Detected change for property: $propertyName")
             }
         }
 
         return changedProperties
+    }
+
+    private fun snapshotProperties(entity: T): Map<String, Any?> {
+        val properties = entity::class.memberProperties.filterIsInstance<KProperty1<T, *>>()
+        return properties.associate { property ->
+            property.isAccessible = true
+            property.name to property.get(entity)
+        }
     }
 }
