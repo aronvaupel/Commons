@@ -23,7 +23,7 @@ abstract class BaseEntity {
     @ElementCollection
     @CollectionTable(name = "pseudo_property_data", joinColumns = [JoinColumn(name = "base_entity_id")])
     @Column(name = "pseudo_property", columnDefinition = "jsonb")
-    open lateinit var pseudoProperties: MutableSet<PseudoPropertyData>
+    open var pseudoProperties: MutableSet<PseudoPropertyData> = mutableSetOf()
 
     fun addPseudoProperty(property: PseudoPropertyData) {
         pseudoProperties.add(property)
