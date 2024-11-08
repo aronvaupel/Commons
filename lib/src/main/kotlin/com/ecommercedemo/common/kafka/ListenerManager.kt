@@ -1,7 +1,7 @@
 package com.ecommercedemo.common.kafka
 
 import com.ecommercedemo.common.redis.RedisService
-import com.ecommercedemo.common.util.springboot.EntityScanner
+import com.ecommercedemo.common.util.EntityScanner
 import jakarta.annotation.PostConstruct
 import org.apache.kafka.clients.consumer.ConsumerRecord
 import org.springframework.beans.factory.annotation.Autowired

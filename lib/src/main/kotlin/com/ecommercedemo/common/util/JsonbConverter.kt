@@ -1,4 +1,4 @@
-package com.ecommercedemo.common.util.jackson
+package com.ecommercedemo.common.util
 
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue

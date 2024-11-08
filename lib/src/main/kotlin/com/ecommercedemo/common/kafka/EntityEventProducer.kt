@@ -16,7 +16,7 @@ class EntityEventProducer(
         entityClass: Class<T>,
         id: UUID,
         entityEventType: EntityEventType,
-        properties: List<ChangedProperty>? = null
+        properties: MutableMap<String, Any?>
     ) {
         val topic = entityClass.simpleName
         val kafkaRegistry = redisService.getKafkaRegistry()

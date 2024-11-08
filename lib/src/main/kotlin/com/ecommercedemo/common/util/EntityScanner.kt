@@ -1,4 +1,4 @@
-package com.ecommercedemo.common.util.springboot
+package com.ecommercedemo.common.util
 
 import jakarta.persistence.EntityManagerFactory
 import org.springframework.beans.factory.annotation.Autowired

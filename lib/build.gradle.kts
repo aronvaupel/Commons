@@ -6,7 +6,7 @@ plugins {
 }
 
 group = "com.github.aronvaupel"
-version = "1.3.37"
+version = "1.4.0"
 
 repositories {
     mavenCentral()
@@ -31,6 +31,7 @@ dependencies {
     implementation("org.hibernate:hibernate-core:6.6.1.Final")
     implementation ("org.hibernate.validator:hibernate-validator:8.0.0.Final")
     implementation("org.jetbrains.kotlin:kotlin-reflect")
+    testImplementation("org.jetbrains.kotlin:kotlin-test")
     testImplementation("org.junit.jupiter:junit-jupiter:5.10.3")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
     //Fixme

@@ -1,4 +1,4 @@
-package com.ecommercedemo.common.util.springboot
+package com.ecommercedemo.common.util
 
 import com.ecommercedemo.common.kafka.DynamicTopicRegistration
 import jakarta.annotation.PostConstruct

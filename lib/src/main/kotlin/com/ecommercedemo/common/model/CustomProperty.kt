@@ -1,6 +1,6 @@
 package com.ecommercedemo.common.model
 
-import com.ecommercedemo.common.util.jackson.JsonbConverter
+import com.ecommercedemo.common.util.JsonbConverter
 import com.ecommercedemo.common.validation.classname.ValidEntityClassName
 import jakarta.persistence.*
 import java.util.*

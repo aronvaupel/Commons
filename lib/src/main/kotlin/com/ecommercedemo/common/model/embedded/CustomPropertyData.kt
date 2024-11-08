@@ -1,6 +1,6 @@
 package com.ecommercedemo.common.model.embedded
 
-import com.ecommercedemo.common.util.jackson.JsonbConverter
+import com.ecommercedemo.common.util.JsonbConverter
 import com.fasterxml.jackson.core.type.TypeReference
 import com.fasterxml.jackson.databind.ObjectMapper
 import jakarta.persistence.Convert
