@@ -16,8 +16,12 @@ class EntityChangeTracker<T : BaseEntity> {
             val oldValue = entityBefore?.let { property.get(it) }
             val newValue = property.get(entityAfter)
 
+            println("Checking property: ${property.name}, Old Value: $oldValue, New Value: $newValue") // Debug log
+
             if (oldValue != newValue) {
                 changedProperties[property.name] = newValue
+                println("Detected change for property: ${property.name}") // Log detected changes
+
             }
         }
 
