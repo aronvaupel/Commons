@@ -9,7 +9,7 @@ import jakarta.validation.constraints.NotBlank
 
 @Embeddable
 @Suppress("unused")
-class CustomPropertyData(
+class PseudoPropertyData(
     @field:NotBlank(message = "Entity is mandatory")
     val entity: String,
     @field:NotBlank(message = "Key is mandatory")
@@ -27,9 +27,9 @@ class CustomPropertyData(
     }
 
     companion object {
-        inline fun <reified V : Any> serialize(entity: String, key: String, value: V?): CustomPropertyData {
+        inline fun <reified V : Any> serialize(entity: String, key: String, value: V?): PseudoPropertyData {
             val jsonValue = JsonbConverter.convertToDatabaseColumn(value)
-            return CustomPropertyData(entity, key, jsonValue)
+            return PseudoPropertyData(entity, key, jsonValue)
         }
     }
 }

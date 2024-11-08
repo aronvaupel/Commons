@@ -17,7 +17,7 @@ class EntityChangeTracker<T : BaseEntity> {
             val newValue = property.get(entityAfter)
 
             if (oldValue != newValue) {
-                changedProperties.put(property.name, newValue)
+                changedProperties[property.name] = newValue
             }
         }
 

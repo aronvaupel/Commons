@@ -1,7 +1,7 @@
 package com.ecommercedemo.common.util
 
 import com.ecommercedemo.common.model.BaseEntity
-import com.ecommercedemo.common.model.embedded.CustomPropertyData
+import com.ecommercedemo.common.model.embedded.PseudoPropertyData
 import org.junit.jupiter.api.Test
 import java.time.LocalDateTime
 import java.util.*
@@ -14,7 +14,7 @@ data class MockEntity(
     var age: Int?,
     override var createdAt: LocalDateTime = LocalDateTime.now(),
     override var updatedAt: LocalDateTime = LocalDateTime.now(),
-    override var customProperties: MutableSet<CustomPropertyData> = mutableSetOf()
+    override var pseudoProperties: MutableSet<PseudoPropertyData> = mutableSetOf()
 ) : BaseEntity()
 
 class EntityChangeTrackerTest {

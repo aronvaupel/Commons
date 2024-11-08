@@ -9,7 +9,7 @@ import kotlin.reflect.KClass
 
 @Suppress("unused")
 @MappedSuperclass
-abstract class CustomProperty{
+abstract class PseudoProperty{
     @Id
     @GeneratedValue(generator = "uuid")
     open val id: UUID = UUID.randomUUID()

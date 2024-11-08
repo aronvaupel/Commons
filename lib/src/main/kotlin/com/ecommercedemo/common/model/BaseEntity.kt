@@ -1,6 +1,6 @@
 package com.ecommercedemo.common.model
 
-import com.ecommercedemo.common.model.embedded.CustomPropertyData
+import com.ecommercedemo.common.model.embedded.PseudoPropertyData
 import jakarta.persistence.*
 import java.time.LocalDateTime
 import java.util.*
@@ -21,16 +21,16 @@ abstract class BaseEntity {
     open var updatedAt: LocalDateTime = LocalDateTime.now()
 
     @ElementCollection
-    @CollectionTable(name = "custom_property_data", joinColumns = [JoinColumn(name = "base_entity_id")])
-    @Column(name = "custom_property", columnDefinition = "jsonb")
-    open lateinit var customProperties: MutableSet<CustomPropertyData>
+    @CollectionTable(name = "pseudo_property_data", joinColumns = [JoinColumn(name = "base_entity_id")])
+    @Column(name = "pseudo_property", columnDefinition = "jsonb")
+    open lateinit var pseudoProperties: MutableSet<PseudoPropertyData>
 
-    fun addCustomProperty(property: CustomPropertyData) {
-        customProperties.add(property)
+    fun addPseudoProperty(property: PseudoPropertyData) {
+        pseudoProperties.add(property)
     }
 
-    fun getCustomPropertiesForEntity(entity: KClass<*>): List<CustomPropertyData> {
-        return customProperties.filter { it.entity == entity.qualifiedName }
+    fun getPseudoPropertiesForEntity(entity: KClass<*>): List<PseudoPropertyData> {
+        return pseudoProperties.filter { it.entity == entity.qualifiedName }
     }
 
     @PrePersist
