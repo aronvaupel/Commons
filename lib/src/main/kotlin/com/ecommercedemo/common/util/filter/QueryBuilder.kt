@@ -42,15 +42,15 @@ class QueryBuilder<T : Any>(
         root: Root<T>,
         filter: FilterCriteria<T>
     ): Path<*> {
-        val property = entityClass.memberProperties.find { it == filter.attribute }
-            ?: throw InvalidAttributeException(filter.attribute.name, entityClass.simpleName ?: "UnknownEntity")
+        val property = entityClass.memberProperties.find { it.name == filter.attribute }
+            ?: throw InvalidAttributeException(filter.attribute, entityClass.simpleName ?: "UnknownEntity")
         val expectedType = property.returnType.classifier as? KClass<*>
         if (!filter.comparison.isSupportedType(expectedType ?: Any::class)) {
             throw IllegalArgumentException(
                 "'${filter.comparison}' does not match '${filter.attribute}' of type '${expectedType?.simpleName}'"
             )
         }
-        return root.get<Any>(filter.attribute.name)
+        return root.get<Any>(filter.attribute)
     }
 
     private fun createPredicate(
