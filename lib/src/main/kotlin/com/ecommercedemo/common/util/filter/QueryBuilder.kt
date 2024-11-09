@@ -9,10 +9,12 @@ import jakarta.persistence.criteria.CriteriaBuilder
 import jakarta.persistence.criteria.Path
 import jakarta.persistence.criteria.Predicate
 import jakarta.persistence.criteria.Root
+import org.springframework.stereotype.Service
 import kotlin.reflect.KClass
 import kotlin.reflect.full.memberProperties
 
-@Suppress("UNCHECKED_CAST")
+@Suppress("UNCHECKED_CAST", "unused")
+@Service
 class QueryBuilder<T : Any>(
     private val entityManager: EntityManager,
     private val redisCacheService: RedisService
@@ -21,14 +23,15 @@ class QueryBuilder<T : Any>(
     fun buildQuery(entityClass: KClass<T>, queryParameters: QueryParams<T>): List<T> {
         val queryKey = redisCacheService.generateQueryKey(entityClass, queryParameters)
         redisCacheService.getQueryResult(queryKey)?.let { return it as List<T> }
+
         val criteriaBuilder = entityManager.criteriaBuilder
         val criteriaQuery = criteriaBuilder.createQuery(entityClass.java)
         val root = criteriaQuery.from(entityClass.java)
         val predicates = queryParameters.filters.mapNotNull { filter ->
-            val validatedPath = validateFilter(entityClass, root, filter)
-            createPredicate(criteriaBuilder, validatedPath, filter)
+            createPredicate(criteriaBuilder, validateFilter(entityClass, root, filter), filter)
         }
         criteriaQuery.where(*predicates.toTypedArray())
+
         val result = entityManager.createQuery(criteriaQuery).resultList
         redisCacheService.cacheQueryResult(queryKey, result)
         return result
