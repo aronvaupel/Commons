@@ -181,6 +181,7 @@ class QueryBuilder<T : Any>(
             ComparisonMethod.CONTAINS_ANY, ComparisonMethod.DOES_NOT_CONTAIN_ANY -> {
                 throw UnsupportedOperationException("Collection comparisons are not implemented.")
             }
+            else -> throw UnsupportedOperationException("Unsupported comparison: ${filter.comparison}")
         }
     }
 }
