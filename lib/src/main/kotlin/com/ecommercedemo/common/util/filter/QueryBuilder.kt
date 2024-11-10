@@ -9,9 +9,9 @@ import jakarta.persistence.criteria.CriteriaBuilder
 import jakarta.persistence.criteria.Path
 import jakarta.persistence.criteria.Predicate
 import jakarta.persistence.criteria.Root
+import jakarta.persistence.metamodel.IdentifiableType
 import org.springframework.stereotype.Service
 import kotlin.reflect.KClass
-import kotlin.reflect.full.memberProperties
 
 @Suppress("UNCHECKED_CAST", "unused")
 @Service
@@ -51,32 +51,20 @@ class QueryBuilder<T : Any>(
             return criteriaBuilder.and(*nestedPredicates.toTypedArray())
         }
 
-        val path = validateAndGetPath(entityClass, root, filter.attribute)
+        val path = validateAndGetPath(root, filter.attribute)
         return createPredicate(criteriaBuilder, path, filter)
     }
 
-    private fun <T : Any> validateAndGetPath(
-        entityClass: KClass<T>,
-        root: Root<T>,
-        attribute: String
-    ): Path<*> {
-        val pathSegments = attribute.split(".")
+    private fun validateAndGetPath(root: Path<*>, attribute: String): Path<*> {
+        val attributes = attribute.split(".")
         var currentPath: Path<*> = root
-        var currentClass: KClass<*> = entityClass
 
-        for (segment in pathSegments) {
-            val property = currentClass.memberProperties.find { it.name == segment }
-                ?: throw InvalidAttributeException(
-                    segment, currentClass.simpleName ?: "UnknownEntity"
-                )
+        for (attr in attributes) {
+            (currentPath.model as? IdentifiableType<*>)?.getAttribute(attr)
+                ?: throw InvalidAttributeException(attr, currentPath.model::class.java.name)
 
-            currentPath = currentPath.get<Any>(segment)
-            currentClass = property.returnType.classifier as? KClass<*>
-                ?: throw IllegalArgumentException(
-                    "Could not determine class type for $segment in $attribute"
-                )
+            currentPath = currentPath.get<Any>(attr)
         }
-
         return currentPath
     }
 
