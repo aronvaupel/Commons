@@ -56,30 +56,26 @@ class QueryBuilder<T : Any>(
 
     private fun validateAndGetPath(root: Path<*>, filter: FilterCriteria<T>): Path<*> {
         if (root.javaType.simpleName != filter.entitySimpleName) {
-            throw InvalidAttributeException(filter.entitySimpleName,root.javaType.simpleName)
+            throw InvalidAttributeException(filter.entitySimpleName, root.javaType.simpleName)
         }
 
         if (filter.nestedFilters.isEmpty()) {
-            if (!root.model::class.java.declaredFields.any { it.name == filter.attribute }) {
-                throw InvalidAttributeException(filter.attribute, filter.entitySimpleName)
-            }
             return root.get<Any>(filter.attribute)
         }
 
         var currentPath: Path<*> = root
         for (nestedFilter in filter.nestedFilters) {
-            val model = currentPath.model as? IdentifiableType<*>
-                ?: throw InvalidAttributeException(nestedFilter.entitySimpleName, currentPath.javaType.simpleName)
-
-            if (!model.attributes.any { it.name == nestedFilter.attribute }) {
-                throw InvalidAttributeException(nestedFilter.attribute,nestedFilter.entitySimpleName)
+            if (currentPath.model is IdentifiableType<*>) {
+                try {
+                    currentPath = currentPath.get<Any>(nestedFilter.attribute)
+                } catch (e: IllegalArgumentException) {
+                    throw InvalidAttributeException(nestedFilter.attribute, nestedFilter.entitySimpleName)
+                }
+            } else {
+                throw InvalidAttributeException(nestedFilter.attribute, nestedFilter.entitySimpleName)
             }
-            currentPath = currentPath.get<Any>(nestedFilter.attribute)
         }
 
-        if (!currentPath.model::class.java.declaredFields.any { it.name == filter.attribute }) {
-            throw InvalidAttributeException(filter.attribute, filter.entitySimpleName)
-        }
         return currentPath.get<Any>(filter.attribute)
     }
 
