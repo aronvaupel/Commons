@@ -43,32 +43,38 @@ class QueryBuilder<T : Any>(
         filter: FilterCriteria<T>
     ): Predicate {
         if (filter.comparison == null) {
-            // Treat as nested filter group
-            val nestedRoot = validateAndGetPath(root, filter.attribute)
+            val nestedRoot = validateAndGetPath(root, filter)
             val nestedPredicates = filter.nestedFilters.map { nestedFilter ->
                 buildPredicateRecursively(criteriaBuilder, nestedRoot, nestedFilter)
             }
             return criteriaBuilder.and(*nestedPredicates.toTypedArray())
         }
 
-        // Leaf node: Directly apply comparison
-        val path = validateAndGetPath(root, filter.attribute)
+        val path = validateAndGetPath(root, filter)
         return createPredicate(criteriaBuilder, path, filter)
     }
 
-    private fun validateAndGetPath(root: Path<*>, attribute: String): Path<*> {
-        val attributes = attribute.split(".")
+    private fun validateAndGetPath(
+        root: Path<*>,
+        filter: FilterCriteria<T>
+    ): Path<*> {
+        val attributes = filter.attribute.split(".")
         var currentPath: Path<*> = root
+
+        if (root.javaType.simpleName != filter.entitySimpleName) {
+            throw InvalidAttributeException(filter.entitySimpleName, root.javaType.simpleName)
+        }
 
         for (attr in attributes) {
             val model = currentPath.model as? IdentifiableType<*>
                 ?: throw InvalidAttributeException(attr, currentPath.javaType.simpleName)
 
             model.getAttribute(attr)
-                ?: throw InvalidAttributeException(attr, model.javaType.simpleName)
+                ?: throw InvalidAttributeException(attr, currentPath.javaType.simpleName)
 
             currentPath = currentPath.get<Any>(attr)
         }
+
         return currentPath
     }
 
