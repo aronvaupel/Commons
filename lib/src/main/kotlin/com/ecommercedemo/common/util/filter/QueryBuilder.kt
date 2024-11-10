@@ -55,25 +55,32 @@ class QueryBuilder<T : Any>(
     }
 
     private fun validateAndGetPath(root: Path<*>, filter: FilterCriteria<T>): Path<*> {
-        val attributes = filter.attribute.split(".")
-        var currentPath: Path<*> = root
-
         if (root.javaType.simpleName != filter.entitySimpleName) {
-            throw InvalidAttributeException(filter.entitySimpleName, root.javaType.simpleName)
+            throw InvalidAttributeException(filter.entitySimpleName,root.javaType.simpleName)
         }
 
-        for (attr in attributes) {
-            val model = currentPath.model as? IdentifiableType<*>
-                ?: throw InvalidAttributeException(attr, currentPath.javaType.simpleName)
-
-            if (!model.attributes.any { it.name == attr }) {
-                throw InvalidAttributeException(attr, model.javaType.simpleName)
+        if (filter.nestedFilters.isEmpty()) {
+            if (!root.model::class.java.declaredFields.any { it.name == filter.attribute }) {
+                throw InvalidAttributeException(filter.attribute, filter.entitySimpleName)
             }
-
-            currentPath = currentPath.get<Any>(attr)
+            return root.get<Any>(filter.attribute)
         }
 
-        return currentPath
+        var currentPath: Path<*> = root
+        for (nestedFilter in filter.nestedFilters) {
+            val model = currentPath.model as? IdentifiableType<*>
+                ?: throw InvalidAttributeException(nestedFilter.entitySimpleName, currentPath.javaType.simpleName)
+
+            if (!model.attributes.any { it.name == nestedFilter.attribute }) {
+                throw InvalidAttributeException(nestedFilter.attribute,nestedFilter.entitySimpleName)
+            }
+            currentPath = currentPath.get<Any>(nestedFilter.attribute)
+        }
+
+        if (!currentPath.model::class.java.declaredFields.any { it.name == filter.attribute }) {
+            throw InvalidAttributeException(filter.attribute, filter.entitySimpleName)
+        }
+        return currentPath.get<Any>(filter.attribute)
     }
 
     private fun createPredicate(
@@ -177,6 +184,7 @@ class QueryBuilder<T : Any>(
             ComparisonMethod.CONTAINS_ANY, ComparisonMethod.DOES_NOT_CONTAIN_ANY -> {
                 throw UnsupportedOperationException("Collection comparisons are not implemented.")
             }
+
             else -> throw UnsupportedOperationException("Unsupported comparison: ${filter.comparison}")
         }
     }
