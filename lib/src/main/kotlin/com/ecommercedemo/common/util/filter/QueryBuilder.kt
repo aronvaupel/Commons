@@ -54,10 +54,7 @@ class QueryBuilder<T : Any>(
         return createPredicate(criteriaBuilder, path, filter)
     }
 
-    private fun validateAndGetPath(
-        root: Path<*>,
-        filter: FilterCriteria<T>
-    ): Path<*> {
+    private fun validateAndGetPath(root: Path<*>, filter: FilterCriteria<T>): Path<*> {
         val attributes = filter.attribute.split(".")
         var currentPath: Path<*> = root
 
@@ -69,8 +66,9 @@ class QueryBuilder<T : Any>(
             val model = currentPath.model as? IdentifiableType<*>
                 ?: throw InvalidAttributeException(attr, currentPath.javaType.simpleName)
 
-            model.getAttribute(attr)
-                ?: throw InvalidAttributeException(attr, currentPath.javaType.simpleName)
+            if (!model.attributes.any { it.name == attr }) {
+                throw InvalidAttributeException(attr, model.javaType.simpleName)
+            }
 
             currentPath = currentPath.get<Any>(attr)
         }
