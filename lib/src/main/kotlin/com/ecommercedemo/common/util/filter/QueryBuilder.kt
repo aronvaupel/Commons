@@ -8,7 +8,6 @@ import jakarta.persistence.EntityManager
 import jakarta.persistence.criteria.CriteriaBuilder
 import jakarta.persistence.criteria.Path
 import jakarta.persistence.criteria.Predicate
-import jakarta.persistence.criteria.Root
 import jakarta.persistence.metamodel.IdentifiableType
 import org.springframework.stereotype.Service
 import kotlin.reflect.KClass
@@ -29,7 +28,7 @@ class QueryBuilder<T : Any>(
         val root = criteriaQuery.from(entityClass.java)
 
         val predicates = queryParameters.filters.map { filter ->
-            buildPredicateRecursively(criteriaBuilder, root, entityClass, filter)
+            buildPredicateRecursively(criteriaBuilder, root, filter)
         }
 
         criteriaQuery.where(*predicates.toTypedArray())
@@ -40,17 +39,19 @@ class QueryBuilder<T : Any>(
 
     private fun buildPredicateRecursively(
         criteriaBuilder: CriteriaBuilder,
-        root: Root<T>,
-        entityClass: KClass<T>,
+        root: Path<*>,
         filter: FilterCriteria<T>
     ): Predicate {
-        if (filter.nestedFilters.isNotEmpty()) {
+        if (filter.comparison == null) {
+            // Treat as nested filter group
+            val nestedRoot = validateAndGetPath(root, filter.attribute)
             val nestedPredicates = filter.nestedFilters.map { nestedFilter ->
-                buildPredicateRecursively(criteriaBuilder, root, entityClass, nestedFilter)
+                buildPredicateRecursively(criteriaBuilder, nestedRoot, nestedFilter)
             }
             return criteriaBuilder.and(*nestedPredicates.toTypedArray())
         }
 
+        // Leaf node: Directly apply comparison
         val path = validateAndGetPath(root, filter.attribute)
         return createPredicate(criteriaBuilder, path, filter)
     }
@@ -60,9 +61,8 @@ class QueryBuilder<T : Any>(
         var currentPath: Path<*> = root
 
         for (attr in attributes) {
-            (currentPath.model as? IdentifiableType<*>)?.getAttribute(attr)
-                ?: throw InvalidAttributeException(attr, currentPath.model::class.java.name)
-
+            val model = currentPath.model as? IdentifiableType<*> ?: throw InvalidAttributeException(attr, currentPath.model::class.java.simpleName)
+            model.getAttribute(attr) ?: throw InvalidAttributeException(attr, currentPath.model::class.java.simpleName)
             currentPath = currentPath.get<Any>(attr)
         }
         return currentPath
