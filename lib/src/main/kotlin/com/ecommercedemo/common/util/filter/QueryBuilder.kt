@@ -27,37 +27,64 @@ class QueryBuilder<T : Any>(
         val criteriaBuilder = entityManager.criteriaBuilder
         val criteriaQuery = criteriaBuilder.createQuery(entityClass.java)
         val root = criteriaQuery.from(entityClass.java)
-        val predicates = queryParameters.filters.mapNotNull { filter ->
-            createPredicate(criteriaBuilder, validateFilter(entityClass, root, filter), filter)
-        }
-        criteriaQuery.where(*predicates.toTypedArray())
 
+        val predicates = queryParameters.filters.map { filter ->
+            buildPredicateRecursively(criteriaBuilder, root, entityClass, filter)
+        }
+
+        criteriaQuery.where(*predicates.toTypedArray())
         val result = entityManager.createQuery(criteriaQuery).resultList
         redisCacheService.cacheQueryResult(queryKey, result)
         return result
     }
 
-    private fun <T : Any> validateFilter(
-        entityClass: KClass<*>,
+    private fun buildPredicateRecursively(
+        criteriaBuilder: CriteriaBuilder,
         root: Root<T>,
+        entityClass: KClass<T>,
         filter: FilterCriteria<T>
-    ): Path<*> {
-        val property = entityClass.memberProperties.find { it.name == filter.attribute }
-            ?: throw InvalidAttributeException(filter.attribute, entityClass.simpleName ?: "UnknownEntity")
-        val expectedType = property.returnType.classifier as? KClass<*>
-        if (!filter.comparison.isSupportedType(expectedType ?: Any::class)) {
-            throw IllegalArgumentException(
-                "'${filter.comparison}' does not match '${filter.attribute}' of type '${expectedType?.simpleName}'"
-            )
+    ): Predicate {
+        if (filter.nestedFilters.isNotEmpty()) {
+            val nestedPredicates = filter.nestedFilters.map { nestedFilter ->
+                buildPredicateRecursively(criteriaBuilder, root, entityClass, nestedFilter)
+            }
+            return criteriaBuilder.and(*nestedPredicates.toTypedArray())
         }
-        return root.get<Any>(filter.attribute)
+
+        val path = validateAndGetPath(entityClass, root, filter.attribute)
+        return createPredicate(criteriaBuilder, path, filter)
+    }
+
+    private fun <T : Any> validateAndGetPath(
+        entityClass: KClass<T>,
+        root: Root<T>,
+        attribute: String
+    ): Path<*> {
+        val pathSegments = attribute.split(".")
+        var currentPath: Path<*> = root
+        var currentClass: KClass<*> = entityClass
+
+        for (segment in pathSegments) {
+            val property = currentClass.memberProperties.find { it.name == segment }
+                ?: throw InvalidAttributeException(
+                    segment, currentClass.simpleName ?: "UnknownEntity"
+                )
+
+            currentPath = currentPath.get<Any>(segment)
+            currentClass = property.returnType.classifier as? KClass<*>
+                ?: throw IllegalArgumentException(
+                    "Could not determine class type for $segment in $attribute"
+                )
+        }
+
+        return currentPath
     }
 
     private fun createPredicate(
         criteriaBuilder: CriteriaBuilder,
         path: Path<*>,
         filter: FilterCriteria<T>
-    ): Predicate? {
+    ): Predicate {
         return when (filter.comparison) {
             ComparisonMethod.EQUALS -> criteriaBuilder.equal(path, filter.value)
             ComparisonMethod.NOT_EQUALS -> criteriaBuilder.notEqual(path, filter.value)
