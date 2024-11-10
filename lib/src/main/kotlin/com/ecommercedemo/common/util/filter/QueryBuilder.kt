@@ -61,8 +61,12 @@ class QueryBuilder<T : Any>(
         var currentPath: Path<*> = root
 
         for (attr in attributes) {
-            val model = currentPath.model as? IdentifiableType<*> ?: throw InvalidAttributeException(attr, currentPath.model::class.java.simpleName)
-            model.getAttribute(attr) ?: throw InvalidAttributeException(attr, currentPath.model::class.java.simpleName)
+            val model = currentPath.model as? IdentifiableType<*>
+                ?: throw InvalidAttributeException(attr, currentPath.javaType.simpleName)
+
+            model.getAttribute(attr)
+                ?: throw InvalidAttributeException(attr, model.javaType.simpleName)
+
             currentPath = currentPath.get<Any>(attr)
         }
         return currentPath
