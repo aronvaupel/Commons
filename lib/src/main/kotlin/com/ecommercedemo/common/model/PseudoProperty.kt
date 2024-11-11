@@ -18,7 +18,7 @@ abstract class PseudoProperty{
     open var key: String = ""
     @Convert(converter = JsonbConverter::class)
     @Column(columnDefinition = "jsonb")
-    open var value: String? = null
+    open var value: Any? = null
 
     private val entity: KClass<*>
         get() = Class.forName(entityClassName).kotlin
