@@ -103,8 +103,8 @@ class RedisService(
         return objectMapper.readValue(cachedData, object : TypeReference<List<Any>>() {})
     }
 
-    fun <T: Any>generateQueryKey(entityClass: KClass<T>, queryParameters: QueryParams<T>): String {
-        val hashSource = entityClass.simpleName + queryParameters.toString()
+    fun <T: Any>generateQueryKey(entityClass: Class<T>, queryParameters: QueryParams<T>): String {
+        val hashSource = entityClass::class.java.simpleName + queryParameters.toString()
         return "query:${hashSource.hashCode()}"
     }
 

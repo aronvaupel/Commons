@@ -7,7 +7,7 @@ import kotlin.reflect.KClass
 
 
 enum class ComparisonMethod(
-    private val supportedTypes: Set<KClass<*>>
+    val supportedTypes: Set<KClass<*>>
 ) {
     EQUALS(setOf(Any::class)),
     NOT_EQUALS(setOf(Any::class)),

@@ -2,10 +2,11 @@ package com.ecommercedemo.common.util.filter
 
 import com.ecommercedemo.common.validation.comparison.ComparisonMethod
 
-data class FilterCriteria<T>(
+data class FilterCriteria(
     val entitySimpleName: String,
     val comparison: ComparisonMethod? = null,
-    val attribute: String,
+    val jpaAttribute: String,
+    val pseudoPropertyPathToKey: String? = null, // i.e. "gender" or "address.city" or "address.city.foundingDate" or "address.city.population"
     val value: Any? = null,
-    val nestedFilters: List<FilterCriteria<T>> = emptyList()
+    val nestedFilter: FilterCriteria? = null,
 )

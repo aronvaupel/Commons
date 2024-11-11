@@ -1,10 +1,8 @@
 package com.ecommercedemo.common.model
 
-import com.ecommercedemo.common.model.embedded.PseudoPropertyData
 import jakarta.persistence.*
 import java.time.LocalDateTime
 import java.util.*
-import kotlin.reflect.KClass
 
 
 @MappedSuperclass
@@ -20,17 +18,21 @@ abstract class BaseEntity {
     @Column(nullable = false)
     open var updatedAt: LocalDateTime = LocalDateTime.now()
 
-    @ElementCollection
+    @ElementCollection(fetch = FetchType.LAZY)
     @CollectionTable(name = "pseudo_property_data", joinColumns = [JoinColumn(name = "base_entity_id")])
+    @MapKeyColumn(name = "key")
     @Column(name = "pseudo_property", columnDefinition = "jsonb")
-    open var pseudoProperties: MutableSet<PseudoPropertyData> = mutableSetOf()
+    open var pseudoProperties: MutableMap<String, Any> = mutableMapOf()
 
-    fun addPseudoProperty(property: PseudoPropertyData) {
-        pseudoProperties.add(property)
+    fun addPseudoProperty(key: String, value: Any, overwrite: Boolean = false) {
+        if (!overwrite && pseudoProperties.containsKey(key)) {
+            throw IllegalArgumentException("Pseudo-property with key '$key' already exists.")
+        }
+        pseudoProperties[key] = value
     }
 
-    fun getPseudoPropertiesForEntity(entity: KClass<*>): List<PseudoPropertyData> {
-        return pseudoProperties.filter { it.entity == entity.qualifiedName }
+    fun getPseudoProperty(key: String): Any? {
+        return pseudoProperties[key]
     }
 
     @PrePersist
