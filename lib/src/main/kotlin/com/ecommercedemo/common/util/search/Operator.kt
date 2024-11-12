@@ -10,6 +10,7 @@ import java.time.LocalDate
 import java.time.LocalDateTime
 import kotlin.reflect.KClass
 
+//Todo: Add support for more operators, i.e. regex, isNull, isNotNull, etc.
 @Suppress("UNCHECKED_CAST")
 enum class Operator(
     private val supportedTypes: Set<KClass<*>>

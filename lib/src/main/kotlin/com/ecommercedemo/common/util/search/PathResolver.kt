@@ -34,11 +34,19 @@ class PathResolver {
     }
 
     private fun validateFieldExistsAndIsAccessible(segment: String, currentClass: Class<*>) {
-        try {
-            currentClass.getDeclaredField(segment).isAccessible = true
-        } catch (e: NoSuchFieldException) {
-            throw InvalidAttributeException(segment, currentClass.simpleName)
+        var classToCheck: Class<*>? = currentClass
+
+        while (classToCheck != null) {
+            try {
+                val field = classToCheck.getDeclaredField(segment)
+                field.isAccessible = true
+                return
+            } catch (e: NoSuchFieldException) {
+                classToCheck = classToCheck.superclass
+            }
         }
+
+        throw InvalidAttributeException(segment, currentClass.simpleName)
     }
 
     private fun isPseudoProperty(segment: String) = segment == "pseudoProperties"
