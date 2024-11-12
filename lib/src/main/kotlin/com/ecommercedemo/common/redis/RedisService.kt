@@ -3,7 +3,7 @@ package com.ecommercedemo.common.redis
 import com.ecommercedemo.common.redis.keys.KafkaTopicRegistry
 import com.ecommercedemo.common.redis.values.Microservice
 import com.ecommercedemo.common.redis.values.TopicDetails
-import com.ecommercedemo.common.util.filter.QueryParams
+import com.ecommercedemo.common.util.search.dto.SearchRequest
 import com.fasterxml.jackson.core.type.TypeReference
 import com.fasterxml.jackson.databind.ObjectMapper
 import org.springframework.beans.factory.annotation.Autowired
@@ -103,7 +103,7 @@ class RedisService(
         return objectMapper.readValue(cachedData, object : TypeReference<List<Any>>() {})
     }
 
-    fun <T: Any>generateQueryKey(entityClass: Class<T>, queryParameters: QueryParams<T>): String {
+    fun <T: Any>generateQueryKey(entityClass: Class<T>, queryParameters: SearchRequest): String {
         val hashSource = entityClass::class.java.simpleName + queryParameters.toString()
         return "query:${hashSource.hashCode()}"
     }
