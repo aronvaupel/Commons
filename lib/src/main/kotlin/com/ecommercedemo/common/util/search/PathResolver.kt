@@ -14,7 +14,7 @@ import org.springframework.stereotype.Service
 class PathResolver {
     fun <T : BaseEntity> resolvePath(params: SearchParams, root: Root<T>): ResolvedPathInfo {
         val segments = params.path.split(".")
-        val currentPath: Path<*> = root
+        var currentPath: Path<*> = root
         var currentClass: Class<*> = root.javaType
 
         segments.forEachIndexed { index, segment ->
@@ -23,7 +23,7 @@ class PathResolver {
                 val jsonSegments = segments.drop(index + 1)
                 return ResolvedPathInfo(jpaPath = currentPath.get<Any>(segment), jsonSegments = jsonSegments)
             } else {
-                currentPath.get<Any>(segment)
+                currentPath = currentPath.get<Any>(segment)
                 currentClass = currentPath.model.bindableJavaType
             }
         }
