@@ -5,13 +5,22 @@ import com.ecommercedemo.common.exception.ValueTypeMismatchException
 import com.ecommercedemo.common.model.BaseEntity
 import com.ecommercedemo.common.util.search.dto.ResolvedPathInfo
 import com.ecommercedemo.common.util.search.dto.SearchParams
+import com.fasterxml.jackson.databind.DeserializationFeature
+import com.fasterxml.jackson.databind.ObjectMapper
 import jakarta.persistence.criteria.Path
 import jakarta.persistence.criteria.Root
 import org.springframework.stereotype.Service
+import kotlin.reflect.KClass
+import kotlin.reflect.full.memberProperties
 
 
 @Service
-class PathResolver {
+class PathResolver(
+    private val objectMapper: ObjectMapper = ObjectMapper().configure(
+        DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES,
+        true
+    )
+) {
     fun <T : BaseEntity> resolvePath(params: SearchParams, root: Root<T>): ResolvedPathInfo {
         val segments = params.path.split(".")
         var currentPath: Path<*> = root
@@ -28,7 +37,7 @@ class PathResolver {
             }
         }
 
-        validateFinalSegmentType(currentPath, params.searchValue)
+        validateFinalSegmentType(currentPath, params.searchValue, segments.last(), currentClass.kotlin)
 
         return ResolvedPathInfo(jpaPath = currentPath, jsonSegments = emptyList())
     }
@@ -52,16 +61,28 @@ class PathResolver {
     private fun isPseudoProperty(segment: String) = segment == "pseudoProperties"
 
 
-    private fun validateFinalSegmentType(path: Path<*>, value: Any) {
+    private fun validateFinalSegmentType(path: Path<*>, value: Any?, fieldName: String, currentClass: KClass<*>) {
         val expectedType = path.model.bindableJavaType
-        val actualType = value::class.java
-
-        if (expectedType != actualType) {
+        if (value == null && currentClass.memberProperties
+                .find { it.name == fieldName }
+                ?.returnType
+                ?.isMarkedNullable == true
+        ) {
             throw ValueTypeMismatchException(
                 attributePath = path.toString(),
-                expectedType = expectedType.simpleName,
-                actualType = actualType.simpleName
+                expectedType = expectedType.simpleName ?: "Unknown",
+                actualType = "null"
+            )
+        }
+        val actualType = value?.takeIf { expectedType.isInstance(it) } ?: objectMapper.convertValue(value, expectedType)
+
+        if (!expectedType.isInstance(actualType)) {
+            throw ValueTypeMismatchException(
+                attributePath = path.toString(),
+                expectedType = expectedType.simpleName ?: "Unknown",
+                actualType = actualType?.let { actualType::class.simpleName ?: "Unknown" } ?: "null"
             )
         }
     }
+
 }
