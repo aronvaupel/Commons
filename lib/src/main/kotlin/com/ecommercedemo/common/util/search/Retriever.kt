@@ -4,6 +4,7 @@ import com.ecommercedemo.common.model.BaseEntity
 import com.ecommercedemo.common.util.search.dto.SearchRequest
 import jakarta.persistence.EntityManager
 import org.springframework.stereotype.Service
+import kotlin.reflect.KClass
 
 @Service
 class Retriever(
@@ -11,10 +12,10 @@ class Retriever(
     private val pathResolver: PathResolver
 ) {
 
-    fun <T : BaseEntity> executeSearch(searchRequest: SearchRequest, entity: T): List<T> {
+    fun <T : BaseEntity> executeSearch(searchRequest: SearchRequest, entity: KClass<T>): List<T> {
         val criteriaBuilder = entityManager.criteriaBuilder
-        val criteriaQuery = criteriaBuilder.createQuery(entity::class.java)
-        val root = criteriaQuery.from(entity::class.java)
+        val criteriaQuery = criteriaBuilder.createQuery(entity.java)
+        val root = criteriaQuery.from(entity.java)
 
         val predicates = searchRequest.params.map { param ->
 
