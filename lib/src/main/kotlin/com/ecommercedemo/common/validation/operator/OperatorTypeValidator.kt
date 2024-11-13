@@ -9,6 +9,6 @@ object OperatorTypeValidator : ConstraintValidator<ValidOperator, SearchParams> 
     override fun isValid(searchParams: SearchParams, context: ConstraintValidatorContext): Boolean {
         val operator = searchParams.operator
         val value = searchParams.searchValue
-        return operator.isSupportedType(value::class)
+        return value == null || operator.isSupportedType(value::class)
     }
 }

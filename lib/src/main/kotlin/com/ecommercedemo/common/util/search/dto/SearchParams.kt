@@ -6,6 +6,6 @@ import com.ecommercedemo.common.validation.operator.ValidOperator
 @ValidOperator
 data class SearchParams(
     val operator: Operator,
-    val searchValue: Any,
+    val searchValue: Any?,
     val path: String // "username", "userInfo.address.city", "userInfo.pseudoProperties.occupation.company"
 )

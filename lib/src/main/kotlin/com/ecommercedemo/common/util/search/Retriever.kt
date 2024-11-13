@@ -2,6 +2,8 @@ package com.ecommercedemo.common.util.search
 
 import com.ecommercedemo.common.model.BaseEntity
 import com.ecommercedemo.common.util.search.dto.SearchRequest
+import com.fasterxml.jackson.databind.DeserializationFeature
+import com.fasterxml.jackson.databind.ObjectMapper
 import jakarta.persistence.EntityManager
 import org.springframework.stereotype.Service
 import kotlin.reflect.KClass
@@ -9,7 +11,11 @@ import kotlin.reflect.KClass
 @Service
 class Retriever(
     private val entityManager: EntityManager,
-    private val pathResolver: PathResolver
+    private val pathResolver: PathResolver,
+    private val objectMapper: ObjectMapper = ObjectMapper().configure(
+        DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES,
+        true
+    )
 ) {
 
     fun <T : BaseEntity> executeSearch(searchRequest: SearchRequest, entity: KClass<T>): List<T> {
@@ -18,14 +24,18 @@ class Retriever(
         val root = criteriaQuery.from(entity.java)
 
         val predicates = searchRequest.params.map { param ->
-
             val resolvedPathInfo = pathResolver.resolvePath(param, root)
+
             if (resolvedPathInfo.jsonSegments.isNotEmpty()) {
+               //Todo: Check if deserialization is needed once pseudo properties and redis is implemented
                 criteriaBuilder.isTrue(
                     param.operator.buildCondition(resolvedPathInfo, criteriaBuilder, param.searchValue)
                 )
             } else {
-                param.operator.buildPredicate(criteriaBuilder, resolvedPathInfo.jpaPath, param.searchValue)
+                val expectedValueType = resolvedPathInfo.jpaPath.model.bindableJavaType
+                val actualValue = param.searchValue?.takeIf { expectedValueType.isInstance(it) }
+                    ?: objectMapper.convertValue(param.searchValue, expectedValueType)
+                param.operator.buildPredicate(criteriaBuilder, resolvedPathInfo.jpaPath, actualValue)
             }
         }
 
