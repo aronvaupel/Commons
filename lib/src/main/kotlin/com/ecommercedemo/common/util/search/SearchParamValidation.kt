@@ -11,10 +11,10 @@ import kotlin.reflect.full.memberProperties
 class SearchParamValidation(
     private val deserializer: SearchParamDeserializer
 ) {
-    fun validate(value: Any?, expectedType: Class<*>, fieldName: String, declaringClass: KClass<*>, attributePath: String) {
+    fun validate(value: Any?, expectedType: Class<*>, declaringClass: KClass<*>, attributePath: String) {
         println("Start validating value")
         if (value == null && declaringClass.memberProperties
-                .find { it.name == fieldName }
+                .find { it.name == attributePath }
                 ?.returnType
                 ?.isMarkedNullable == true
         ) {
@@ -26,7 +26,7 @@ class SearchParamValidation(
         }
 
         if (value is Collection<*>) {
-            println("Collection detected")
+            println("Collection detected by validator")
             validateCollectionElements(value, expectedType, attributePath)
         } else if (!expectedType.isInstance(value)) {
             throw ValueTypeMismatchException(
@@ -66,10 +66,10 @@ class SearchParamValidation(
         throw InvalidAttributeException(segment, currentClass.simpleName)
     }
 
-    fun validateFinalSegmentType(path: Path<*>, value: Any?, fieldName: String, currentClass: KClass<*>) {
+    fun validateFinalSegmentType(path: Path<*>, value: Any?, currentClass: KClass<*>) {
         println("Start validating final segment type")
         val expectedType = path.model.bindableJavaType
-        validate(value, expectedType, fieldName, currentClass, path.toString())
+        validate(value, expectedType, currentClass, path.toString())
         val actualValue = deserializer.convertAnyIfNeeded(value, expectedType)
         if (!expectedType.isInstance(actualValue)) {
             throw ValueTypeMismatchException(

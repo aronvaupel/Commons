@@ -32,7 +32,8 @@ class Retriever(
             } else {
                 val expectedValueType = resolvedPathInfo.jpaPath.model.bindableJavaType
                 val actualValue = deserializer.convertAnyIfNeeded(param.searchValue, expectedValueType)
-                validator.validate(actualValue, expectedValueType, param.path, entity, resolvedPathInfo.jpaPath.toString())
+                println("Actual value: $actualValue")
+                validator.validate(actualValue, expectedValueType, entity, resolvedPathInfo.jpaPath.toString())
                 param.operator.buildPredicate(criteriaBuilder, resolvedPathInfo.jpaPath, actualValue)
             }
         }
