@@ -61,6 +61,7 @@ class PathResolver(
     private fun validateFinalSegmentType(path: Path<*>, value: Any?, fieldName: String, currentClass: KClass<*>) {
         println("Validating final segment type")
         val expectedType = path.model.bindableJavaType
+        println("Expected type: $expectedType")
         if (value == null && currentClass.memberProperties
                 .find { it.name == fieldName }
                 ?.returnType
@@ -74,9 +75,13 @@ class PathResolver(
         }
         val actualType = when (value) {
             is Collection<*> -> {
+               println("Detected: Collection")
                val forCollection = value.map { element ->
-                    element.takeIf { expectedType.isInstance(it) }
-                        ?: objectMapper.convertValue(element, expectedType) }
+                    println("Element: $element")
+                    val conversionResult = element.takeIf { expectedType.isInstance(it) }
+                        ?: objectMapper.convertValue(element, expectedType)
+                    println("Conversion result: $conversionResult")
+               }
                 println("For collection: $forCollection")
                 forCollection
             }
