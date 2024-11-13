@@ -36,12 +36,19 @@ class Retriever(
 
                 val actualValue = when (param.searchValue) {
                     is Collection<*> -> {
-                        param.searchValue.map { validateAndConvert(it, expectedValueType) }
+                        param.searchValue.map { value ->
+                            value.takeIf { expectedValueType.isInstance(it) }
+                            ?: objectMapper.convertValue(value, expectedValueType) }
                     }
 
                     is Pair<*, *> -> {
                         val (first, second) = param.searchValue
-                        Pair(validateAndConvert(first, expectedValueType), validateAndConvert(second, expectedValueType))
+                        Pair(
+                            first.takeIf { expectedValueType.isInstance(it) }
+                                ?: objectMapper.convertValue(first, expectedValueType),
+                            second.takeIf { expectedValueType.isInstance(it) }
+                                ?: objectMapper.convertValue(second, expectedValueType)
+                        )
                     }
 
                     else -> param.searchValue?.takeIf { expectedValueType.isInstance(it) }
@@ -54,14 +61,6 @@ class Retriever(
         criteriaQuery.where(*predicates.toTypedArray())
 
         return entityManager.createQuery(criteriaQuery).resultList
-    }
-
-    private fun validateAndConvert(value: Any?, expectedValueType: Class<*>): Any? {
-        require(value != null && expectedValueType.isInstance(value)) {
-            "All elements in searchValue must match expected type $expectedValueType and cannot be null for comparisons."
-        }
-        return value.takeIf { expectedValueType.isInstance(it) }
-            ?: objectMapper.convertValue(value, expectedValueType)
     }
 
 }
