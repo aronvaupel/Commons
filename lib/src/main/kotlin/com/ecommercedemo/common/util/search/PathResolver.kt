@@ -72,7 +72,30 @@ class PathResolver(
                 actualType = "null"
             )
         }
-        val actualType = value?.takeIf { expectedType.isInstance(it) } ?: objectMapper.convertValue(value, expectedType)
+        val actualType = when (value) {
+            is Collection<*> -> {
+               val forCollection = value.map { element ->
+                    element.takeIf { expectedType.isInstance(it) }
+                        ?: objectMapper.convertValue(element, expectedType) }
+                println("For collection: $forCollection")
+                forCollection
+            }
+
+            is Pair<*, *> -> {
+                val (first, second) = value
+                val forPair = Pair(
+                    first.takeIf { expectedType.isInstance(it) }
+                        ?: objectMapper.convertValue(first, expectedType),
+                    second.takeIf { expectedType.isInstance(it) }
+                        ?: objectMapper.convertValue(second, expectedType)
+                )
+                println("For pair: $forPair")
+                forPair
+            }
+
+            else -> value?.takeIf { expectedType.isInstance(it) }
+                ?: objectMapper.convertValue(value, expectedType)
+        }
         println("Finished validating final segment type. Expected: $expectedType, Actual: $actualType")
         if (!expectedType.isInstance(actualType)) {
             throw ValueTypeMismatchException(
