@@ -11,7 +11,7 @@ import java.time.LocalDateTime
 import kotlin.reflect.KClass
 
 //Todo: Add support for more operators, i.e. regex, isNull, isNotNull, etc.
-@Suppress("UNCHECKED_CAST")
+@Suppress("UNCHECKED_CAST", "unused")
 enum class Operator(
     private val supportedTypes: Set<KClass<*>>
 ) {
@@ -155,7 +155,10 @@ enum class Operator(
             value: Any?
         ): Expression<Boolean> {
             val jsonPathExpr = buildJsonPathExpression(resolvedPathInfo, criteriaBuilder)
-            return criteriaBuilder.greaterThanOrEqualTo(jsonPathExpr as Expression<Comparable<Any>>, value as Comparable<Any>)
+            return criteriaBuilder.greaterThanOrEqualTo(
+                jsonPathExpr as Expression<Comparable<Any>>,
+                value as Comparable<Any>
+            )
         }
     },
     LESS_THAN_OR_EQUAL(setOf(Int::class, Long::class, Short::class, Double::class, Float::class)) {
@@ -168,7 +171,10 @@ enum class Operator(
             value: Any?
         ): Expression<Boolean> {
             val jsonPathExpr = buildJsonPathExpression(resolvedPathInfo, criteriaBuilder)
-            return criteriaBuilder.lessThanOrEqualTo(jsonPathExpr as Expression<Comparable<Any>>, value as Comparable<Any>)
+            return criteriaBuilder.lessThanOrEqualTo(
+                jsonPathExpr as Expression<Comparable<Any>>,
+                value as Comparable<Any>
+            )
         }
     },
     BEFORE(setOf(LocalDate::class, LocalDateTime::class, Instant::class)) {
@@ -199,8 +205,7 @@ enum class Operator(
     },
     BETWEEN(setOf(LocalDate::class, LocalDateTime::class, Instant::class)) {
         override fun buildPredicate(cb: CriteriaBuilder, path: Path<*>, value: Any?): Predicate {
-            val list = restrictToTwoElements(value)
-            val (start, end) = value as List<Comparable<Any>>
+            val (start, end) = restrictToTwoElements(value)
             return cb.between(path as Path<Comparable<Any>>, start, end)
         }
 
@@ -209,15 +214,14 @@ enum class Operator(
             criteriaBuilder: CriteriaBuilder,
             value: Any?
         ): Expression<Boolean> {
-            val list = restrictToTwoElements(value)
-            val (start, end) = list.map { it as Comparable<Any> }
+            val (start, end) = restrictToTwoElements(value)
             val jsonPathExpr = buildJsonPathExpression(resolvedPathInfo, criteriaBuilder)
             return criteriaBuilder.between(jsonPathExpr as Expression<Comparable<Any>>, start, end)
         }
     },
     NOT_BETWEEN(setOf(LocalDate::class, LocalDateTime::class, Instant::class)) {
         override fun buildPredicate(cb: CriteriaBuilder, path: Path<*>, value: Any?): Predicate {
-            val (start, end) = value as List<Comparable<Any>>
+            val (start, end) = restrictToTwoElements(value)
             return cb.not(cb.between(path as Path<Comparable<Any>>, start, end))
         }
 
@@ -226,7 +230,7 @@ enum class Operator(
             criteriaBuilder: CriteriaBuilder,
             value: Any?
         ): Expression<Boolean> {
-            val (start, end) = value as Pair<Comparable<Any>, Comparable<Any>>
+            val (start, end) = restrictToTwoElements(value)
             val jsonPathExpr = buildJsonPathExpression(resolvedPathInfo, criteriaBuilder)
             return criteriaBuilder.not(
                 criteriaBuilder.between(jsonPathExpr as Expression<Comparable<Any>>, start, end)
@@ -331,7 +335,12 @@ enum class Operator(
             val jsonPathExpr = buildJsonPathExpression(resolvedPathInfo, criteriaBuilder)
             val values = (value as Collection<*>).joinToString(",") { "\"$it\"" }
             return criteriaBuilder.equal(
-                criteriaBuilder.function("jsonb_contains", Boolean::class.java, jsonPathExpr, criteriaBuilder.literal("[$values]")),
+                criteriaBuilder.function(
+                    "jsonb_contains",
+                    Boolean::class.java,
+                    jsonPathExpr,
+                    criteriaBuilder.literal("[$values]")
+                ),
                 criteriaBuilder.literal(true)
             )
         }
@@ -339,7 +348,8 @@ enum class Operator(
 
     DOES_NOT_CONTAIN_ALL(setOf(List::class, Set::class)) {
         override fun buildPredicate(cb: CriteriaBuilder, path: Path<*>, value: Any?): Predicate =
-            cb.not(cb.and(*(value as Collection<*>).map { cb.isMember(it, path as Path<Collection<*>>) }.toTypedArray()))
+            cb.not(cb.and(*(value as Collection<*>).map { cb.isMember(it, path as Path<Collection<*>>) }
+                .toTypedArray()))
 
         override fun buildCondition(
             resolvedPathInfo: ResolvedPathInfo,
@@ -349,7 +359,12 @@ enum class Operator(
             val jsonPathExpr = buildJsonPathExpression(resolvedPathInfo, criteriaBuilder)
             val values = (value as Collection<*>).joinToString(",") { "\"$it\"" }
             return criteriaBuilder.notEqual(
-                criteriaBuilder.function("jsonb_contains", Boolean::class.java, jsonPathExpr, criteriaBuilder.literal("[$values]")),
+                criteriaBuilder.function(
+                    "jsonb_contains",
+                    Boolean::class.java,
+                    jsonPathExpr,
+                    criteriaBuilder.literal("[$values]")
+                ),
                 criteriaBuilder.literal(true)
             )
         }
@@ -367,7 +382,12 @@ enum class Operator(
             val jsonPathExpr = buildJsonPathExpression(resolvedPathInfo, criteriaBuilder)
             val values = (value as Collection<*>).joinToString(",") { "\"$it\"" }
             return criteriaBuilder.equal(
-                criteriaBuilder.function("jsonb_contains_any", Boolean::class.java, jsonPathExpr, criteriaBuilder.literal("[$values]")),
+                criteriaBuilder.function(
+                    "jsonb_contains_any",
+                    Boolean::class.java,
+                    jsonPathExpr,
+                    criteriaBuilder.literal("[$values]")
+                ),
                 criteriaBuilder.literal(true)
             )
         }
@@ -385,7 +405,12 @@ enum class Operator(
             val jsonPathExpr = buildJsonPathExpression(resolvedPathInfo, criteriaBuilder)
             val values = (value as Collection<*>).joinToString(",") { "\"$it\"" }
             return criteriaBuilder.notEqual(
-                criteriaBuilder.function("jsonb_contains_any", Boolean::class.java, jsonPathExpr, criteriaBuilder.literal("[$values]")),
+                criteriaBuilder.function(
+                    "jsonb_contains_any",
+                    Boolean::class.java,
+                    jsonPathExpr,
+                    criteriaBuilder.literal("[$values]")
+                ),
                 criteriaBuilder.literal(true)
             )
         }

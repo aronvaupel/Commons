@@ -2,20 +2,17 @@ package com.ecommercedemo.common.util.search
 
 import com.ecommercedemo.common.model.BaseEntity
 import com.ecommercedemo.common.util.search.dto.SearchRequest
-import com.fasterxml.jackson.databind.DeserializationFeature
-import com.fasterxml.jackson.databind.ObjectMapper
 import jakarta.persistence.EntityManager
 import org.springframework.stereotype.Service
 import kotlin.reflect.KClass
 
 @Service
+@Suppress("unused")
 class Retriever(
+    private val deserializer: SearchParamDeserializer,
     private val entityManager: EntityManager,
     private val pathResolver: PathResolver,
-    private val objectMapper: ObjectMapper = ObjectMapper().configure(
-        DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES,
-        true
-    )
+    private val validator: SearchParamValidation
 ) {
 
     fun <T : BaseEntity> executeSearch(searchRequest: SearchRequest, entity: KClass<T>): List<T> {
@@ -34,30 +31,9 @@ class Retriever(
                 )
             } else {
                 val expectedValueType = resolvedPathInfo.jpaPath.model.bindableJavaType
-                println("ExpectedValueType: $expectedValueType")
-                println("SearchValue: ${param.searchValue}")
 
-                val actualValue = when (param.searchValue) {
-                    is Collection<*> -> {
-                        param.searchValue.map { value ->
-                            value.takeIf { expectedValueType.isInstance(it) }
-                            ?: objectMapper.convertValue(value, expectedValueType) }
-                    }
-
-                    is Pair<*, *> -> {
-                        val (first, second) = param.searchValue
-                        Pair(
-                            first.takeIf { expectedValueType.isInstance(it) }
-                                ?: objectMapper.convertValue(first, expectedValueType),
-                            second.takeIf { expectedValueType.isInstance(it) }
-                                ?: objectMapper.convertValue(second, expectedValueType)
-                        )
-                    }
-
-                    else -> param.searchValue?.takeIf { expectedValueType.isInstance(it) }
-                        ?: objectMapper.convertValue(param.searchValue, expectedValueType)
-                }
-                println("ActualValue: $actualValue")
+                validator.validate(param.searchValue, expectedValueType, param.path, entity, resolvedPathInfo.jpaPath.toString())
+                val actualValue = deserializer.deserializeIfNeeded(param.searchValue, expectedValueType)
                 param.operator.buildPredicate(criteriaBuilder, resolvedPathInfo.jpaPath, actualValue)
             }
         }

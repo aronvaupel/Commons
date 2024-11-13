@@ -1,21 +1,17 @@
 package com.ecommercedemo.common.util.search
 
-import com.ecommercedemo.common.exception.InvalidAttributeException
-import com.ecommercedemo.common.exception.ValueTypeMismatchException
 import com.ecommercedemo.common.model.BaseEntity
 import com.ecommercedemo.common.util.search.dto.ResolvedPathInfo
 import com.ecommercedemo.common.util.search.dto.SearchParams
-import com.fasterxml.jackson.databind.ObjectMapper
 import jakarta.persistence.criteria.Path
 import jakarta.persistence.criteria.Root
 import org.springframework.stereotype.Service
-import kotlin.reflect.KClass
-import kotlin.reflect.full.memberProperties
 
 
 @Service
 class PathResolver(
-    private val objectMapper: ObjectMapper = ObjectMapper()
+    private val validator: SearchParamValidation
+
 ) {
     fun <T : BaseEntity> resolvePath(params: SearchParams, root: Root<T>): ResolvedPathInfo {
         println("Resolving path: ${params.path}")
@@ -24,8 +20,8 @@ class PathResolver(
         var currentClass: Class<*> = root.javaType
 
         segments.forEachIndexed { index, segment ->
-            validateFieldExistsAndIsAccessible(segment, currentClass)
-            if (isPseudoProperty(segment)) {
+            validator.validateFieldExistsAndIsAccessible(segment, currentClass)
+            if (segment == "pseudoProperties") {
                 val jsonSegments = segments.drop(index + 1)
                 return ResolvedPathInfo(jpaPath = currentPath.get<Any>(segment), jsonSegments = jsonSegments)
             } else {
@@ -34,99 +30,9 @@ class PathResolver(
             }
         }
 
-        validateFinalSegmentType(currentPath, params.searchValue, segments.last(), currentClass.kotlin)
+        validator.validateFinalSegmentType(currentPath, params.searchValue, segments.last(), currentClass.kotlin)
 
         return ResolvedPathInfo(jpaPath = currentPath, jsonSegments = emptyList())
     }
 
-    private fun validateFieldExistsAndIsAccessible(segment: String, currentClass: Class<*>) {
-        var classToCheck: Class<*>? = currentClass
-
-        while (classToCheck != null) {
-            try {
-                val field = classToCheck.getDeclaredField(segment)
-                field.isAccessible = true
-                return
-            } catch (e: NoSuchFieldException) {
-                classToCheck = classToCheck.superclass
-            }
-        }
-
-        throw InvalidAttributeException(segment, currentClass.simpleName)
-    }
-
-    private fun isPseudoProperty(segment: String) = segment == "pseudoProperties"
-
-
-    private fun validateFinalSegmentType(path: Path<*>, value: Any?, fieldName: String, currentClass: KClass<*>) {
-        println("Validating final segment type")
-        val expectedType = path.model.bindableJavaType
-        println("Expected type: $expectedType")
-        if (value == null && currentClass.memberProperties
-                .find { it.name == fieldName }
-                ?.returnType
-                ?.isMarkedNullable == true
-        ) {
-            throw ValueTypeMismatchException(
-                attributePath = path.toString(),
-                expectedType = expectedType.simpleName ?: "Unknown",
-                actualType = "null"
-            )
-        }
-        val actualType = when (value) {
-            is Collection<*> -> {
-               println("Detected: Collection")
-               val forCollection = value.map { element ->
-                    println("Element: $element")
-                    val conversionResult = element.takeIf { expectedType.isInstance(it) }
-                        ?: objectMapper.convertValue(element, expectedType)
-                    println("Conversion result: $conversionResult")
-                   if (!expectedType.isInstance(conversionResult)) {
-                       throw ValueTypeMismatchException(
-                           attributePath = path.toString(),
-                           expectedType = expectedType.simpleName ?: "Unknown",
-                           actualType = conversionResult?.let { conversionResult::class.simpleName ?: "Unknown" } ?: "null"
-                       )
-                   }
-                   conversionResult
-               }
-                println("For collection: $forCollection")
-                forCollection
-            }
-
-            is Pair<*, *> -> {
-                val (first, second) = value
-                val forPair = Pair(
-                    first.takeIf { expectedType.isInstance(it) }
-                        ?: objectMapper.convertValue(first, expectedType),
-                    second.takeIf { expectedType.isInstance(it) }
-                        ?: objectMapper.convertValue(second, expectedType)
-                )
-                if (!expectedType.isInstance(forPair.first) || !expectedType.isInstance(forPair.second)) {
-                    throw ValueTypeMismatchException(
-                        attributePath = path.toString(),
-                        expectedType = expectedType.simpleName ?: "Unknown",
-                        actualType = forPair.first?.let { forPair.first::class.simpleName ?: "Unknown" } ?: "null"
-                    )
-                }
-                println("For pair: $forPair")
-                forPair
-            }
-
-            else -> {
-               val type = value?.takeIf { expectedType.isInstance(it) }
-                    ?: objectMapper.convertValue(value, expectedType)
-                if (!expectedType.isInstance(type)) {
-                    throw ValueTypeMismatchException(
-                        attributePath = path.toString(),
-                        expectedType = expectedType.simpleName ?: "Unknown",
-                        actualType = type?.let { type::class.simpleName ?: "Unknown" } ?: "null"
-                    )
-                }
-                println("For single value: $type")
-                type
-            }
-        }
-        println("Finished validating final segment type. Expected: $expectedType, Actual: $actualType")
-    }
 }
