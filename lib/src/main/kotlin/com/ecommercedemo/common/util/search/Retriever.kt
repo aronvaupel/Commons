@@ -31,8 +31,6 @@ class Retriever(
                     param.operator.buildCondition(resolvedPathInfo, criteriaBuilder, param.searchValue)
                 )
             } else {
-                val expectedValueType = resolvedPathInfo.jpaPath.model.bindableJavaType
-                validator.validate(deserializedValue, expectedValueType, entity, resolvedPathInfo.jpaPath.toString())
                 param.operator.buildPredicate(criteriaBuilder, resolvedPathInfo.jpaPath, deserializedValue)
             }
         }
