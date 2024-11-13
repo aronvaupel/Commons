@@ -23,6 +23,7 @@ class Retriever(
 
         val predicates = searchRequest.params.map { param ->
             val resolvedPathInfo = pathResolver.resolvePath(param, root)
+            val deserializedValue = deserializer.convertAnyIfNeeded(param.searchValue, resolvedPathInfo.jpaPath.model.bindableJavaType)
 
             if (resolvedPathInfo.jsonSegments.isNotEmpty()) {
                //Todo: Check if deserialization is needed once pseudo properties and redis is implemented
@@ -31,10 +32,8 @@ class Retriever(
                 )
             } else {
                 val expectedValueType = resolvedPathInfo.jpaPath.model.bindableJavaType
-                val actualValue = deserializer.convertAnyIfNeeded(param.searchValue, expectedValueType)
-                println("Actual value: $actualValue")
-                validator.validate(actualValue, expectedValueType, entity, resolvedPathInfo.jpaPath.toString())
-                param.operator.buildPredicate(criteriaBuilder, resolvedPathInfo.jpaPath, actualValue)
+                validator.validate(deserializedValue, expectedValueType, entity, resolvedPathInfo.jpaPath.toString())
+                param.operator.buildPredicate(criteriaBuilder, resolvedPathInfo.jpaPath,deserializedValue)
             }
         }
 
