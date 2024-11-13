@@ -18,6 +18,7 @@ class PathResolver(
     private val objectMapper: ObjectMapper = ObjectMapper()
 ) {
     fun <T : BaseEntity> resolvePath(params: SearchParams, root: Root<T>): ResolvedPathInfo {
+        println("Resolving path: ${params.path}")
         val segments = params.path.split(".")
         var currentPath: Path<*> = root
         var currentClass: Class<*> = root.javaType
