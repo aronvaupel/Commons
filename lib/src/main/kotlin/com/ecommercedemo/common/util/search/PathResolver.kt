@@ -32,7 +32,7 @@ class PathResolver(
             }
         }
         val actualValue = deserializer.convertAnyIfNeeded(params.searchValue, currentClass)
-        validator.validateFinalSegmentType(currentPath, actualValue, currentClass.kotlin)
+        validator.validate(actualValue, currentPath.model.bindableJavaType, currentClass.kotlin, currentPath.toString())
         println("Finished resolving path: ${params.path}")
         return ResolvedSearchParam(actualValue, jpaPath = currentPath, jsonSegments = emptyList())
     }

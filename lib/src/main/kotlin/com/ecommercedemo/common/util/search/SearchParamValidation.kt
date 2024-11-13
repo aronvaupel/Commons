@@ -2,12 +2,12 @@ package com.ecommercedemo.common.util.search
 
 import com.ecommercedemo.common.exception.InvalidAttributeException
 import com.ecommercedemo.common.exception.ValueTypeMismatchException
-import jakarta.persistence.criteria.Path
 import org.springframework.stereotype.Service
 import kotlin.reflect.KClass
 import kotlin.reflect.full.memberProperties
 
 @Service
+@Suppress("unused")
 class SearchParamValidation(
     private val deserializer: SearchParamDeserializer
 ) {
@@ -66,17 +66,16 @@ class SearchParamValidation(
         throw InvalidAttributeException(segment, currentClass.simpleName)
     }
 
-    fun validateFinalSegmentType(path: Path<*>, value: Any?, currentClass: KClass<*>) {
-        println("Start validating final segment type")
-        val expectedType = path.model.bindableJavaType
-        validate(value, expectedType, currentClass, path.toString())
-        val actualValue = deserializer.convertAnyIfNeeded(value, expectedType)
-        if (!expectedType.isInstance(actualValue)) {
-            throw ValueTypeMismatchException(
-                attributePath = path.toString(),
-                expectedType = expectedType.simpleName ?: "Unknown",
-                actualType = actualValue?.javaClass?.simpleName ?: "Unknown"
-            )
-        }
-    }
+//    fun validateFinalSegmentType(path: Path<*>, actualValue: Any?, currentClass: KClass<*>) {
+//        println("Start validating final segment type")
+//        val expectedType = path.model.bindableJavaType
+//        validate(actualValue, expectedType, currentClass, path.toString())
+//        if (!expectedType.isInstance(actualValue)) {
+//            throw ValueTypeMismatchException(
+//                attributePath = path.toString(),
+//                expectedType = expectedType.simpleName ?: "Unknown",
+//                actualType = actualValue?.javaClass?.simpleName ?: "Unknown"
+//            )
+//        }
+//    }
 }
