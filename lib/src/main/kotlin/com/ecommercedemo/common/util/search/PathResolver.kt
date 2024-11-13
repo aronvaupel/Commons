@@ -81,6 +81,13 @@ class PathResolver(
                     val conversionResult = element.takeIf { expectedType.isInstance(it) }
                         ?: objectMapper.convertValue(element, expectedType)
                     println("Conversion result: $conversionResult")
+                   if (!expectedType.isInstance(conversionResult)) {
+                       throw ValueTypeMismatchException(
+                           attributePath = path.toString(),
+                           expectedType = expectedType.simpleName ?: "Unknown",
+                           actualType = conversionResult?.let { conversionResult::class.simpleName ?: "Unknown" } ?: "null"
+                       )
+                   }
                    conversionResult
                }
                 println("For collection: $forCollection")
@@ -95,20 +102,31 @@ class PathResolver(
                     second.takeIf { expectedType.isInstance(it) }
                         ?: objectMapper.convertValue(second, expectedType)
                 )
+                if (!expectedType.isInstance(forPair.first) || !expectedType.isInstance(forPair.second)) {
+                    throw ValueTypeMismatchException(
+                        attributePath = path.toString(),
+                        expectedType = expectedType.simpleName ?: "Unknown",
+                        actualType = forPair.first?.let { forPair.first::class.simpleName ?: "Unknown" } ?: "null"
+                    )
+                }
                 println("For pair: $forPair")
                 forPair
             }
 
-            else -> value?.takeIf { expectedType.isInstance(it) }
-                ?: objectMapper.convertValue(value, expectedType)
+            else -> {
+               val type = value?.takeIf { expectedType.isInstance(it) }
+                    ?: objectMapper.convertValue(value, expectedType)
+                if (!expectedType.isInstance(type)) {
+                    throw ValueTypeMismatchException(
+                        attributePath = path.toString(),
+                        expectedType = expectedType.simpleName ?: "Unknown",
+                        actualType = type?.let { type::class.simpleName ?: "Unknown" } ?: "null"
+                    )
+                }
+                println("For single value: $type")
+                type
+            }
         }
         println("Finished validating final segment type. Expected: $expectedType, Actual: $actualType")
-        if (!expectedType.isInstance(actualType)) {
-            throw ValueTypeMismatchException(
-                attributePath = path.toString(),
-                expectedType = expectedType.simpleName ?: "Unknown",
-                actualType = actualType?.let { actualType::class.simpleName ?: "Unknown" } ?: "null"
-            )
-        }
     }
 }
