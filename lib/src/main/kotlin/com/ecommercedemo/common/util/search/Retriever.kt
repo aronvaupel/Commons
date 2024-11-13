@@ -33,6 +33,8 @@ class Retriever(
                 )
             } else {
                 val expectedValueType = resolvedPathInfo.jpaPath.model.bindableJavaType
+                println("ExpectedValueType: $expectedValueType")
+                println("SearchValue: ${param.searchValue}")
 
                 val actualValue = when (param.searchValue) {
                     is Collection<*> -> {
@@ -54,6 +56,7 @@ class Retriever(
                     else -> param.searchValue?.takeIf { expectedValueType.isInstance(it) }
                         ?: objectMapper.convertValue(param.searchValue, expectedValueType)
                 }
+                println("ActualValue: $actualValue")
                 param.operator.buildPredicate(criteriaBuilder, resolvedPathInfo.jpaPath, actualValue)
             }
         }
