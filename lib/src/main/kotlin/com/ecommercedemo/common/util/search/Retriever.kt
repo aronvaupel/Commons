@@ -19,6 +19,7 @@ class Retriever(
 ) {
 
     fun <T : BaseEntity> executeSearch(searchRequest: SearchRequest, entity: KClass<T>): List<T> {
+        println("Start executing search")
         val criteriaBuilder = entityManager.criteriaBuilder
         val criteriaQuery = criteriaBuilder.createQuery(entity.java)
         val root = criteriaQuery.from(entity.java)
