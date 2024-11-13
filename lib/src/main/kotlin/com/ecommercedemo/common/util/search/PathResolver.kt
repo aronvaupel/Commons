@@ -59,6 +59,7 @@ class PathResolver(
 
 
     private fun validateFinalSegmentType(path: Path<*>, value: Any?, fieldName: String, currentClass: KClass<*>) {
+        println("Validating final segment type")
         val expectedType = path.model.bindableJavaType
         if (value == null && currentClass.memberProperties
                 .find { it.name == fieldName }
@@ -72,7 +73,7 @@ class PathResolver(
             )
         }
         val actualType = value?.takeIf { expectedType.isInstance(it) } ?: objectMapper.convertValue(value, expectedType)
-
+        println("Finished validating final segment type. Expected: $expectedType, Actual: $actualType")
         if (!expectedType.isInstance(actualType)) {
             throw ValueTypeMismatchException(
                 attributePath = path.toString(),
