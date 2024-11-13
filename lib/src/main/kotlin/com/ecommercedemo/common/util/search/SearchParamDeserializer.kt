@@ -6,9 +6,10 @@ import org.springframework.stereotype.Service
 @Service
 class SearchParamDeserializer(private val objectMapper: ObjectMapper) {
 
-    fun deserializeIfNeeded(value: Any?, expectedType: Class<*>): Any? {
+    fun convertAnyIfNeeded(value: Any?, expectedType: Class<*>): Any? {
         return when (value) {
-            is Collection<*> -> value.map { convertIfNeeded(it, expectedType) }
+            is Collection<*> -> value.map { element ->
+                convertIfNeeded(element, expectedType) }
             else -> convertIfNeeded(value, expectedType)
         }
     }

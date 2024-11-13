@@ -31,7 +31,7 @@ class PathResolver(
         }
 
         validator.validateFinalSegmentType(currentPath, params.searchValue, segments.last(), currentClass.kotlin)
-
+        println("Finished resolving path: ${params.path}")
         return ResolvedPathInfo(jpaPath = currentPath, jsonSegments = emptyList())
     }
 

@@ -444,9 +444,11 @@ enum class Operator(
     }
 
     fun restrictToTwoElements(value: Any?): List<Comparable<Any>> {
-        require(value is List<*> && value.size == 2) {
+        val collection = value as? Collection<*>
+            ?: throw IllegalArgumentException("The operator requires a collection of two elements.")
+        require(collection is List<*> && value.size == 2) {
             "BETWEEN operator requires exactly two elements in the list."
         }
-        return value.map { it as Comparable<Any> }
+        return collection.map { it as Comparable<Any> }
     }
 }
