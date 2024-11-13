@@ -5,7 +5,6 @@ import com.ecommercedemo.common.exception.ValueTypeMismatchException
 import com.ecommercedemo.common.model.BaseEntity
 import com.ecommercedemo.common.util.search.dto.ResolvedPathInfo
 import com.ecommercedemo.common.util.search.dto.SearchParams
-import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.databind.ObjectMapper
 import jakarta.persistence.criteria.Path
 import jakarta.persistence.criteria.Root
@@ -16,10 +15,7 @@ import kotlin.reflect.full.memberProperties
 
 @Service
 class PathResolver(
-    private val objectMapper: ObjectMapper = ObjectMapper().configure(
-        DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES,
-        true
-    )
+    private val objectMapper: ObjectMapper = ObjectMapper()
 ) {
     fun <T : BaseEntity> resolvePath(params: SearchParams, root: Root<T>): ResolvedPathInfo {
         val segments = params.path.split(".")
