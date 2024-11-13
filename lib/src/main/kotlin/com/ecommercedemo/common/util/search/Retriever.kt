@@ -33,8 +33,20 @@ class Retriever(
                 )
             } else {
                 val expectedValueType = resolvedPathInfo.jpaPath.model.bindableJavaType
-                val actualValue = param.searchValue?.takeIf { expectedValueType.isInstance(it) }
-                    ?: objectMapper.convertValue(param.searchValue, expectedValueType)
+
+                val actualValue = when (param.searchValue) {
+                    is Collection<*> -> {
+                        param.searchValue.map { validateAndConvert(it, expectedValueType) }
+                    }
+
+                    is Pair<*, *> -> {
+                        val (first, second) = param.searchValue
+                        Pair(validateAndConvert(first, expectedValueType), validateAndConvert(second, expectedValueType))
+                    }
+
+                    else -> param.searchValue?.takeIf { expectedValueType.isInstance(it) }
+                        ?: objectMapper.convertValue(param.searchValue, expectedValueType)
+                }
                 param.operator.buildPredicate(criteriaBuilder, resolvedPathInfo.jpaPath, actualValue)
             }
         }
@@ -43,4 +55,12 @@ class Retriever(
 
         return entityManager.createQuery(criteriaQuery).resultList
     }
+
+    private fun validateAndConvert(value: Any?, expectedValueType: Any?): Any? {
+        require(value != null &&  (expectedValueType as KClass<*>).isInstance(value)) {
+            "All elements in searchValue must match expected type $expectedValueType and cannot be null for comparisons."
+        }
+        return value.takeIf {  (expectedValueType as KClass<*>).isInstance(it) } ?: objectMapper.convertValue(value, (expectedValueType as KClass<*>).java)
+    }
+
 }
