@@ -56,11 +56,12 @@ class Retriever(
         return entityManager.createQuery(criteriaQuery).resultList
     }
 
-    private fun validateAndConvert(value: Any?, expectedValueType: Any?): Any? {
-        require(value != null &&  (expectedValueType as KClass<*>).isInstance(value)) {
+    private fun validateAndConvert(value: Any?, expectedValueType: Class<*>): Any? {
+        require(value != null && expectedValueType.isInstance(value)) {
             "All elements in searchValue must match expected type $expectedValueType and cannot be null for comparisons."
         }
-        return value.takeIf {  (expectedValueType as KClass<*>).isInstance(it) } ?: objectMapper.convertValue(value, (expectedValueType as KClass<*>).java)
+        return value.takeIf { expectedValueType.isInstance(it) }
+            ?: objectMapper.convertValue(value, expectedValueType)
     }
 
 }
