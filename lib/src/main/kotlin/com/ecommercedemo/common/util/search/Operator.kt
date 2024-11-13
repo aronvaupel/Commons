@@ -199,6 +199,7 @@ enum class Operator(
     },
     BETWEEN(setOf(LocalDate::class, LocalDateTime::class, Instant::class)) {
         override fun buildPredicate(cb: CriteriaBuilder, path: Path<*>, value: Any?): Predicate {
+            val list = restrictToTwoElements(value)
             val (start, end) = value as List<Comparable<Any>>
             return cb.between(path as Path<Comparable<Any>>, start, end)
         }
@@ -208,7 +209,8 @@ enum class Operator(
             criteriaBuilder: CriteriaBuilder,
             value: Any?
         ): Expression<Boolean> {
-            val (start, end) = value as Pair<Comparable<Any>, Comparable<Any>>
+            val list = restrictToTwoElements(value)
+            val (start, end) = list.map { it as Comparable<Any> }
             val jsonPathExpr = buildJsonPathExpression(resolvedPathInfo, criteriaBuilder)
             return criteriaBuilder.between(jsonPathExpr as Expression<Comparable<Any>>, start, end)
         }
@@ -414,5 +416,12 @@ enum class Operator(
 
     fun isSupportedType(type: KClass<*>): Boolean {
         return supportedTypes.contains(type) || supportedTypes.contains(Any::class)
+    }
+
+    fun restrictToTwoElements(value: Any?): List<Comparable<Any>> {
+        require(value is List<*> && value.size == 2) {
+            "BETWEEN operator requires exactly two elements in the list."
+        }
+        return value.map { it as Comparable<Any> }
     }
 }
