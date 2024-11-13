@@ -81,6 +81,7 @@ class PathResolver(
                     val conversionResult = element.takeIf { expectedType.isInstance(it) }
                         ?: objectMapper.convertValue(element, expectedType)
                     println("Conversion result: $conversionResult")
+                   conversionResult
                }
                 println("For collection: $forCollection")
                 forCollection
