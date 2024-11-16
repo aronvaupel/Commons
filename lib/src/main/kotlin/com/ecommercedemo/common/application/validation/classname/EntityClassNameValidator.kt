@@ -1,27 +1,17 @@
 package com.ecommercedemo.common.application.validation.classname
 
-import jakarta.persistence.EntityManager
-import jakarta.persistence.metamodel.EntityType
+import com.ecommercedemo.common.application.EntityScanner
 import jakarta.validation.ConstraintValidator
 import jakarta.validation.ConstraintValidatorContext
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.stereotype.Component
 
-class EntityClassNameValidator : ConstraintValidator<ValidEntityClassName, String> {
-
-    @Autowired
-    private lateinit var entityManager: EntityManager
-
-    private lateinit var validClassNames: Set<String>
-
-    override fun initialize(constraintAnnotation: ValidEntityClassName?) {
-        validClassNames = entityManager.metamodel.entities
-            .map(EntityType<*>::getJavaType)
-            .map(Class<*>::getSimpleName)
-            .toSet()
-    }
+@Component
+class EntityClassNameValidator @Autowired constructor(
+    private val entityScanner: EntityScanner
+) : ConstraintValidator<ValidEntityClassName, String> {
 
     override fun isValid(value: String?, context: ConstraintValidatorContext?): Boolean {
-        if (value.isNullOrBlank()) return false
-        return validClassNames.contains(value)
+        return value != null && entityScanner.getUpstreamEntityNames().contains(value)
     }
 }
