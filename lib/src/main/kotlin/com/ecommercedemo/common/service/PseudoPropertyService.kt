@@ -8,6 +8,7 @@ import com.ecommercedemo.common.persistence.IPseudoPropertyAdapter
 import com.ecommercedemo.common.persistence.IPseudoPropertyManagement
 import com.ecommercedemo.common.util.search.dto.SearchRequest
 import org.springframework.beans.factory.BeanFactory
+import org.springframework.beans.factory.NoSuchBeanDefinitionException
 import org.springframework.stereotype.Service
 import java.util.*
 
@@ -18,22 +19,39 @@ class PseudoPropertyService(
     private val eventProducer: EntityEventProducer,
 ) {
 
-    private fun getRepositoryForEntity(entityClass: String) =
-        beanFactory.getBean("$entityClass${"Repository"}")
+    private fun getRepositoryForEntity(entityClass: String): IPseudoPropertyManagement {
+        if (entityClass.startsWith("_")) {
+            throw IllegalArgumentException(
+                "Downstream entity '$entityClass' is not directly manageable. Use event handling for updates."
+            )
+        }
+
+        val repository = try {
+            beanFactory.getBean("${entityClass}Repository")
+        } catch (e: NoSuchBeanDefinitionException) {
+            throw IllegalArgumentException("Entity '$entityClass' is not managed by this service.")
+        }
+
+        return repository as? IPseudoPropertyManagement
+            ?: throw IllegalArgumentException(
+                "Repository for entity '$entityClass' does not support pseudo-property management."
+            )
+    }
 
     fun addPseudoProperty(pseudoProperty: PseudoPropertyDto): PseudoProperty {
+        val repository = getRepositoryForEntity(pseudoProperty.entityClassName)
         val result = pseudoPropertyAdapter.save(pseudoProperty)
-        (getRepositoryForEntity(pseudoProperty.entityClassName) as? IPseudoPropertyManagement)
-            ?.updatePseudoPropertyForAllEntities(pseudoProperty.key, null)
+        repository.updatePseudoPropertyForAllEntities(pseudoProperty.key, null)
         eventProducer.emit(PseudoProperty::class.java, result.id, EntityEventType.CREATE, mutableMapOf())
         return result
     }
 
     fun deletePseudoProperty(id: UUID) {
         val pseudoProperty = pseudoPropertyAdapter.getById(id)
-        (getRepositoryForEntity(pseudoProperty.entityClassName) as? IPseudoPropertyManagement)
-            ?.deletePseudoPropertyForAllEntities(pseudoProperty.key)
+        (getRepositoryForEntity(pseudoProperty.entityClassName))
+            .deletePseudoPropertyForAllEntities(pseudoProperty.key)
         pseudoPropertyAdapter.delete(pseudoProperty.id)
+        getRepositoryForEntity(pseudoProperty.entityClassName).deletePseudoPropertyForAllEntities(pseudoProperty.key)
         eventProducer.emit(PseudoProperty::class.java, pseudoProperty.id, EntityEventType.DELETE, mutableMapOf())
     }
 
@@ -42,6 +60,7 @@ class PseudoPropertyService(
     fun getAll(request: SearchRequest) = pseudoPropertyAdapter.getAll(request)
 
     fun update(id: UUID, body: PseudoPropertyDto): PseudoProperty {
+        val repository = getRepositoryForEntity(body.entityClassName)
         val old = pseudoPropertyAdapter.getById(id)
         val updatedPseudoProperty = old.copy(
             entityClassName = body.entityClassName.ifBlank { old.entityClassName },
@@ -54,6 +73,7 @@ class PseudoPropertyService(
             PseudoProperty::valueType.name to updatedPseudoProperty.valueType.takeIf { it != old.valueType }
         ).filterValues { it != null }.toMutableMap()
         val result = pseudoPropertyAdapter.save(updatedPseudoProperty.toDto())
+        repository.updatePseudoPropertyForAllEntities(old.key, updatedPseudoProperty.key)
         eventProducer.emit(PseudoProperty::class.java, result.id, EntityEventType.UPDATE, changes)
         return result
     }
