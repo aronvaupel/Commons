@@ -16,7 +16,7 @@ class PseudoPropertyAdapterPostgresql(
     override fun save(dto: PseudoPropertyDto): PseudoProperty {
         val property = PseudoProperty(
             id = UUID.randomUUID(),
-            entityClassName = dto.entityClassName,
+            entitySimpleName = dto.entityClassName,
             key = dto.key,
             valueType = dto.valueType
         )

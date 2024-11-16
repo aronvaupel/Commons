@@ -31,7 +31,7 @@ class PseudoPropertyService(
     fun deletePseudoProperty(id: UUID) {
         val pseudoProperty = pseudoPropertyAdapter.getById(id)
         pseudoPropertyApplier.deletePseudoPropertyForAllEntitiesOfType(
-            Class.forName(pseudoProperty.entityClassName) as Class<out ExtendableBaseEntity>,
+            Class.forName(pseudoProperty.entitySimpleName) as Class<out ExtendableBaseEntity>,
             pseudoProperty.key
         )
         pseudoPropertyAdapter.delete(pseudoProperty.id)
@@ -44,7 +44,7 @@ class PseudoPropertyService(
             pseudoProperty.apply { key = newKey }.toDto()
         )
         pseudoPropertyApplier.renamePseudoPropertyForAllEntitiesOfType(
-            Class.forName(pseudoProperty.entityClassName) as Class<out ExtendableBaseEntity>,
+            Class.forName(pseudoProperty.entitySimpleName) as Class<out ExtendableBaseEntity>,
             pseudoProperty.key,
             newKey
         )
