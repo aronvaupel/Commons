@@ -10,5 +10,4 @@ import java.util.*
 interface PseudoPropertyRepository: JpaRepository<PseudoProperty, UUID> {
     fun save(pseudoProperty: PseudoPropertyDto): PseudoProperty
     fun getAll(request: SearchRequest): List<PseudoProperty>
-    fun delete(id: UUID)
 }
