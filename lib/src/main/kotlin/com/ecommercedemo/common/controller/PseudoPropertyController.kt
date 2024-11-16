@@ -1,6 +1,7 @@
 package com.ecommercedemo.common.controller
 
 import com.ecommercedemo.common.model.PseudoProperty
+import com.ecommercedemo.common.model.dto.PseudoPropertyDto
 import com.ecommercedemo.common.service.PseudoPropertyService
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
@@ -15,19 +16,19 @@ class PseudoPropertyController(
 
     @PostMapping
     fun createPseudoProperty(
-        @RequestParam userId: UUID,
-        @RequestBody pseudoProperty: PseudoProperty
+        @RequestBody body: PseudoPropertyDto
     ): ResponseEntity<PseudoProperty> {
-        val createdProperty = pseudoPropertyService.addPseudoProperty(pseudoProperty)
-        return ResponseEntity.ok(createdProperty)
+        return ResponseEntity.ok(
+            pseudoPropertyService.addPseudoProperty(body)
+        )
     }
 
     @PutMapping("/{id}")
     fun updatePseudoProperty(
         @PathVariable id: UUID,
-        @RequestBody new: PseudoProperty
+        @RequestBody body: PseudoPropertyDto
     ): ResponseEntity<PseudoProperty> {
-        return ResponseEntity.ok(pseudoPropertyService.update(id, new))
+        return ResponseEntity.ok(pseudoPropertyService.update(id, body))
     }
 
     @DeleteMapping("/{id}")

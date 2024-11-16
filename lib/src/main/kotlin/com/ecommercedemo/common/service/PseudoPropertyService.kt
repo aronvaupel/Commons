@@ -3,6 +3,7 @@ package com.ecommercedemo.common.service
 import com.ecommercedemo.common.kafka.EntityEventProducer
 import com.ecommercedemo.common.kafka.EntityEventType
 import com.ecommercedemo.common.model.PseudoProperty
+import com.ecommercedemo.common.model.dto.PseudoPropertyDto
 import com.ecommercedemo.common.persistence.IPseudoPropertyAdapter
 import com.ecommercedemo.common.persistence.IPseudoPropertyManagement
 import com.ecommercedemo.common.util.search.dto.SearchRequest
@@ -20,7 +21,7 @@ class PseudoPropertyService(
     private fun getRepositoryForEntity(entityClass: String) =
         beanFactory.getBean("$entityClass${"Repository"}")
 
-    fun addPseudoProperty(pseudoProperty: PseudoProperty): PseudoProperty {
+    fun addPseudoProperty(pseudoProperty: PseudoPropertyDto): PseudoProperty {
         val result = pseudoPropertyAdapter.save(pseudoProperty)
         (getRepositoryForEntity(pseudoProperty.entityClassName) as? IPseudoPropertyManagement)
             ?.updatePseudoPropertyForAllEntities(pseudoProperty.key, null)
@@ -40,19 +41,19 @@ class PseudoPropertyService(
 
     fun getAll(request: SearchRequest) = pseudoPropertyAdapter.getAll(request)
 
-    fun update(id: UUID, new: PseudoProperty): PseudoProperty {
+    fun update(id: UUID, body: PseudoPropertyDto): PseudoProperty {
         val old = pseudoPropertyAdapter.getById(id)
         val updatedPseudoProperty = old.copy(
-            entityClassName = new.entityClassName.ifBlank { old.entityClassName },
-            key = new.key.ifBlank { old.key },
-            value = new.valueType ?: old.valueType
+            entityClassName = body.entityClassName.ifBlank { old.entityClassName },
+            key = body.key.ifBlank { old.key },
+            value = body.valueType
         )
         val changes = mapOf(
             PseudoProperty::entityClassName.name to updatedPseudoProperty.entityClassName.takeIf { it != old.entityClassName },
             PseudoProperty::key.name to updatedPseudoProperty.key.takeIf { it != old.key },
             PseudoProperty::valueType.name to updatedPseudoProperty.valueType.takeIf { it != old.valueType }
         ).filterValues { it != null }.toMutableMap()
-        val result = pseudoPropertyAdapter.save(updatedPseudoProperty)
+        val result = pseudoPropertyAdapter.save(updatedPseudoProperty.toDto())
         eventProducer.emit(PseudoProperty::class.java, result.id, EntityEventType.UPDATE, changes)
         return result
     }

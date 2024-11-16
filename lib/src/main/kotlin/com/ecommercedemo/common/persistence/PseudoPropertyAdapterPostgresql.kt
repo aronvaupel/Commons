@@ -1,6 +1,7 @@
 package com.ecommercedemo.common.persistence
 
 import com.ecommercedemo.common.model.PseudoProperty
+import com.ecommercedemo.common.model.dto.PseudoPropertyDto
 import com.ecommercedemo.common.util.search.dto.SearchRequest
 import org.springframework.stereotype.Service
 import java.util.*
@@ -10,7 +11,7 @@ class PseudoPropertyAdapterPostgresql(
     private val pseudoPropertyRepository: PseudoPropertyRepository
 ) : IPseudoPropertyAdapter {
 
-    override fun save(property: PseudoProperty): PseudoProperty {
+    override fun save(property: PseudoPropertyDto): PseudoProperty {
         return pseudoPropertyRepository.save(property)
     }
 

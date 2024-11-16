@@ -1,5 +1,6 @@
 package com.ecommercedemo.common.model
 
+import com.ecommercedemo.common.model.dto.PseudoPropertyDto
 import com.ecommercedemo.common.util.JsonbConverter
 import com.ecommercedemo.common.validation.classname.ValidEntityClassName
 import jakarta.persistence.Column
@@ -20,7 +21,7 @@ open class PseudoProperty(
     var key: String = "",
     @Convert(converter = JsonbConverter::class)
     @Column(columnDefinition = "jsonb")
-    var valueType: Any? = null
+    var valueType: Any
 ) {
     private val entity: KClass<*>
         get() = Class.forName(entityClassName).kotlin
@@ -32,8 +33,10 @@ open class PseudoProperty(
         id: UUID = this.id,
         entityClassName: String = this.entityClassName,
         key: String = this.key,
-        value: Any? = this.valueType
+        value: Any = this.valueType
     ) = PseudoProperty(id, entityClassName, key, value)
+
+    fun toDto() = PseudoPropertyDto(entityClassName, key, valueType)
 }
 
 
