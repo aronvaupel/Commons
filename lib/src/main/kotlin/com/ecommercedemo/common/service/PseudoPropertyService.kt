@@ -17,12 +17,12 @@ class PseudoPropertyService(
     private val pseudoPropertyApplier: PseudoPropertyApplier,
     private val eventProducer: EntityEventProducer,
 ) {
-    fun addPseudoProperty(pseudoProperty: PseudoPropertyDto): PseudoProperty {
-        val result = pseudoPropertyAdapter.save(pseudoProperty)
+    fun addPseudoProperty(dto: PseudoPropertyDto): PseudoProperty {
+        val result = pseudoPropertyAdapter.save(dto)
         pseudoPropertyApplier.addPseudoPropertyToAllEntitiesOfType(
-            Class.forName(pseudoProperty.entityClassName) as Class<out ExtendableBaseEntity>,
-            pseudoProperty.key,
-            pseudoProperty.valueType
+            Class.forName(dto.entityClassName) as Class<out ExtendableBaseEntity>,
+            dto.key,
+            dto.valueType
         )
         eventProducer.emit(PseudoProperty::class.java, result.id, EntityEventType.CREATE, mutableMapOf())
         return result

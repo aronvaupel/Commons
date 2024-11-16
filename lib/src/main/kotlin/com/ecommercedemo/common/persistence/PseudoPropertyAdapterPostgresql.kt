@@ -13,7 +13,13 @@ class PseudoPropertyAdapterPostgresql(
     private val retriever: Retriever
 ) : IPseudoPropertyAdapter {
 
-    override fun save(property: PseudoPropertyDto): PseudoProperty {
+    override fun save(dto: PseudoPropertyDto): PseudoProperty {
+        val property = PseudoProperty(
+            id = UUID.randomUUID(),
+            entityClassName = dto.entityClassName,
+            key = dto.key,
+            valueType = dto.valueType
+        )
         return pseudoPropertyRepository.save(property)
     }
 
