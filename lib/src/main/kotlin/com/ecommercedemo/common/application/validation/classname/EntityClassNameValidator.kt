@@ -2,8 +2,10 @@ package com.ecommercedemo.common.application.validation.classname
 
 import jakarta.validation.ConstraintValidator
 import jakarta.validation.ConstraintValidatorContext
+import org.springframework.stereotype.Component
 
-object EntityClassNameValidator : ConstraintValidator<ValidEntityClassName, String> {
+@Component
+class EntityClassNameValidator : ConstraintValidator<ValidEntityClassName, String> {
 
     override fun isValid(value: String, context: ConstraintValidatorContext?): Boolean {
         return try {
