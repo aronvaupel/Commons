@@ -6,7 +6,7 @@ plugins {
 }
 
 group = "com.github.aronvaupel"
-version = "2.3.1"
+version = "2.3.2"
 
 repositories {
     mavenCentral()
@@ -43,8 +43,6 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-web:3.3.4")
     implementation("org.springframework.boot:spring-boot-starter-validation:3.3.4")
     implementation("org.springframework.kafka:spring-kafka:3.2.4")
-    implementation("org.springframework:spring-context")
-    implementation("org.springframework:spring-beans")
     implementation("org.springframework:spring-orm:6.1.13")
     implementation("org.springframework:spring-tx:6.1.13")
 }
