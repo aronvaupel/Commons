@@ -9,7 +9,6 @@ import jakarta.persistence.Entity
 import jakarta.persistence.Table
 import jakarta.validation.constraints.NotNull
 import java.util.*
-import kotlin.reflect.KClass
 
 
 @Suppress("unused")
@@ -18,20 +17,14 @@ import kotlin.reflect.KClass
 open class PseudoProperty(
     override val id: UUID = UUID.randomUUID(),
     @ValidEntityClassName
-    open val entityClassName: String = Any::class.qualifiedName!!,
+    open val entityClassName: String,
     @NotNull
     open var key: String = "",
     @Convert(converter = JsonbConverter::class)
     @Column(columnDefinition = "jsonb")
     open var valueType: Any
 ) : BaseEntity() {
-    constructor() : this(UUID.randomUUID(), Any::class.qualifiedName!!, "", "")
-
-    private val entity: KClass<*>
-        get() = Class.forName(entityClassName).kotlin
-
-    val simpleEntityName: String
-        get() = entity.simpleName ?: "Unknown"
+    constructor() : this(UUID.randomUUID(), Any::class.simpleName!!, "", "")
 
     fun copy(
         id: UUID = this.id,

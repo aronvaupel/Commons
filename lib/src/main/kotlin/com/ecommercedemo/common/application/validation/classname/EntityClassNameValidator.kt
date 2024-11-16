@@ -1,15 +1,20 @@
 package com.ecommercedemo.common.application.validation.classname
 
+import jakarta.persistence.EntityManager
 import jakarta.validation.ConstraintValidator
 import jakarta.validation.ConstraintValidatorContext
 import org.springframework.stereotype.Component
 
 @Component
-class EntityClassNameValidator : ConstraintValidator<ValidEntityClassName, String> {
+class EntityClassNameValidator(
+    private val entityManager: EntityManager
+) : ConstraintValidator<ValidEntityClassName, String> {
 
     override fun isValid(value: String, context: ConstraintValidatorContext?): Boolean {
         return try {
-            val className = Class.forName(value).simpleName
+            val className = entityManager.metamodel.entities
+                .find { it.javaType.simpleName == value }
+                ?.javaType?.simpleName
             className == value
         } catch (e: ClassNotFoundException) {
             false
