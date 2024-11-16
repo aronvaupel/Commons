@@ -6,7 +6,7 @@ plugins {
 }
 
 group = "com.github.aronvaupel"
-version = "2.2.9"
+version = "2.3.0"
 
 repositories {
     mavenCentral()
@@ -35,12 +35,16 @@ dependencies {
     testImplementation("org.junit.jupiter:junit-jupiter:5.10.3")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
     //Fixme
+    implementation("org.springframework.boot:spring-boot-starter-data-jpa:3.1.5")
+    //Fixme
     implementation("org.springframework.boot:spring-boot-starter-data-redis:3.3.4")
     //Fixme
     implementation("org.springframework.boot:spring-boot-starter-security:3.3.4")
     implementation("org.springframework.boot:spring-boot-starter-web:3.3.4")
     implementation("org.springframework.boot:spring-boot-starter-validation:3.3.4")
     implementation("org.springframework.kafka:spring-kafka:3.2.4")
+    implementation("org.springframework:spring-context")
+    implementation("org.springframework:spring-beans")
     implementation("org.springframework:spring-orm:6.1.13")
     implementation("org.springframework:spring-tx:6.1.13")
 }

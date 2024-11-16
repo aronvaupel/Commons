@@ -65,17 +65,4 @@ class SearchParamValidation(
 
         throw InvalidAttributeException(segment, currentClass.simpleName)
     }
-
-//    fun validateFinalSegmentType(path: Path<*>, actualValue: Any?, currentClass: KClass<*>) {
-//        println("Start validating final segment type")
-//        val expectedType = path.model.bindableJavaType
-//        validate(actualValue, expectedType, currentClass, path.toString())
-//        if (!expectedType.isInstance(actualValue)) {
-//            throw ValueTypeMismatchException(
-//                attributePath = path.toString(),
-//                expectedType = expectedType.simpleName ?: "Unknown",
-//                actualType = actualValue?.javaClass?.simpleName ?: "Unknown"
-//            )
-//        }
-//    }
 }
