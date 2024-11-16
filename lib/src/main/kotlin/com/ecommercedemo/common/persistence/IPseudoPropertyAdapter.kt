@@ -10,5 +10,5 @@ interface IPseudoPropertyAdapter {
     fun save(property: PseudoPropertyDto): PseudoProperty
     fun delete(id: UUID)
     fun getById(id: UUID): PseudoProperty
-    fun getAll(request: SearchRequest): List<PseudoProperty>
+    fun getPseudoProperties(request: SearchRequest): List<PseudoProperty>
 }

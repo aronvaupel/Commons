@@ -1,6 +1,6 @@
 package com.ecommercedemo.common.util
 
-import com.ecommercedemo.common.model.BaseEntity
+import com.ecommercedemo.common.model.ExtendableBaseEntity
 import org.junit.jupiter.api.Test
 import java.time.LocalDateTime
 import java.util.*
@@ -14,7 +14,7 @@ data class MockEntity(
     override var createdAt: LocalDateTime = LocalDateTime.now(),
     override var updatedAt: LocalDateTime = LocalDateTime.now(),
     override var pseudoProperties: MutableMap<String, Any> = mutableMapOf()
-) : BaseEntity()
+) : ExtendableBaseEntity()
 
 class EntityChangeTrackerTest {
 

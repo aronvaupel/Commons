@@ -3,7 +3,10 @@ package com.ecommercedemo.common.model
 import com.ecommercedemo.common.model.dto.PseudoPropertyDto
 import com.ecommercedemo.common.util.JsonbConverter
 import com.ecommercedemo.common.validation.classname.ValidEntityClassName
-import jakarta.persistence.*
+import jakarta.persistence.Column
+import jakarta.persistence.Convert
+import jakarta.persistence.Entity
+import jakarta.persistence.Table
 import jakarta.validation.constraints.NotNull
 import java.util.*
 import kotlin.reflect.KClass
@@ -13,20 +16,16 @@ import kotlin.reflect.KClass
 @Entity
 @Table(name = PseudoProperty.STORAGE_NAME)
 open class PseudoProperty(
-    @Id
-    @GeneratedValue(generator = "uuid")
-    open val id: UUID = UUID.randomUUID(),
+    override val id: UUID = UUID.randomUUID(),
     @ValidEntityClassName
-    val entityClassName: String = Any::class.qualifiedName!!,
+    open val entityClassName: String = Any::class.qualifiedName!!,
     @NotNull
-    var key: String = "",
+    open var key: String = "",
     @Convert(converter = JsonbConverter::class)
     @Column(columnDefinition = "jsonb")
-    var valueType: Any
-) {
-    constructor() : this(UUID.randomUUID(), Any::class.qualifiedName!!, "", "") {
-
-    }
+    open var valueType: Any
+) : BaseEntity() {
+    constructor() : this(UUID.randomUUID(), Any::class.qualifiedName!!, "", "")
 
     private val entity: KClass<*>
         get() = Class.forName(entityClassName).kotlin

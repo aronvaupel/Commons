@@ -57,7 +57,7 @@ class PseudoPropertyService(
 
     fun getById(id: UUID) = pseudoPropertyAdapter.getById(id)
 
-    fun getAll(request: SearchRequest) = pseudoPropertyAdapter.getAll(request)
+    fun getAll(request: SearchRequest) = pseudoPropertyAdapter.getPseudoProperties(request)
 
     fun update(id: UUID, body: PseudoPropertyDto): PseudoProperty {
         val repository = getRepositoryForEntity(body.entityClassName)

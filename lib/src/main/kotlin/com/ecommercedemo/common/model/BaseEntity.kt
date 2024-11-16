@@ -6,7 +6,7 @@ import java.util.*
 
 
 @MappedSuperclass
-@Suppress("unused", "JpaQlInspection", "JpaDataSourceORMInspection")
+@Suppress("unused", "JpaQlInspection")
 abstract class BaseEntity {
     @Id
     @GeneratedValue(generator = "UUID")
@@ -17,23 +17,6 @@ abstract class BaseEntity {
 
     @Column(nullable = false)
     open var updatedAt: LocalDateTime = LocalDateTime.now()
-
-    @ElementCollection(fetch = FetchType.LAZY)
-    @CollectionTable(name = "pseudo_property_data", joinColumns = [JoinColumn(name = "base_entity_id")])
-    @MapKeyColumn(name = "key")
-    @Column(name = "pseudo_property", columnDefinition = "jsonb")
-    open var pseudoProperties: MutableMap<String, Any> = mutableMapOf()
-
-    fun addPseudoProperty(key: String, value: Any, overwrite: Boolean = false) {
-        if (!overwrite && pseudoProperties.containsKey(key)) {
-            throw IllegalArgumentException("Pseudo-property with key '$key' already exists.")
-        }
-        pseudoProperties[key] = value
-    }
-
-    fun getPseudoProperty(key: String): Any? {
-        return pseudoProperties[key]
-    }
 
     @PrePersist
     fun onCreate() {

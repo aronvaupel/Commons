@@ -2,13 +2,15 @@ package com.ecommercedemo.common.persistence
 
 import com.ecommercedemo.common.model.PseudoProperty
 import com.ecommercedemo.common.model.dto.PseudoPropertyDto
+import com.ecommercedemo.common.util.search.Retriever
 import com.ecommercedemo.common.util.search.dto.SearchRequest
 import org.springframework.stereotype.Service
 import java.util.*
 
 @Service
 class PseudoPropertyAdapterPostgresql(
-    private val pseudoPropertyRepository: PseudoPropertyRepository
+    private val pseudoPropertyRepository: PseudoPropertyRepository,
+    private val retriever: Retriever
 ) : IPseudoPropertyAdapter {
 
     override fun save(property: PseudoPropertyDto): PseudoProperty {
@@ -19,8 +21,8 @@ class PseudoPropertyAdapterPostgresql(
         return pseudoPropertyRepository.findById(id).orElseThrow()
     }
 
-    override fun getAll(request: SearchRequest): List<PseudoProperty> {
-        return pseudoPropertyRepository.getAll(request)
+    override fun getPseudoProperties(request: SearchRequest): List<PseudoProperty> {
+        return retriever.executeSearch(request, PseudoProperty::class)
     }
 
     override fun delete(id: UUID) {
