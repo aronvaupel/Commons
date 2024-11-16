@@ -6,10 +6,8 @@ import jakarta.validation.ConstraintValidatorContext
 import org.springframework.stereotype.Component
 
 @Component
-class EntityClassNameValidator(
-    private val entityManager: EntityManager
-) : ConstraintValidator<ValidEntityClassName, String> {
-
+class EntityClassNameValidator: ConstraintValidator<ValidEntityClassName, String> {
+    private lateinit var entityManager: EntityManager
     override fun isValid(value: String, context: ConstraintValidatorContext?): Boolean {
         return try {
             val className = entityManager.metamodel.entities
