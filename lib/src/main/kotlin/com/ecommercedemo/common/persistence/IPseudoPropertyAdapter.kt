@@ -1,8 +1,8 @@
 package com.ecommercedemo.common.persistence
 
+import com.ecommercedemo.common.application.search.dto.SearchRequest
 import com.ecommercedemo.common.model.PseudoProperty
 import com.ecommercedemo.common.model.dto.PseudoPropertyDto
-import com.ecommercedemo.common.util.search.dto.SearchRequest
 import java.util.*
 
 

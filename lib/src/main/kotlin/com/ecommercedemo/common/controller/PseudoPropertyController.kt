@@ -1,9 +1,9 @@
 package com.ecommercedemo.common.controller
 
+import com.ecommercedemo.common.application.search.dto.SearchRequest
 import com.ecommercedemo.common.model.PseudoProperty
 import com.ecommercedemo.common.model.dto.PseudoPropertyDto
 import com.ecommercedemo.common.service.PseudoPropertyService
-import com.ecommercedemo.common.util.search.dto.SearchRequest
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 import java.util.*
@@ -14,10 +14,10 @@ class PseudoPropertyController(
     private val pseudoPropertyService: PseudoPropertyService,
 ) {
     @GetMapping
-    fun getAll(
+    fun getPseudoProperties(
         @RequestBody request: SearchRequest
     ) : ResponseEntity<List<PseudoProperty>> {
-        return ResponseEntity.ok(pseudoPropertyService.getAll(request))
+        return ResponseEntity.ok(pseudoPropertyService.getPseudoProperties(request))
     }
 
     @PostMapping
@@ -30,11 +30,11 @@ class PseudoPropertyController(
     }
 
     @PutMapping("/{id}")
-    fun updatePseudoProperty(
+    fun renamePseudoProperty(
         @PathVariable id: UUID,
-        @RequestBody body: PseudoPropertyDto
+        @RequestParam newKey: String,
     ): ResponseEntity<PseudoProperty> {
-        return ResponseEntity.ok(pseudoPropertyService.update(id, body))
+        return ResponseEntity.ok(pseudoPropertyService.renamePseudoProperty(id, newKey))
     }
 
     @DeleteMapping("/{id}")

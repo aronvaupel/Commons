@@ -1,8 +1,8 @@
 package com.ecommercedemo.common.model
 
+import com.ecommercedemo.common.application.JsonbConverter
+import com.ecommercedemo.common.application.validation.classname.ValidEntityClassName
 import com.ecommercedemo.common.model.dto.PseudoPropertyDto
-import com.ecommercedemo.common.util.JsonbConverter
-import com.ecommercedemo.common.validation.classname.ValidEntityClassName
 import jakarta.persistence.Column
 import jakarta.persistence.Convert
 import jakarta.persistence.Entity
