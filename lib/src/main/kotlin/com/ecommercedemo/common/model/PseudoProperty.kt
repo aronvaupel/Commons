@@ -3,6 +3,7 @@ package com.ecommercedemo.common.model
 import com.ecommercedemo.common.application.search.TypeDescriptor
 import com.ecommercedemo.common.application.validation.type.ValueType
 import com.ecommercedemo.common.model.dto.PseudoPropertyDto
+import com.fasterxml.jackson.databind.ObjectMapper
 import io.hypersistence.utils.hibernate.type.json.JsonBinaryType
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
@@ -26,18 +27,18 @@ open class PseudoProperty(
     open var key: String = "",
     @Type(JsonBinaryType::class)
     @Column(columnDefinition = "jsonb")
-    open var typeDescriptor: TypeDescriptor
+    open var typeDescriptor: String
 ) : BaseEntity() {
-    constructor() : this(UUID.randomUUID(), "DUMMY_CLASS", "DUMMY_KEY", TypeDescriptor.PrimitiveDescriptor(ValueType.ANY))
+    constructor() : this(UUID.randomUUID(), "DUMMY_CLASS", "DUMMY_KEY", ObjectMapper().writeValueAsString(TypeDescriptor.PrimitiveDescriptor(ValueType.STRING)))
 
     fun copy(
         id: UUID = this.id,
         entityClassName: String = this.entitySimpleName,
         key: String = this.key,
-        value: TypeDescriptor = this.typeDescriptor
+        value: String = this.typeDescriptor
     ) = PseudoProperty(id, entityClassName, key, value)
 
-    fun toDto() = PseudoPropertyDto(entitySimpleName, key, typeDescriptor)
+    fun toDto() = PseudoPropertyDto(entitySimpleName, key, ObjectMapper().readValue(typeDescriptor, TypeDescriptor::class.java))
 
     companion object {
         const val STORAGE_NAME = "pseudo_properties"

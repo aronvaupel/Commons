@@ -4,6 +4,7 @@ import com.ecommercedemo.common.application.search.Retriever
 import com.ecommercedemo.common.application.search.dto.SearchRequest
 import com.ecommercedemo.common.model.PseudoProperty
 import com.ecommercedemo.common.model.dto.PseudoPropertyDto
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import org.springframework.stereotype.Service
 import java.util.*
 
@@ -12,14 +13,15 @@ open class PseudoPropertyAdapterPostgresql(
     private val pseudoPropertyRepository: PseudoPropertyRepository,
     private val retriever: Retriever
 ) : IPseudoPropertyAdapter {
-
+    private val objectMapper = jacksonObjectMapper()
     override fun saveAsJsonb(dto: PseudoPropertyDto): PseudoProperty {
         println("Creating pseudo property from dto: $dto")
+        val asJson = objectMapper.writeValueAsString(dto.typeDescriptor)
         val property = PseudoProperty(
             id = UUID.randomUUID(),
             entitySimpleName = dto.entityClassName,
             key = dto.key,
-            typeDescriptor = dto.typeDescriptor
+            typeDescriptor = asJson
         )
         println("Instantiated pseudo property: $property")
         pseudoPropertyRepository.saveAsJsonb(property)
