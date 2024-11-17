@@ -11,6 +11,7 @@ import jakarta.transaction.Transactional
 import org.springframework.stereotype.Service
 import java.util.*
 
+@Transactional
 @Service
 @Suppress("UNCHECKED_CAST")
 open class PseudoPropertyService(
@@ -18,7 +19,7 @@ open class PseudoPropertyService(
     private val pseudoPropertyApplier: PseudoPropertyApplier,
     private val eventProducer: EntityEventProducer,
 ) {
-    @Transactional
+
     open fun addPseudoProperty(dto: PseudoPropertyDto): PseudoProperty {
         val result = pseudoPropertyAdapter.saveAsJsonb(dto)
         println("Saved pseudo property: $result")

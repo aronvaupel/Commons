@@ -26,6 +26,14 @@ interface PseudoPropertyRepository : JpaRepository<PseudoProperty, UUID> {
         @Param("typeDescriptor") typeDescriptor: String,
         @Param("updatedAt") updatedAt: LocalDateTime,
         @Param("id") id: UUID
-    )
+    ){
+        println("Parameters being passed:")
+        println("createdAt: $createdAt")
+        println("entitySimpleName: $entitySimpleName")
+        println("key: $key")
+        println("typeDescriptor: $typeDescriptor")
+        println("updatedAt: $updatedAt")
+        println("id: $id")
+    }
 }
 
