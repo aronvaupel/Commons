@@ -25,7 +25,6 @@ open class PseudoPropertyService(
         pseudoPropertyApplier.addPseudoPropertyToAllEntitiesOfType(
             dto.entityClassName,
             dto.key,
-            dto.typeDescriptor
         )
         eventProducer.emit(PseudoProperty::class.java, result.id, EntityEventType.CREATE, mutableMapOf())
         return result

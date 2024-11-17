@@ -56,7 +56,6 @@ open class PseudoPropertyApplier(
     open fun addPseudoPropertyToAllEntitiesOfType(
         entityClassName: String,
         key: String,
-        value: Any
     ) {
         println("Attempting to determine Class for entityClassName: $entityClassName")
         val entityClass = getClass(entityClassName)
@@ -65,7 +64,7 @@ open class PseudoPropertyApplier(
 
         repository.findAll().forEach { entity ->
             val deserializedPseudoProperties = if (entity.pseudoProperties.isNotEmpty()) {
-                objectMapper.readValue<Map<String, Any>>(entity.pseudoProperties).toMutableMap()
+                objectMapper.readValue<Map<String, Any?>>(entity.pseudoProperties).toMutableMap()
             } else {
                 mutableMapOf()
             }
@@ -76,7 +75,7 @@ open class PseudoPropertyApplier(
                 )
             }
 
-            deserializedPseudoProperties[key] = value
+            deserializedPseudoProperties[key] = null
 
             entity.pseudoProperties = objectMapper.writeValueAsString(deserializedPseudoProperties)
 
