@@ -1,15 +1,15 @@
 package com.ecommercedemo.common.model
 
-import com.ecommercedemo.common.application.JsonbConverterForTypeDescriptor
 import com.ecommercedemo.common.application.search.TypeDescriptor
 import com.ecommercedemo.common.application.validation.type.ValueType
 import com.ecommercedemo.common.model.dto.PseudoPropertyDto
+import io.hypersistence.utils.hibernate.type.json.JsonBinaryType
 import jakarta.persistence.Column
-import jakarta.persistence.Convert
 import jakarta.persistence.Entity
 import jakarta.persistence.Table
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.NotNull
+import org.hibernate.annotations.Type
 import java.util.*
 
 
@@ -24,7 +24,7 @@ open class PseudoProperty(
     @NotNull
     @NotBlank
     open var key: String = "",
-    @Convert(converter = JsonbConverterForTypeDescriptor::class)
+    @Type(JsonBinaryType::class)
     @Column(columnDefinition = "jsonb")
     open var typeDescriptor: TypeDescriptor
 ) : BaseEntity() {
