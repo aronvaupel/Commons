@@ -25,7 +25,14 @@ open class PseudoPropertyAdapterPostgresql(
             typeDescriptor = asJson
         )
         println("Instantiated pseudo property: $property")
-        pseudoPropertyRepository.saveAsJsonb(property)
+        pseudoPropertyRepository.saveAsJsonb(
+            createdAt = property.createdAt,
+            entitySimpleName = property.entitySimpleName,
+            key = property.key,
+            typeDescriptor = property.typeDescriptor,
+            updatedAt = property.updatedAt,
+            id = property.id
+        )
         println("Saved pseudo property: $property")
         return property
 
