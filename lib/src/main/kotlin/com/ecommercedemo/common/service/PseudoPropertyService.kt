@@ -7,17 +7,19 @@ import com.ecommercedemo.common.model.ExtendableBaseEntity
 import com.ecommercedemo.common.model.PseudoProperty
 import com.ecommercedemo.common.model.dto.PseudoPropertyDto
 import com.ecommercedemo.common.persistence.IPseudoPropertyAdapter
+import jakarta.transaction.Transactional
 import org.springframework.stereotype.Service
 import java.util.*
 
 @Service
 @Suppress("UNCHECKED_CAST")
-class PseudoPropertyService(
+open class PseudoPropertyService(
     private val pseudoPropertyAdapter: IPseudoPropertyAdapter,
     private val pseudoPropertyApplier: PseudoPropertyApplier,
     private val eventProducer: EntityEventProducer,
 ) {
-    fun addPseudoProperty(dto: PseudoPropertyDto): PseudoProperty {
+    @Transactional
+    open fun addPseudoProperty(dto: PseudoPropertyDto): PseudoProperty {
         val result = pseudoPropertyAdapter.saveAsJsonb(dto)
         pseudoPropertyApplier.addPseudoPropertyToAllEntitiesOfType(
             Class.forName(dto.entityClassName) as Class<out ExtendableBaseEntity>,

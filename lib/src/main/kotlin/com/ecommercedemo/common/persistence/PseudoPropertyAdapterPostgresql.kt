@@ -8,7 +8,7 @@ import org.springframework.stereotype.Service
 import java.util.*
 
 @Service
-class PseudoPropertyAdapterPostgresql(
+open class PseudoPropertyAdapterPostgresql(
     private val pseudoPropertyRepository: PseudoPropertyRepository,
     private val retriever: Retriever
 ) : IPseudoPropertyAdapter {
