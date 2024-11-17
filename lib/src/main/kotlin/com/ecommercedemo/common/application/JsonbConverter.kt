@@ -9,7 +9,10 @@ object JsonbConverter : AttributeConverter<Any, String> {
     private val objectMapper = jacksonObjectMapper()
 
     override fun convertToDatabaseColumn(attribute: Any?): String? {
-        return attribute?.let { objectMapper.writeValueAsString(it) }
+        println("Start convertToDatabaseColumn. Attribute: $attribute")
+        val result = attribute?.let { objectMapper.writeValueAsString(it) }
+        println("End convertToDatabaseColumn. Result: $result")
+        return result
     }
 
     override fun convertToEntityAttribute(dbData: String?): Any? {

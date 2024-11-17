@@ -14,13 +14,16 @@ class PseudoPropertyAdapterPostgresql(
 ) : IPseudoPropertyAdapter {
 
     override fun save(dto: PseudoPropertyDto): PseudoProperty {
+        println("Creating pseudo property from dto: $dto")
         val property = PseudoProperty(
             id = UUID.randomUUID(),
             entitySimpleName = dto.entityClassName,
             key = dto.key,
             typeDescriptor = dto.typeDescriptor
         )
-        return pseudoPropertyRepository.save(property)
+        println("Instantiated pseudo property: $property")
+        return  pseudoPropertyRepository.save(property)
+
     }
 
     override fun getById(id: UUID): PseudoProperty {
