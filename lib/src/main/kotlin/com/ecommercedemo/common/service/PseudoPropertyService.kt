@@ -22,7 +22,6 @@ open class PseudoPropertyService(
 
     open fun addPseudoProperty(dto: PseudoPropertyDto): PseudoProperty {
         val result = pseudoPropertyAdapter.saveAsJsonb(dto)
-        println("Saved pseudo property: $result")
         pseudoPropertyApplier.addPseudoPropertyToAllEntitiesOfType(
             dto.entityClassName,
             dto.key,

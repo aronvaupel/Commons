@@ -62,15 +62,26 @@ open class PseudoPropertyApplier(
         val entityClass = getClass(entityClassName)
         println("Determined Class for entityClassName: $entityClass")
         val repository = getEntityRepository(entityClass)
+
         repository.findAll().forEach { entity ->
-            val deserializedPseudoProperties = objectMapper.readValue<Map<String, Any>>(entity.pseudoProperties).toMutableMap()
+            val deserializedPseudoProperties = if (entity.pseudoProperties.isNotEmpty()) {
+                objectMapper.readValue<Map<String, Any>>(entity.pseudoProperties).toMutableMap()
+            } else {
+                mutableMapOf()
+            }
+
             if (deserializedPseudoProperties.containsKey(key)) {
                 throw IllegalArgumentException(
                     "Entity ${entity.id} of type '${entityClass.simpleName}' already contains the key '$key'. Cannot override."
                 )
             }
-            deserializedPseudoProperties[key] = objectMapper.writeValueAsString(value)
+
+            deserializedPseudoProperties[key] = value
+
+            entity.pseudoProperties = objectMapper.writeValueAsString(deserializedPseudoProperties)
+
             repository.save(entity)
+
             eventProducer.emit(
                 entity.javaClass,
                 entity.id,
