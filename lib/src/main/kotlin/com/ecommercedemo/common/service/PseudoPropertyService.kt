@@ -18,7 +18,7 @@ class PseudoPropertyService(
     private val eventProducer: EntityEventProducer,
 ) {
     fun addPseudoProperty(dto: PseudoPropertyDto): PseudoProperty {
-        val result = pseudoPropertyAdapter.save(dto)
+        val result = pseudoPropertyAdapter.saveAsJsonb(dto)
         pseudoPropertyApplier.addPseudoPropertyToAllEntitiesOfType(
             Class.forName(dto.entityClassName) as Class<out ExtendableBaseEntity>,
             dto.key,
@@ -40,7 +40,7 @@ class PseudoPropertyService(
 
     fun renamePseudoProperty(id: UUID, newKey: String): PseudoProperty {
         val pseudoProperty = pseudoPropertyAdapter.getById(id)
-        val result = pseudoPropertyAdapter.save(
+        val result = pseudoPropertyAdapter.saveAsJsonb(
             pseudoProperty.apply { key = newKey }.toDto()
         )
         pseudoPropertyApplier.renamePseudoPropertyForAllEntitiesOfType(

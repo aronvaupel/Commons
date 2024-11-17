@@ -7,7 +7,7 @@ import java.util.*
 
 
 interface IPseudoPropertyAdapter {
-    fun save(dto: PseudoPropertyDto): PseudoProperty
+    fun saveAsJsonb(dto: PseudoPropertyDto): PseudoProperty
     fun delete(id: UUID)
     fun getById(id: UUID): PseudoProperty
     fun getPseudoProperties(request: SearchRequest): List<PseudoProperty>
