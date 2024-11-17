@@ -1,5 +1,6 @@
 package com.ecommercedemo.common.model
 
+import com.ecommercedemo.common.application.JsonbConverter
 import jakarta.persistence.*
 
 @MappedSuperclass
@@ -10,9 +11,14 @@ abstract class ExtendableBaseEntity: BaseEntity() {
     @CollectionTable(name = "pseudo_property_data", joinColumns = [JoinColumn(name = "base_entity_id")])
     @MapKeyColumn(name = "key")
     @Column(name = "pseudo_property", columnDefinition = "jsonb")
-    open var pseudoProperties: MutableMap<String, Any> = mutableMapOf()
+    open var pseudoProperties: MutableMap<String, String> = mutableMapOf()
 
     fun getPseudoProperty(key: String): Any? {
-        return pseudoProperties[key]
+        val jsonValue = pseudoProperties[key]
+        return jsonValue?.let { JsonbConverter.convertToEntityAttribute(it) }
+    }
+
+    fun setPseudoProperty(key: String, value: Any) {
+        pseudoProperties[key] = JsonbConverter.convertToDatabaseColumn(value) ?: "{}"
     }
 }

@@ -1,7 +1,6 @@
 package com.ecommercedemo.common.application
 
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
-import com.fasterxml.jackson.module.kotlin.readValue
 import jakarta.persistence.AttributeConverter
 import jakarta.persistence.Converter
 
@@ -14,6 +13,6 @@ object JsonbConverter : AttributeConverter<Any, String> {
     }
 
     override fun convertToEntityAttribute(dbData: String?): Any? {
-        return dbData?.let { objectMapper.readValue(it) }
+        return dbData?.let { objectMapper.readValue(it, Any::class.java) }
     }
 }

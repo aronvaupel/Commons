@@ -3,6 +3,7 @@ package com.ecommercedemo.common.service
 import com.ecommercedemo.common.application.event.EntityEventProducer
 import com.ecommercedemo.common.application.event.EntityEventType
 import com.ecommercedemo.common.model.ExtendableBaseEntity
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import jakarta.transaction.Transactional
 import org.springframework.beans.factory.BeanFactory
 import org.springframework.beans.factory.NoSuchBeanDefinitionException
@@ -54,13 +55,14 @@ open class PseudoPropertyApplier(
         value: Any
     ) {
         val repository = getEntityRepository(entityClass)
+        val objectMapper = jacksonObjectMapper()
         repository.findAll().forEach { entity ->
             if (entity.pseudoProperties.containsKey(key)) {
                 throw IllegalArgumentException(
                     "Entity ${entity.id} of type '${entityClass.simpleName}' already contains the key '$key'. Cannot override."
                 )
             }
-            entity.pseudoProperties[key] = value
+            entity.pseudoProperties[key] = objectMapper.writeValueAsString(value)
             repository.save(entity)
             eventProducer.emit(
                 entity.javaClass,
