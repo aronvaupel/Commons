@@ -4,6 +4,7 @@ import com.ecommercedemo.common.application.event.EntityEventProducer
 import com.ecommercedemo.common.application.event.EntityEventType
 import com.ecommercedemo.common.model.ExtendableBaseEntity
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import com.fasterxml.jackson.module.kotlin.readValue
 import jakarta.persistence.EntityManagerFactory
 import jakarta.transaction.Transactional
 import org.springframework.beans.factory.BeanFactory
@@ -19,6 +20,7 @@ open class PseudoPropertyApplier(
     private val eventProducer: EntityEventProducer,
     private val entityManagerFactory: EntityManagerFactory,
 ) {
+    private val objectMapper = jacksonObjectMapper()
     private fun getEntityRepository(entityClass: Class<*>): JpaRepository<ExtendableBaseEntity, UUID> {
         val repositoryName = "${entityClass.simpleName.replaceFirstChar { it.lowercase(Locale.getDefault()) }}Repository"
         val repository = try {
@@ -32,27 +34,27 @@ open class PseudoPropertyApplier(
 
     @Transactional
     open fun deletePseudoPropertyForAllEntitiesOfType(entityClass: Class<out ExtendableBaseEntity>, key: String) {
-        val repository = getEntityRepository(entityClass)
-        repository.findAll().forEach { entity ->
-            if (!entity.pseudoProperties.containsKey(key)) {
-                throw IllegalArgumentException(
-                    "Entity ${entity.id} of type '${entityClass.simpleName}' does not contain the key '$key'. Cannot delete."
-                )
-            }
-            entity.pseudoProperties.remove(key)
-            repository.save(entity)
-            eventProducer.emit(
-                entity.javaClass,
-                entity.id,
-                EntityEventType.DELETE,
-                getChanges(entity)
-            )
-        }
+//        val repository = getEntityRepository(entityClass)
+//        repository.findAll().forEach { entity ->
+//            if (!entity.pseudoProperties.containsKey(key)) {
+//                throw IllegalArgumentException(
+//                    "Entity ${entity.id} of type '${entityClass.simpleName}' does not contain the key '$key'. Cannot delete."
+//                )
+//            }
+//            entity.pseudoProperties.remove(key)
+//            repository.save(entity)
+//            eventProducer.emit(
+//                entity.javaClass,
+//                entity.id,
+//                EntityEventType.DELETE,
+//                getChanges(entity)
+//            )
+//        }
     }
 
     @Transactional
     open fun addPseudoPropertyToAllEntitiesOfType(
-        entityClassName: String,  //Class<out ExtendableBaseEntity>,
+        entityClassName: String,
         key: String,
         value: Any
     ) {
@@ -60,14 +62,14 @@ open class PseudoPropertyApplier(
         val entityClass = getClass(entityClassName)
         println("Determined Class for entityClassName: $entityClass")
         val repository = getEntityRepository(entityClass)
-        val objectMapper = jacksonObjectMapper()
         repository.findAll().forEach { entity ->
-            if (entity.pseudoProperties.containsKey(key)) {
+            val deserializedPseudoProperties = objectMapper.readValue<Map<String, Any>>(entity.pseudoProperties).toMutableMap()
+            if (deserializedPseudoProperties.containsKey(key)) {
                 throw IllegalArgumentException(
                     "Entity ${entity.id} of type '${entityClass.simpleName}' already contains the key '$key'. Cannot override."
                 )
             }
-            entity.pseudoProperties[key] = objectMapper.writeValueAsString(value)
+            deserializedPseudoProperties[key] = objectMapper.writeValueAsString(value)
             repository.save(entity)
             eventProducer.emit(
                 entity.javaClass,
@@ -84,7 +86,7 @@ open class PseudoPropertyApplier(
         oldKey: String,
         newKey: String
     ) {
-        val repository = getEntityRepository(entityClass)
+       /* val repository = getEntityRepository(entityClass)
         repository.findAll().forEach { entity ->
             if (!entity.pseudoProperties.containsKey(oldKey)) {
                 throw IllegalArgumentException(
@@ -104,7 +106,7 @@ open class PseudoPropertyApplier(
                 EntityEventType.UPDATE,
                 getChanges(entity)
             )
-        }
+        }*/
     }
 
     private fun getClass(simpleName: String): Class<out ExtendableBaseEntity> {
