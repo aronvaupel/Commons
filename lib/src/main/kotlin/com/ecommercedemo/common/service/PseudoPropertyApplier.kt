@@ -20,7 +20,7 @@ open class PseudoPropertyApplier(
     private val entityManagerFactory: EntityManagerFactory,
 ) {
     private fun getEntityRepository(entityClass: Class<*>): JpaRepository<ExtendableBaseEntity, UUID> {
-        val repositoryName = "${entityClass.simpleName}Repository"
+        val repositoryName = "${entityClass.simpleName.replaceFirstChar { it.lowercase(Locale.getDefault()) }}Repository"
         val repository = try {
             beanFactory.getBean(repositoryName)
         } catch (e: NoSuchBeanDefinitionException) {
