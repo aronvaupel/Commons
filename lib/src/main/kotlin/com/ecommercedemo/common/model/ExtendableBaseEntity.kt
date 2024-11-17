@@ -1,6 +1,6 @@
 package com.ecommercedemo.common.model
 
-import com.ecommercedemo.common.application.JsonbConverter
+import com.ecommercedemo.common.application.validation.StandardJsonbConverter
 import jakarta.persistence.*
 
 @MappedSuperclass
@@ -15,10 +15,10 @@ abstract class ExtendableBaseEntity: BaseEntity() {
 
     fun getPseudoProperty(key: String): Any? {
         val jsonValue = pseudoProperties[key]
-        return jsonValue?.let { JsonbConverter.convertToEntityAttribute(it) }
+        return jsonValue?.let { StandardJsonbConverter.convertToEntityAttribute(it) }
     }
 
     fun setPseudoProperty(key: String, value: Any) {
-        pseudoProperties[key] = JsonbConverter.convertToDatabaseColumn(value) ?: "{}"
+        pseudoProperties[key] = StandardJsonbConverter.convertToDatabaseColumn(value) ?: "{}"
     }
 }

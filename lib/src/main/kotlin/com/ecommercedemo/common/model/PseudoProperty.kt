@@ -1,6 +1,6 @@
 package com.ecommercedemo.common.model
 
-import com.ecommercedemo.common.application.JsonbConverter
+import com.ecommercedemo.common.application.JsonbConverterForTypeDescriptor
 import com.ecommercedemo.common.application.search.TypeDescriptor
 import com.ecommercedemo.common.application.validation.type.ValueType
 import com.ecommercedemo.common.model.dto.PseudoPropertyDto
@@ -24,7 +24,7 @@ open class PseudoProperty(
     @NotNull
     @NotBlank
     open var key: String = "",
-    @Convert(converter = JsonbConverter::class)
+    @Convert(converter = JsonbConverterForTypeDescriptor::class)
     @Column(columnDefinition = "jsonb")
     open var typeDescriptor: TypeDescriptor
 ) : BaseEntity() {
