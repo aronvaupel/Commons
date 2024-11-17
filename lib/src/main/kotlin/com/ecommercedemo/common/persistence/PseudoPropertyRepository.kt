@@ -16,6 +16,6 @@ interface PseudoPropertyRepository : JpaRepository<PseudoProperty, UUID> {
     """,
         nativeQuery = true
     )
-    fun saveAsJsonb(@Param("pseudoProperty") pseudoProperty: PseudoProperty) : PseudoProperty
+    fun saveAsJsonb(@Param("pseudoProperty") pseudoProperty: PseudoProperty)
 
 }

@@ -22,7 +22,9 @@ class PseudoPropertyAdapterPostgresql(
             typeDescriptor = dto.typeDescriptor
         )
         println("Instantiated pseudo property: $property")
-        return  pseudoPropertyRepository.saveAsJsonb(property)
+        pseudoPropertyRepository.saveAsJsonb(property)
+        println("Saved pseudo property: $property")
+        return property
 
     }
 
