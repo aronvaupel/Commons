@@ -50,10 +50,13 @@ open class PseudoPropertyApplier(
 
     @Transactional
     open fun addPseudoPropertyToAllEntitiesOfType(
-        entityClass: Class<out ExtendableBaseEntity>,
+        entityClassName: String,  //Class<out ExtendableBaseEntity>,
         key: String,
         value: Any
     ) {
+        println("Attempting to determine Class for entityClassName: $entityClassName")
+        val entityClass = Class.forName(entityClassName) as Class<out ExtendableBaseEntity>
+        println("Determined Class for entityClassName: $entityClass")
         val repository = getEntityRepository(entityClass)
         val objectMapper = jacksonObjectMapper()
         repository.findAll().forEach { entity ->
