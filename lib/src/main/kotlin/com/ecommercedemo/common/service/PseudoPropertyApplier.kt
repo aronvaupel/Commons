@@ -4,6 +4,7 @@ import com.ecommercedemo.common.application.event.EntityEventProducer
 import com.ecommercedemo.common.application.event.EntityEventType
 import com.ecommercedemo.common.model.ExtendableBaseEntity
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import jakarta.persistence.EntityManagerFactory
 import jakarta.transaction.Transactional
 import org.springframework.beans.factory.BeanFactory
 import org.springframework.beans.factory.NoSuchBeanDefinitionException
@@ -15,7 +16,8 @@ import java.util.*
 @Suppress("UNCHECKED_CAST")
 open class PseudoPropertyApplier(
     private val beanFactory: BeanFactory,
-    private val eventProducer: EntityEventProducer
+    private val eventProducer: EntityEventProducer,
+    private val entityManagerFactory: EntityManagerFactory,
 ) {
     private fun getEntityRepository(entityClass: Class<*>): JpaRepository<ExtendableBaseEntity, UUID> {
         val repositoryName = "${entityClass.simpleName}Repository"
@@ -55,7 +57,7 @@ open class PseudoPropertyApplier(
         value: Any
     ) {
         println("Attempting to determine Class for entityClassName: $entityClassName")
-        val entityClass = Class.forName(entityClassName) as Class<out ExtendableBaseEntity>
+        val entityClass = getClass(entityClassName)
         println("Determined Class for entityClassName: $entityClass")
         val repository = getEntityRepository(entityClass)
         val objectMapper = jacksonObjectMapper()
@@ -103,6 +105,13 @@ open class PseudoPropertyApplier(
                 getChanges(entity)
             )
         }
+    }
+
+    private fun getClass(simpleName: String): Class<out ExtendableBaseEntity> {
+        val entityType = entityManagerFactory.createEntityManager().metamodel.entities.find {
+            it.name == simpleName
+        } ?: throw IllegalArgumentException("Class with simple name '$simpleName' not found.")
+        return entityType.javaType as Class<out ExtendableBaseEntity>
     }
 
     private fun getChanges(entity: ExtendableBaseEntity): MutableMap<String, Any?> =
