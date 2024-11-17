@@ -13,7 +13,7 @@ data class MockEntity(
     var age: Int?,
     override var createdAt: LocalDateTime = LocalDateTime.now(),
     override var updatedAt: LocalDateTime = LocalDateTime.now(),
-    override var pseudoProperties: MutableMap<String, Any> = mutableMapOf()
+    override var pseudoProperties: MutableMap<String, String> = mutableMapOf()
 ) : ExtendableBaseEntity()
 
 class EntityChangeTrackerTest {
