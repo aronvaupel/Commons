@@ -17,6 +17,7 @@ open class PseudoPropertyAdapterPostgresql(
     override fun saveAsJsonb(dto: PseudoPropertyDto): PseudoProperty {
         println("Creating pseudo property from dto: $dto")
         val asJson = objectMapper.writeValueAsString(dto.typeDescriptor)
+        println("Converted type descriptor to JSON: $asJson")
         val property = PseudoProperty(
             id = UUID.randomUUID(),
             entitySimpleName = dto.entityClassName,
