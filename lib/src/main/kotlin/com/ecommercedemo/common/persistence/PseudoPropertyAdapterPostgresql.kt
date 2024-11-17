@@ -18,7 +18,7 @@ class PseudoPropertyAdapterPostgresql(
             id = UUID.randomUUID(),
             entitySimpleName = dto.entityClassName,
             key = dto.key,
-            valueType = dto.valueType
+            typeDescriptor = dto.typeDescriptor
         )
         return pseudoPropertyRepository.save(property)
     }

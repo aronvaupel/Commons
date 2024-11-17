@@ -22,7 +22,7 @@ class PseudoPropertyService(
         pseudoPropertyApplier.addPseudoPropertyToAllEntitiesOfType(
             Class.forName(dto.entityClassName) as Class<out ExtendableBaseEntity>,
             dto.key,
-            dto.valueType
+            dto.typeDescriptor
         )
         eventProducer.emit(PseudoProperty::class.java, result.id, EntityEventType.CREATE, mutableMapOf())
         return result
