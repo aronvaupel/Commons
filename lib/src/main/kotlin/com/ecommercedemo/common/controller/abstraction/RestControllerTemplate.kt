@@ -49,7 +49,7 @@ abstract class RestControllerTemplate<T : BaseEntity>(
         return ResponseEntity.ok(service.getMultiple(ids))
     }
 
-    @GetMapping
+    @GetMapping("/search")
     fun search(
         @RequestBody request: SearchRequest
     ): ResponseEntity<List<T>> {
