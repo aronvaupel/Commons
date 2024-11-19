@@ -9,20 +9,18 @@ import com.ecommercedemo.common.service.abstraction.ServiceTemplate
 import com.fasterxml.jackson.databind.ObjectMapper
 import jakarta.transaction.Transactional
 import org.springframework.stereotype.Service
-import kotlin.reflect.KClass
 
 @Transactional
 @Service
 open class PseudoPropertyService(
     adapter: IEntityPersistenceAdapter<PseudoProperty>,
-    entityClass: KClass<PseudoProperty>,
     eventProducer: EntityEventProducer,
     objectMapper: ObjectMapper,
     pseudoPropertyRepository: PseudoPropertyRepository,
     retriever: Retriever
 ) : ServiceTemplate<PseudoProperty>(
     adapter,
-    entityClass,
+    PseudoProperty::class,
     eventProducer,
     objectMapper,
     pseudoPropertyRepository,
