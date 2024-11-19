@@ -1,6 +1,6 @@
 package com.ecommercedemo.common.application
 
-import com.ecommercedemo.common.model.BaseEntity
+import com.ecommercedemo.common.model.abstraction.BaseEntity
 import kotlin.reflect.KProperty1
 import kotlin.reflect.full.memberProperties
 import kotlin.reflect.jvm.isAccessible

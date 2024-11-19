@@ -1,4 +1,4 @@
-package com.ecommercedemo.common.application.search
+package com.ecommercedemo.common.controller.abstraction.util
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import org.springframework.stereotype.Service

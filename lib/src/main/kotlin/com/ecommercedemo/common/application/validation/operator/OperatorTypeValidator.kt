@@ -1,6 +1,6 @@
 package com.ecommercedemo.common.application.validation.operator
 
-import com.ecommercedemo.common.application.search.dto.SearchParams
+import com.ecommercedemo.common.controller.abstraction.util.SearchParams
 import jakarta.validation.ConstraintValidator
 import jakarta.validation.ConstraintValidatorContext
 

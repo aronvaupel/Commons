@@ -1,7 +1,7 @@
-package com.ecommercedemo.common.application.search
+package com.ecommercedemo.common.controller.abstraction.util
 
-import com.ecommercedemo.common.application.search.dto.SearchRequest
-import com.ecommercedemo.common.model.BaseEntity
+import com.ecommercedemo.common.controller.abstraction.request.SearchRequest
+import com.ecommercedemo.common.model.abstraction.BaseEntity
 import jakarta.persistence.EntityManager
 import org.springframework.stereotype.Service
 import kotlin.reflect.KClass

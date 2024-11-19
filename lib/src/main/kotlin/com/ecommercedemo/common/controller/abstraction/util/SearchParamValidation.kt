@@ -1,4 +1,4 @@
-package com.ecommercedemo.common.application.search
+package com.ecommercedemo.common.controller.abstraction.util
 
 import com.ecommercedemo.common.application.exception.InvalidAttributeException
 import com.ecommercedemo.common.application.exception.ValueTypeMismatchException

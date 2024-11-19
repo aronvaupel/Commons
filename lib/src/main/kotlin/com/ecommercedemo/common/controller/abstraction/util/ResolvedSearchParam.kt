@@ -1,4 +1,4 @@
-package com.ecommercedemo.common.application.search.dto
+package com.ecommercedemo.common.controller.abstraction.util
 
 import jakarta.persistence.criteria.Path
 

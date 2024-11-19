@@ -1,6 +1,4 @@
-package com.ecommercedemo.common.application.search.dto
-
-import com.ecommercedemo.common.application.search.Operator
+package com.ecommercedemo.common.controller.abstraction.util
 
 @com.ecommercedemo.common.application.validation.operator.ValidOperator
 data class SearchParams(

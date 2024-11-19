@@ -1,4 +1,4 @@
-package com.ecommercedemo.common.application.search
+package com.ecommercedemo.common.controller.abstraction.util
 
 enum class TypeCategory {
     PRIMITIVE,

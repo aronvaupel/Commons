@@ -1,8 +1,8 @@
-package com.ecommercedemo.common.service
+package com.ecommercedemo.common.service.concretion
 
 import com.ecommercedemo.common.application.event.EntityEventProducer
 import com.ecommercedemo.common.application.event.EntityEventType
-import com.ecommercedemo.common.model.ExtendableBaseEntity
+import com.ecommercedemo.common.model.abstraction.ExpandableBaseEntity
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import jakarta.persistence.EntityManagerFactory
@@ -21,19 +21,19 @@ open class PseudoPropertyApplier(
     private val entityManagerFactory: EntityManagerFactory,
 ) {
     private val objectMapper = jacksonObjectMapper()
-    private fun getEntityRepository(entityClass: Class<*>): JpaRepository<ExtendableBaseEntity, UUID> {
+    private fun getEntityRepository(entityClass: Class<*>): JpaRepository<ExpandableBaseEntity, UUID> {
         val repositoryName = "${entityClass.simpleName.replaceFirstChar { it.lowercase(Locale.getDefault()) }}Repository"
         val repository = try {
             beanFactory.getBean(repositoryName)
         } catch (e: NoSuchBeanDefinitionException) {
             throw IllegalArgumentException("Repository for entity class '${entityClass.simpleName}' not found.", e)
         }
-        return repository as? JpaRepository<ExtendableBaseEntity, UUID>
+        return repository as? JpaRepository<ExpandableBaseEntity, UUID>
             ?: throw IllegalArgumentException("Repository for '${entityClass.simpleName}' is not a JpaRepository.")
     }
 
     @Transactional
-    open fun deletePseudoPropertyForAllEntitiesOfType(entityClass: Class<out ExtendableBaseEntity>, key: String) {
+    open fun deletePseudoPropertyForAllEntitiesOfType(entityClass: Class<out ExpandableBaseEntity>, key: String) {
 //        val repository = getEntityRepository(entityClass)
 //        repository.findAll().forEach { entity ->
 //            if (!entity.pseudoProperties.containsKey(key)) {
@@ -54,12 +54,9 @@ open class PseudoPropertyApplier(
 
     @Transactional
     open fun addPseudoPropertyToAllEntitiesOfType(
-        entityClassName: String,
+        entityClass: Class<out ExpandableBaseEntity>,
         key: String,
     ) {
-        println("Attempting to determine Class for entityClassName: $entityClassName")
-        val entityClass = getClass(entityClassName)
-        println("Determined Class for entityClassName: $entityClass")
         val repository = getEntityRepository(entityClass)
 
         repository.findAll().forEach { entity ->
@@ -92,7 +89,7 @@ open class PseudoPropertyApplier(
 
     @Transactional
     open fun renamePseudoPropertyForAllEntitiesOfType(
-        entityClass: Class<out ExtendableBaseEntity>,
+        entityClass: Class<out ExpandableBaseEntity>,
         oldKey: String,
         newKey: String
     ) {
@@ -119,13 +116,13 @@ open class PseudoPropertyApplier(
         }*/
     }
 
-    private fun getClass(simpleName: String): Class<out ExtendableBaseEntity> {
+    private fun getClass(simpleName: String): Class<out ExpandableBaseEntity> {
         val entityType = entityManagerFactory.createEntityManager().metamodel.entities.find {
             it.name == simpleName
         } ?: throw IllegalArgumentException("Class with simple name '$simpleName' not found.")
-        return entityType.javaType as Class<out ExtendableBaseEntity>
+        return entityType.javaType as Class<out ExpandableBaseEntity>
     }
 
-    private fun getChanges(entity: ExtendableBaseEntity): MutableMap<String, Any?> =
+    private fun getChanges(entity: ExpandableBaseEntity): MutableMap<String, Any?> =
         mutableMapOf(entity::pseudoProperties.name to entity.pseudoProperties)
 }

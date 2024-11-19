@@ -1,4 +1,4 @@
-package com.ecommercedemo.common.model
+package com.ecommercedemo.common.model.abstraction
 
 import jakarta.persistence.*
 import java.time.LocalDateTime
@@ -28,4 +28,6 @@ abstract class BaseEntity {
     fun onUpdate() {
         updatedAt = LocalDateTime.now()
     }
+
+    abstract fun copy(): BaseEntity
 }

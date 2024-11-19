@@ -1,8 +1,6 @@
-package com.ecommercedemo.common.application.search
+package com.ecommercedemo.common.controller.abstraction.util
 
-import com.ecommercedemo.common.application.search.dto.ResolvedSearchParam
-import com.ecommercedemo.common.application.search.dto.SearchParams
-import com.ecommercedemo.common.model.BaseEntity
+import com.ecommercedemo.common.model.abstraction.BaseEntity
 import jakarta.persistence.criteria.Path
 import jakarta.persistence.criteria.Root
 import org.springframework.stereotype.Service
@@ -13,7 +11,7 @@ class PathResolver(
     private val validator: SearchParamValidation,
     private val deserializer: SearchParamDeserializer,
 
-) {
+    ) {
     fun <T : BaseEntity> resolvePath(params: SearchParams, root: Root<T>): ResolvedSearchParam {
         println("Resolving path: ${params.path}")
         val segments = params.path.split(".")

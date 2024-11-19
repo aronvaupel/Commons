@@ -1,4 +1,4 @@
-package com.ecommercedemo.common.model
+package com.ecommercedemo.common.model.abstraction
 
 import com.fasterxml.jackson.core.type.TypeReference
 import com.fasterxml.jackson.databind.ObjectMapper
@@ -9,8 +9,7 @@ import org.hibernate.annotations.Type
 
 @MappedSuperclass
 @Suppress("unused")
-
-abstract class ExtendableBaseEntity: BaseEntity() {
+abstract class ExpandableBaseEntity: BaseEntity() {
     @Type(JsonBinaryType::class)
     @Column(name = "pseudo_property", columnDefinition = "jsonb")
     open var pseudoProperties: String = "{}"

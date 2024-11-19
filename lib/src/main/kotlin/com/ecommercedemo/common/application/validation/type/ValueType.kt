@@ -1,6 +1,6 @@
 package com.ecommercedemo.common.application.validation.type
 
-import com.ecommercedemo.common.application.search.TypeCategory
+import com.ecommercedemo.common.controller.abstraction.util.TypeCategory
 
 @Suppress("unused")
 enum class ValueType(val category: TypeCategory) {

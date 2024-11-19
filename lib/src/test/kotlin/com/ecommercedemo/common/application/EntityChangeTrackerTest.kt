@@ -1,6 +1,7 @@
 package com.ecommercedemo.common.application
 
-import com.ecommercedemo.common.model.ExtendableBaseEntity
+import com.ecommercedemo.common.model.abstraction.BaseEntity
+import com.ecommercedemo.common.model.abstraction.ExpandableBaseEntity
 import org.junit.jupiter.api.Test
 import java.time.LocalDateTime
 import java.util.*
@@ -13,8 +14,20 @@ data class MockEntity(
     var age: Int?,
     override var createdAt: LocalDateTime = LocalDateTime.now(),
     override var updatedAt: LocalDateTime = LocalDateTime.now(),
-    override var pseudoProperties: MutableMap<String, String> = mutableMapOf()
-) : ExtendableBaseEntity()
+    override var pseudoProperties: String = ""
+) : ExpandableBaseEntity() {
+    override fun copy(): BaseEntity {
+        return MockEntity(
+            id = this.id,
+            name = this.name,
+            email = this.email,
+            age = this.age,
+            createdAt = this.createdAt,
+            updatedAt = this.updatedAt,
+            pseudoProperties = this.pseudoProperties
+        )
+    }
+}
 
 class EntityChangeTrackerTest {
 
@@ -82,7 +95,7 @@ class EntityChangeTrackerTest {
         )
         val entityAfter = entityBefore.copy()
 
-        val changes = tracker.getChangedProperties(entityBefore, entityAfter)
+        val changes = tracker.getChangedProperties(entityBefore, entityAfter as MockEntity)
 
         assertEquals(0, changes.size)
     }

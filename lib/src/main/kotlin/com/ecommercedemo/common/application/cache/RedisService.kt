@@ -3,7 +3,7 @@ package com.ecommercedemo.common.application.cache
 import com.ecommercedemo.common.application.cache.keys.KafkaTopicRegistry
 import com.ecommercedemo.common.application.cache.values.Microservice
 import com.ecommercedemo.common.application.cache.values.TopicDetails
-import com.ecommercedemo.common.application.search.dto.SearchRequest
+import com.ecommercedemo.common.controller.abstraction.request.SearchRequest
 import com.fasterxml.jackson.core.type.TypeReference
 import com.fasterxml.jackson.databind.ObjectMapper
 import org.springframework.beans.factory.annotation.Autowired
