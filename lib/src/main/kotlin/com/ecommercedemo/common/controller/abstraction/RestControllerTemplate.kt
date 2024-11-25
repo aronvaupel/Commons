@@ -5,6 +5,7 @@ import com.ecommercedemo.common.controller.abstraction.request.SearchRequest
 import com.ecommercedemo.common.controller.abstraction.request.UpdateRequest
 import com.ecommercedemo.common.model.abstraction.BaseEntity
 import com.ecommercedemo.common.service.abstraction.ServiceTemplate
+import jakarta.annotation.PostConstruct
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
@@ -15,6 +16,11 @@ abstract class RestControllerTemplate<T : BaseEntity>(
 ) {
     init {
         println("RestControllerTemplate initialized with service: $service")
+    }
+
+    @PostConstruct
+    fun afterInit() {
+        println("UserController post-construction with service: $service")
     }
 
     @PostMapping
