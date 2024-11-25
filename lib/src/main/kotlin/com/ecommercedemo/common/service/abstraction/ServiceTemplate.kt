@@ -22,7 +22,7 @@ import kotlin.reflect.full.createType
 import kotlin.reflect.full.memberProperties
 
 @Suppress("UNCHECKED_CAST")
-open class ServiceTemplate<T : BaseEntity>(
+abstract class ServiceTemplate<T : BaseEntity>(
     private val adapter: IEntityPersistenceAdapter<T>,
     private val entityClass: KClass<T>,
     private val eventProducer: EntityEventProducer,
