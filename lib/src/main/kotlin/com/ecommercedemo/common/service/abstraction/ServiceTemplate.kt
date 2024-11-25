@@ -44,7 +44,6 @@ abstract class ServiceTemplate<T : BaseEntity>(
 
         val entityParams = mutableMapOf<KParameter, Any?>()
 
-        // Populate parameters for constructor
         entityConstructor.parameters.forEach { param ->
             val requestProperty = requestEntityClass.memberProperties.find { it.name == param.name }
             val value = requestProperty?.getter?.call(request.data)
@@ -58,7 +57,23 @@ abstract class ServiceTemplate<T : BaseEntity>(
 
         val initializedEntity = entityConstructor.callBy(entityParams)
 
-        // Handle mutable properties (pseudo-properties, etc.)
+        val entityProperties = entityClass.memberProperties
+        requestEntityClass.memberProperties.filter { it.name.startsWith("_") }.forEach { requestProperty ->
+            val propertyNameWithoutUnderscore = requestProperty.name.removePrefix("_")
+            val entityProperty = entityProperties.find { it.name == propertyNameWithoutUnderscore }
+
+            if (entityProperty is KMutableProperty<*>) {
+                val value = requestProperty.getter.call(request.data)
+                if (value != null) {
+                    entityProperty.setter.call(initializedEntity, value)
+                } else if (!entityProperty.returnType.isMarkedNullable) {
+                    throw IllegalArgumentException("Field ${entityProperty.name} must be provided and cannot be null.")
+                }
+            } else {
+                throw IllegalArgumentException("Field $propertyNameWithoutUnderscore does not have a mutable setter.")
+            }
+        }
+
         if (initializedEntity is ExpandableBaseEntity) {
             val pseudoPropertiesFromRequest = if (request.data is ExpandableBaseEntity)
                 objectMapper.readValue(request.data.pseudoProperties, object : TypeReference<Map<String, Any?>>() {})
@@ -70,13 +85,13 @@ abstract class ServiceTemplate<T : BaseEntity>(
             }
         }
 
-        // Persist and emit events
         val savedEntity = adapter.save(initializedEntity)
         val changes = EntityChangeTracker<T>().getChangedProperties(null, savedEntity)
         eventProducer.emit(requestEntityClass.java, savedEntity.id, EntityEventType.CREATE, changes)
 
         return savedEntity
     }
+
 
     @Transactional
     override fun update(request: UpdateRequest): T {
