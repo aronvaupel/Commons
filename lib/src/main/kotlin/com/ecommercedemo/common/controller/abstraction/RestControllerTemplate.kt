@@ -13,6 +13,9 @@ import java.util.*
 abstract class RestControllerTemplate<T : BaseEntity>(
     private val service: ServiceTemplate<T>
 ) {
+    init {
+        println("RestControllerTemplate initialized with service: $service")
+    }
 
     @PostMapping
     fun create(
