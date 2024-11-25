@@ -85,38 +85,40 @@ abstract class ServiceTemplate<T : BaseEntity>(
 
     @Transactional
     override fun update(request: UpdateRequest): T {
-        val originalEntity = adapter.getById(request.id)
+        val originalEntity = getSingle(request.id)
         if (originalEntity::class != entityClass) {
             throw IllegalArgumentException(
                 "Entity type mismatch. Expected ${entityClass.simpleName} but found ${originalEntity::class.simpleName}."
             )
         }
 
+        val requestPropertyMap = request.properties
 
-        val requestStandardProperties = request.properties.filterKeys {
-            it != "pseudoProperties" && !it.startsWith("_")
-        }
         val updatedEntity = (originalEntity.copy() as T)
-        val entityClassProperties = updatedEntity::class.memberProperties
+
+        val targetPropertyMap = updatedEntity::class.memberProperties
             .filterIsInstance<KMutableProperty<*>>()
             .associateBy { it.name }
 
-        requestStandardProperties.forEach { (key, value) ->
-            val property = entityClassProperties[key]
-            if (property != null) {
-                if (value == null && !property.returnType.isMarkedNullable) {
-                    throw IllegalArgumentException("Field $key cannot be set to null.")
+        targetPropertyMap.forEach { (name, property) ->
+            val requestValue = requestPropertyMap[name.removePrefix("_")]
+            property.isAccessible = true
+
+            when {
+                requestValue == null && !property.returnType.isMarkedNullable -> {
+                    throw IllegalArgumentException("Field $name cannot be set to null.")
                 }
-                if (value != null && value::class.createType() != property.returnType) {
-                    throw IllegalArgumentException("Field $key must be of type ${property.returnType}")
+                requestValue != null && requestValue::class.createType() != property.returnType -> {
+                    throw IllegalArgumentException("Field $name must be of type ${property.returnType}")
                 }
-                property.setter.call(updatedEntity, value)
-            } else throw IllegalArgumentException("Invalid property: $key")
+                requestValue != null -> {
+                    property.setter.call(updatedEntity, requestValue)
+                }
+            }
         }
 
         if (updatedEntity is ExpandableBaseEntity) {
-            val pseudoPropertiesFromRequest = request.properties["pseudoProperties"] as? Map<String, Any?>
-                ?: emptyMap()
+            val pseudoPropertiesFromRequest = requestPropertyMap["pseudoProperties"] as? Map<String, Any?> ?: emptyMap()
 
             if (pseudoPropertiesFromRequest.isNotEmpty()) {
                 validatePseudoPropertiesFromRequest(updatedEntity, pseudoPropertiesFromRequest)
@@ -130,11 +132,12 @@ abstract class ServiceTemplate<T : BaseEntity>(
         }
 
         val savedEntity = adapter.save(updatedEntity)
-        val changes = EntityChangeTracker<T>().getChangedProperties(originalEntity, updatedEntity)
-        eventProducer.emit(updatedEntity::class.java, updatedEntity.id, EntityEventType.UPDATE, changes)
+        val changes = EntityChangeTracker<T>().getChangedProperties(originalEntity, savedEntity)
+        eventProducer.emit(entityClass.java, savedEntity.id, EntityEventType.UPDATE, changes)
 
         return savedEntity
     }
+
 
     @Transactional
     override fun delete(id: UUID): HttpStatus {
