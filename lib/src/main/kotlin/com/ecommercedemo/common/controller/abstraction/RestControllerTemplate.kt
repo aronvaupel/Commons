@@ -5,6 +5,7 @@ import com.ecommercedemo.common.controller.abstraction.request.SearchRequest
 import com.ecommercedemo.common.controller.abstraction.request.UpdateRequest
 import com.ecommercedemo.common.model.abstraction.BaseEntity
 import com.ecommercedemo.common.service.abstraction.ServiceTemplate
+import org.springframework.context.annotation.Lazy
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
@@ -12,7 +13,7 @@ import java.util.*
 
 @RestController
 abstract class RestControllerTemplate<T : BaseEntity>(
-    private val service: ServiceTemplate<T>
+    @Lazy private val service: ServiceTemplate<T>
 ) {
 
     @PostMapping
