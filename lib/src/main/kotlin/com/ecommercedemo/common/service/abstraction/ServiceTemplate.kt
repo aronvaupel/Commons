@@ -13,6 +13,7 @@ import com.ecommercedemo.common.persistence.abstraction.IEntityPersistenceAdapte
 import com.ecommercedemo.common.persistence.concretion.PseudoPropertyRepository
 import com.fasterxml.jackson.core.type.TypeReference
 import com.fasterxml.jackson.databind.ObjectMapper
+import jakarta.transaction.Transactional
 import org.springframework.http.HttpStatus
 import java.util.*
 import kotlin.reflect.KClass
@@ -30,6 +31,8 @@ abstract class ServiceTemplate<T : BaseEntity>(
     private val pseudoPropertyRepository: PseudoPropertyRepository,
     private val retriever: Retriever
 ) : IService<T> {
+
+    @Transactional
     override fun create(request: CreateRequest<T>): T {
         val requestEntityClass = request.data::class
         if (requestEntityClass != entityClass) {
@@ -78,7 +81,7 @@ abstract class ServiceTemplate<T : BaseEntity>(
         return savedEntity
     }
 
-
+    @Transactional
     override fun update(request: UpdateRequest): T {
         val originalEntity = adapter.getById(request.id)
         if (originalEntity::class != entityClass) {
@@ -131,6 +134,7 @@ abstract class ServiceTemplate<T : BaseEntity>(
         return savedEntity
     }
 
+    @Transactional
     override fun delete(id: UUID): HttpStatus {
         val entity = getSingle(id)
         adapter.delete(entity.id)
