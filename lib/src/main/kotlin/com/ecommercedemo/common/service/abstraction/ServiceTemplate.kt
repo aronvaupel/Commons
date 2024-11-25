@@ -18,9 +18,9 @@ import org.springframework.http.HttpStatus
 import java.util.*
 import kotlin.reflect.KClass
 import kotlin.reflect.KMutableProperty
-import kotlin.reflect.KParameter
 import kotlin.reflect.full.createType
 import kotlin.reflect.full.memberProperties
+import kotlin.reflect.jvm.isAccessible
 
 @Suppress("UNCHECKED_CAST")
 abstract class ServiceTemplate<T : BaseEntity>(
@@ -34,64 +34,54 @@ abstract class ServiceTemplate<T : BaseEntity>(
 
     @Transactional
     override fun create(request: CreateRequest<T>): T {
-        val requestEntityClass = request.data::class
-        if (requestEntityClass != entityClass) {
-            throw IllegalArgumentException("Invalid entity type: ${requestEntityClass.simpleName}")
-        }
+        val requestPropertyMap = request.data::class.memberProperties.associateBy { it.name }
 
         val entityConstructor = entityClass.constructors.firstOrNull()
             ?: throw IllegalArgumentException("No suitable constructor found for ${entityClass.simpleName}")
 
-        val entityParams = mutableMapOf<KParameter, Any?>()
-
-        entityConstructor.parameters.forEach { param ->
-            val requestProperty = requestEntityClass.memberProperties.find { it.name == param.name }
+        val entityConstructorParams = entityConstructor.parameters.associateWith { param ->
+            val requestProperty = requestPropertyMap[param.name]
             val value = requestProperty?.getter?.call(request.data)
 
             if (value == null && !param.type.isMarkedNullable) {
                 throw IllegalArgumentException("Field ${param.name} must be provided and cannot be null.")
             }
-
-            entityParams[param] = value
+            value
         }
 
-        val initializedEntity = entityConstructor.callBy(entityParams)
+        val newInstance = entityConstructor.callBy(entityConstructorParams)
 
-        val entityProperties = entityClass.memberProperties
-        requestEntityClass.memberProperties.filter { it.name.startsWith("_") }.forEach { requestProperty ->
-            val propertyNameWithoutUnderscore = requestProperty.name.removePrefix("_")
-            val entityProperty = entityProperties.find { it.name == propertyNameWithoutUnderscore }
+        val targetPropertyMap = newInstance::class.memberProperties.associateBy { it.name }
 
-            if (entityProperty is KMutableProperty<*>) {
-                val value = requestProperty.getter.call(request.data)
+        targetPropertyMap.values
+            .filterIsInstance<KMutableProperty<*>>()
+            .forEach { property ->
+                property.isAccessible = true
+                val matchingRequestProperty = requestPropertyMap[property.name.removePrefix("_")]
+                val value = matchingRequestProperty?.getter?.call(request.data)
+
                 if (value != null) {
-                    entityProperty.setter.call(initializedEntity, value)
-                } else if (!entityProperty.returnType.isMarkedNullable) {
-                    throw IllegalArgumentException("Field ${entityProperty.name} must be provided and cannot be null.")
+                    property.setter.call(newInstance, value)
                 }
-            } else {
-                throw IllegalArgumentException("Field $propertyNameWithoutUnderscore does not have a mutable setter.")
             }
-        }
 
-        if (initializedEntity is ExpandableBaseEntity) {
-            val pseudoPropertiesFromRequest = if (request.data is ExpandableBaseEntity)
-                objectMapper.readValue(request.data.pseudoProperties, object : TypeReference<Map<String, Any?>>() {})
-            else emptyMap()
+        if (newInstance is ExpandableBaseEntity && request.data is ExpandableBaseEntity) {
+            val pseudoPropertiesFromRequest = objectMapper.readValue(
+                request.data.pseudoProperties, object : TypeReference<Map<String, Any?>>() {}
+            )
 
             if (pseudoPropertiesFromRequest.isNotEmpty()) {
-                validatePseudoPropertiesFromRequest(initializedEntity, pseudoPropertiesFromRequest)
-                initializedEntity.pseudoProperties = objectMapper.writeValueAsString(pseudoPropertiesFromRequest)
+                validatePseudoPropertiesFromRequest(newInstance, pseudoPropertiesFromRequest)
+                newInstance.pseudoProperties = objectMapper.writeValueAsString(pseudoPropertiesFromRequest)
             }
         }
 
-        val savedEntity = adapter.save(initializedEntity)
+        val savedEntity = adapter.save(newInstance)
         val changes = EntityChangeTracker<T>().getChangedProperties(null, savedEntity)
-        eventProducer.emit(requestEntityClass.java, savedEntity.id, EntityEventType.CREATE, changes)
+        eventProducer.emit(entityClass.java, savedEntity.id, EntityEventType.CREATE, changes)
 
         return savedEntity
     }
-
 
     @Transactional
     override fun update(request: UpdateRequest): T {
