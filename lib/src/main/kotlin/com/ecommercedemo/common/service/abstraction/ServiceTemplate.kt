@@ -18,7 +18,7 @@ import org.springframework.http.HttpStatus
 import java.util.*
 import kotlin.reflect.KClass
 import kotlin.reflect.KMutableProperty
-import kotlin.reflect.full.createInstance
+import kotlin.reflect.KParameter
 import kotlin.reflect.full.createType
 import kotlin.reflect.full.memberProperties
 
@@ -38,43 +38,40 @@ abstract class ServiceTemplate<T : BaseEntity>(
         if (requestEntityClass != entityClass) {
             throw IllegalArgumentException("Invalid entity type: ${requestEntityClass.simpleName}")
         }
-        val requestStandardProperties =
-            requestEntityClass.memberProperties.filter {
-                !it.name.startsWith("_") && it.name != "pseudoProperties"
-            }
-        val newInstance: T = entityClass.createInstance()
 
-        val entityClassProperties = newInstance::class.memberProperties
+        val entityConstructor = entityClass.constructors.firstOrNull()
+            ?: throw IllegalArgumentException("No suitable constructor found for ${entityClass.simpleName}")
 
-        requestStandardProperties.forEach { requestProperty ->
-            val correspondingEntityProperty = entityClassProperties.find { it.name == requestProperty.name }
-                ?: throw IllegalArgumentException(
-                    "Invalid property: ${requestProperty.name} is not a member of ${newInstance::class.simpleName}"
-                )
-            val value = requestProperty.getter.call(request.data)
-            if (value == null && !correspondingEntityProperty.returnType.isMarkedNullable) {
-                throw IllegalArgumentException("Field ${requestProperty.name} must be provided and cannot be null.")
+        val entityParams = mutableMapOf<KParameter, Any?>()
+
+        // Populate parameters for constructor
+        entityConstructor.parameters.forEach { param ->
+            val requestProperty = requestEntityClass.memberProperties.find { it.name == param.name }
+            val value = requestProperty?.getter?.call(request.data)
+
+            if (value == null && !param.type.isMarkedNullable) {
+                throw IllegalArgumentException("Field ${param.name} must be provided and cannot be null.")
             }
-            if (value != null && value::class.createType() != correspondingEntityProperty.returnType) {
-                throw IllegalArgumentException(
-                    "Field ${requestProperty.name} must be of type ${correspondingEntityProperty.returnType}"
-                )
-            }
-            (requestProperty as KMutableProperty<*>).setter.call(newInstance, value)
+
+            entityParams[param] = value
         }
 
-        if (newInstance is ExpandableBaseEntity) {
+        val initializedEntity = entityConstructor.callBy(entityParams)
+
+        // Handle mutable properties (pseudo-properties, etc.)
+        if (initializedEntity is ExpandableBaseEntity) {
             val pseudoPropertiesFromRequest = if (request.data is ExpandableBaseEntity)
                 objectMapper.readValue(request.data.pseudoProperties, object : TypeReference<Map<String, Any?>>() {})
             else emptyMap()
-            if (pseudoPropertiesFromRequest.isNotEmpty()) {
-                validatePseudoPropertiesFromRequest(newInstance, pseudoPropertiesFromRequest)
 
-                newInstance.pseudoProperties = objectMapper.writeValueAsString(pseudoPropertiesFromRequest)
+            if (pseudoPropertiesFromRequest.isNotEmpty()) {
+                validatePseudoPropertiesFromRequest(initializedEntity, pseudoPropertiesFromRequest)
+                initializedEntity.pseudoProperties = objectMapper.writeValueAsString(pseudoPropertiesFromRequest)
             }
         }
 
-        val savedEntity = adapter.save(newInstance)
+        // Persist and emit events
+        val savedEntity = adapter.save(initializedEntity)
         val changes = EntityChangeTracker<T>().getChangedProperties(null, savedEntity)
         eventProducer.emit(requestEntityClass.java, savedEntity.id, EntityEventType.CREATE, changes)
 
