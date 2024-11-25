@@ -24,42 +24,42 @@ abstract class RestControllerTemplate<T : BaseEntity>(
     }
 
     @PostMapping
-    fun create(
+    open fun create(
         @RequestBody request: CreateRequest<T>
     ): ResponseEntity<T> {
         return ResponseEntity.ok(service.create(request))
     }
 
     @PatchMapping
-    fun update(
+    open fun update(
         @RequestBody request: UpdateRequest
     ): ResponseEntity<T> {
         return ResponseEntity.ok(service.update(request))
     }
 
     @DeleteMapping("/{id}")
-    fun delete(
+    open fun delete(
         @PathVariable id: UUID
     ): ResponseEntity<HttpStatus> {
         return ResponseEntity.ok(service.delete(id))
     }
 
     @GetMapping("/{id}")
-    fun getSingle(
+    open fun getSingle(
         @PathVariable id: UUID
     ): ResponseEntity<T> {
         return ResponseEntity.ok(service.getSingle(id))
     }
 
     @GetMapping
-    fun getMultiple(
+    open fun getMultiple(
         @RequestParam ids: List<UUID>
     ): ResponseEntity<List<T>> {
         return ResponseEntity.ok(service.getMultiple(ids))
     }
 
     @GetMapping("/search")
-    fun search(
+    open fun search(
         @RequestBody request: SearchRequest
     ): ResponseEntity<List<T>> {
         return ResponseEntity.ok(service.search(request))
