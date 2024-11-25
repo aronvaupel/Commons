@@ -11,15 +11,9 @@ import org.springframework.web.bind.annotation.*
 import java.util.*
 
 @RestController
-abstract class RestControllerTemplate<T : BaseEntity> {
-    private lateinit var service: ServiceTemplate<T>
-
-    constructor()
-
-    constructor(service: ServiceTemplate<T>) {
-        this.service = service
-    }
-
+abstract class RestControllerTemplate<T : BaseEntity>(
+    private val service: ServiceTemplate<T>
+) {
     @PostMapping
     fun create(
         @RequestBody request: CreateRequest<T>
