@@ -10,6 +10,7 @@ import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 import java.util.*
 
+@RestController
 abstract class RestControllerTemplate<T : BaseEntity>(
     private val service: ServiceTemplate<T>
 ) {
