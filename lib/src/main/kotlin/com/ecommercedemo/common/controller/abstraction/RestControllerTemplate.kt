@@ -20,7 +20,7 @@ abstract class RestControllerTemplate<T : BaseEntity>(
 
     @PostConstruct
     fun afterInit() {
-        println("UserController post-construction with service: $service")
+        println("RestControllerTemplate post-construction with service: $service")
     }
 
     @PostMapping
