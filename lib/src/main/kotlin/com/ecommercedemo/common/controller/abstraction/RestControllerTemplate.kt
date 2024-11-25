@@ -10,9 +10,15 @@ import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 import java.util.*
 
-abstract class RestControllerTemplate<T : BaseEntity>(
-    private val service: ServiceTemplate<T>
-) {
+@RestController
+abstract class RestControllerTemplate<T : BaseEntity> {
+    private lateinit var service: ServiceTemplate<T>
+
+    constructor()
+
+    constructor(service: ServiceTemplate<T>) {
+        this.service = service
+    }
 
     @PostMapping
     fun create(

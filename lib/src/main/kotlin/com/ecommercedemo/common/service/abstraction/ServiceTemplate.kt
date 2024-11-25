@@ -14,6 +14,7 @@ import com.ecommercedemo.common.persistence.concretion.PseudoPropertyRepository
 import com.fasterxml.jackson.core.type.TypeReference
 import com.fasterxml.jackson.databind.ObjectMapper
 import org.springframework.http.HttpStatus
+import org.springframework.stereotype.Service
 import java.util.*
 import kotlin.reflect.KClass
 import kotlin.reflect.KMutableProperty
@@ -22,6 +23,7 @@ import kotlin.reflect.full.createType
 import kotlin.reflect.full.memberProperties
 
 @Suppress("UNCHECKED_CAST")
+@Service
 abstract class ServiceTemplate<T : BaseEntity>(
     private val adapter: IEntityPersistenceAdapter<T>,
     private val entityClass: KClass<T>,
