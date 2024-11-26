@@ -4,7 +4,7 @@ import jakarta.persistence.MappedSuperclass
 
 @MappedSuperclass
 abstract class BasePseudoProperty: BaseEntity() {
-    abstract val entitySimpleName: String
-    abstract var key: String
-    abstract var typeDescriptor: String
+    open val entitySimpleName: String = ""
+    open var key: String = ""
+    open var typeDescriptor: String = ""
 }
