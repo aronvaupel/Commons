@@ -1,10 +1,9 @@
 package com.ecommercedemo.common.persistence.concretion
 
 import com.ecommercedemo.common.model.concretion.PseudoProperty
-import com.ecommercedemo.common.persistence.abstraction.EntityRepository
-import java.util.*
+import com.ecommercedemo.common.persistence.abstraction.IPseudoPropertyRepository
 
-interface PseudoPropertyRepository : EntityRepository<PseudoProperty, UUID> {
-    fun findAllByEntitySimpleName(entitySimpleName: String): List<PseudoProperty>
+interface PseudoPropertyRepository : IPseudoPropertyRepository<PseudoProperty> {
+    override fun findAllByEntitySimpleName(entitySimpleName: String): List<PseudoProperty>
 }
 

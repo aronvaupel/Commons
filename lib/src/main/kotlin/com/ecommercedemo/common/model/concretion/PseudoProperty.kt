@@ -3,7 +3,6 @@ package com.ecommercedemo.common.model.concretion
 import com.ecommercedemo.common.application.validation.type.ValueType
 import com.ecommercedemo.common.controller.abstraction.util.TypeDescriptor
 import com.ecommercedemo.common.model.abstraction.BaseEntity
-import com.ecommercedemo.common.model.concretion.dto.PseudoPropertyDto
 import com.fasterxml.jackson.databind.ObjectMapper
 import io.hypersistence.utils.hibernate.type.json.JsonBinaryType
 import jakarta.persistence.Column
@@ -37,9 +36,6 @@ open class PseudoProperty(
         "DUMMY_KEY",
         ObjectMapper().writeValueAsString(TypeDescriptor.PrimitiveDescriptor(ValueType.STRING))
     )
-
-    fun toDto() =
-        PseudoPropertyDto(entitySimpleName, key, ObjectMapper().readValue(typeDescriptor, TypeDescriptor::class.java))
 
     companion object {
         const val STORAGE_NAME = "pseudo_properties"

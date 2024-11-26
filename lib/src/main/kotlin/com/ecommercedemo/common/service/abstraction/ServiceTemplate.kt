@@ -9,8 +9,9 @@ import com.ecommercedemo.common.controller.abstraction.request.UpdateRequest
 import com.ecommercedemo.common.controller.abstraction.util.Retriever
 import com.ecommercedemo.common.model.abstraction.BaseEntity
 import com.ecommercedemo.common.model.abstraction.ExpandableBaseEntity
+import com.ecommercedemo.common.model.concretion.PseudoProperty
 import com.ecommercedemo.common.persistence.abstraction.IEntityPersistenceAdapter
-import com.ecommercedemo.common.persistence.concretion.PseudoPropertyRepository
+import com.ecommercedemo.common.persistence.abstraction.IPseudoPropertyRepository
 import com.fasterxml.jackson.core.type.TypeReference
 import com.fasterxml.jackson.databind.ObjectMapper
 import jakarta.transaction.Transactional
@@ -28,7 +29,7 @@ abstract class ServiceTemplate<T : BaseEntity>(
     private val entityClass: KClass<T>,
     private val eventProducer: EntityEventProducer,
     private val objectMapper: ObjectMapper,
-    private val pseudoPropertyRepository: PseudoPropertyRepository,
+    private val pseudoPropertyRepository: IPseudoPropertyRepository<PseudoProperty>,
     private val retriever: Retriever
 ) : IService<T> {
 
@@ -149,7 +150,7 @@ abstract class ServiceTemplate<T : BaseEntity>(
             EntityEventType.DELETE,
             mutableMapOf()
         ) //Fixme: should this be mutable?
-        return HttpStatus.CREATED
+        return HttpStatus.OK
     }
 
     override fun getSingle(id: UUID): T = adapter.getById(id)
