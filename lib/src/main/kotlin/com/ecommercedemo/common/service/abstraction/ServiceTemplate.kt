@@ -8,8 +8,9 @@ import com.ecommercedemo.common.controller.abstraction.request.SearchRequest
 import com.ecommercedemo.common.controller.abstraction.request.UpdateRequest
 import com.ecommercedemo.common.controller.abstraction.util.Retriever
 import com.ecommercedemo.common.model.abstraction.BaseEntity
-import com.ecommercedemo.common.model.abstraction.BasePseudoProperty
 import com.ecommercedemo.common.model.abstraction.ExpandableBaseEntity
+import com.ecommercedemo.common.model.concretion.PseudoProperty
+import com.ecommercedemo.common.persistence.abstraction.EntityRepository
 import com.ecommercedemo.common.persistence.abstraction.IEntityPersistenceAdapter
 import com.ecommercedemo.common.persistence.abstraction.IPseudoPropertyRepository
 import com.fasterxml.jackson.core.type.TypeReference
@@ -29,7 +30,7 @@ abstract class ServiceTemplate<T : BaseEntity>(
     private val entityClass: KClass<T>,
     private val eventProducer: EntityEventProducer,
     private val objectMapper: ObjectMapper,
-    private val pseudoPropertyRepository: IPseudoPropertyRepository<out BasePseudoProperty>,
+    private val pseudoPropertyRepository: EntityRepository<PseudoProperty, UUID>,
     private val retriever: Retriever
 ) : IService<T> {
 
@@ -176,12 +177,14 @@ abstract class ServiceTemplate<T : BaseEntity>(
     }
 
     private fun getValidPseudoProperties(updatedEntity: ExpandableBaseEntity): Map<String, Any> {
-        return pseudoPropertyRepository
-            .findAllByEntitySimpleName(updatedEntity::class.simpleName!!)
-            .associateBy { it.key }
-            .mapValues {
-                objectMapper.readValue(it.value.typeDescriptor, object : TypeReference<Any>() {})
-            }
-
+        if (pseudoPropertyRepository is IPseudoPropertyRepository<*>) {
+            return pseudoPropertyRepository
+                .findAllByEntitySimpleName(updatedEntity::class.simpleName!!)
+                .associateBy { it.key }
+                .mapValues {
+                    objectMapper.readValue(it.value.typeDescriptor, object : TypeReference<Any>() {})
+                }
+        }
+        throw IllegalStateException("Repository must implement IPseudoPropertyRepository")
     }
 }
