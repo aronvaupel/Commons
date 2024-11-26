@@ -8,8 +8,8 @@ import com.ecommercedemo.common.controller.abstraction.request.SearchRequest
 import com.ecommercedemo.common.controller.abstraction.request.UpdateRequest
 import com.ecommercedemo.common.controller.abstraction.util.Retriever
 import com.ecommercedemo.common.model.abstraction.BaseEntity
+import com.ecommercedemo.common.model.abstraction.BasePseudoProperty
 import com.ecommercedemo.common.model.abstraction.ExpandableBaseEntity
-import com.ecommercedemo.common.model.concretion.PseudoProperty
 import com.ecommercedemo.common.persistence.abstraction.IEntityPersistenceAdapter
 import com.ecommercedemo.common.persistence.abstraction.IPseudoPropertyRepository
 import com.fasterxml.jackson.core.type.TypeReference
@@ -29,7 +29,7 @@ abstract class ServiceTemplate<T : BaseEntity>(
     private val entityClass: KClass<T>,
     private val eventProducer: EntityEventProducer,
     private val objectMapper: ObjectMapper,
-    private val pseudoPropertyRepository: IPseudoPropertyRepository<PseudoProperty>,
+    private val pseudoPropertyRepository: IPseudoPropertyRepository<out BasePseudoProperty>,
     private val retriever: Retriever
 ) : IService<T> {
 

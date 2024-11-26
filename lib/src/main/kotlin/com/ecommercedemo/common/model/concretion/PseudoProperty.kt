@@ -2,7 +2,7 @@ package com.ecommercedemo.common.model.concretion
 
 import com.ecommercedemo.common.application.validation.type.ValueType
 import com.ecommercedemo.common.controller.abstraction.util.TypeDescriptor
-import com.ecommercedemo.common.model.abstraction.BaseEntity
+import com.ecommercedemo.common.model.abstraction.BasePseudoProperty
 import com.fasterxml.jackson.databind.ObjectMapper
 import io.hypersistence.utils.hibernate.type.json.JsonBinaryType
 import jakarta.persistence.Column
@@ -22,14 +22,14 @@ open class PseudoProperty(
     @NotNull
     @NotBlank
     @Column(updatable = false)
-    open val entitySimpleName: String,
+    override val entitySimpleName: String,
     @NotNull
     @NotBlank
-    open var key: String = "",
+    override var key: String = "",
     @Type(JsonBinaryType::class)
     @Column(columnDefinition = "jsonb", updatable = false)
-    open var typeDescriptor: String
-) : BaseEntity() {
+    override var typeDescriptor: String
+) : BasePseudoProperty() {
     constructor() : this(
         UUID.randomUUID(),
         "DUMMY_CLASS",

@@ -1,8 +1,8 @@
 package com.ecommercedemo.common.persistence.abstraction
 
-import com.ecommercedemo.common.model.abstraction.BaseEntity
+import com.ecommercedemo.common.model.abstraction.BasePseudoProperty
 import java.util.*
 
-interface IPseudoPropertyRepository <T: BaseEntity>: EntityRepository<T, UUID> {
+interface IPseudoPropertyRepository <T: BasePseudoProperty>: EntityRepository<T, UUID> {
     fun findAllByEntitySimpleName(entitySimpleName: String): List<T>
 }
