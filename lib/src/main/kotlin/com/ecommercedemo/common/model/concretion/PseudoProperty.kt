@@ -22,7 +22,7 @@ open class PseudoProperty(
     @NotNull
     @NotBlank
     @Column(updatable = false)
-    override val entitySimpleName: String,
+    override var entitySimpleName: String,
     @NotNull
     @NotBlank
     override var key: String = "",
