@@ -1,6 +1,6 @@
 package com.ecommercedemo.common.service.abstraction
 
-import com.ecommercedemo.common.application.EntityChangeTracker
+import com.ecommercedemo.common.application.event.EntityEvent
 import com.ecommercedemo.common.application.event.EntityEventProducer
 import com.ecommercedemo.common.application.event.EntityEventType
 import com.ecommercedemo.common.controller.abstraction.request.CreateRequest
@@ -9,20 +9,15 @@ import com.ecommercedemo.common.controller.abstraction.request.UpdateRequest
 import com.ecommercedemo.common.controller.abstraction.util.Retriever
 import com.ecommercedemo.common.model.abstraction.BaseEntity
 import com.ecommercedemo.common.model.abstraction.BasePseudoProperty
-import com.ecommercedemo.common.model.abstraction.ExpandableBaseEntity
 import com.ecommercedemo.common.persistence.abstraction.EntityRepository
 import com.ecommercedemo.common.persistence.abstraction.IEntityPersistenceAdapter
-import com.ecommercedemo.common.persistence.abstraction.IPseudoPropertyRepository
-import com.fasterxml.jackson.core.type.TypeReference
+import com.ecommercedemo.common.service.utility.ServiceUtility
 import com.fasterxml.jackson.databind.ObjectMapper
 import jakarta.transaction.Transactional
 import org.springframework.http.HttpStatus
 import java.util.*
 import kotlin.reflect.KClass
-import kotlin.reflect.KMutableProperty
-import kotlin.reflect.full.createType
 import kotlin.reflect.full.memberProperties
-import kotlin.reflect.jvm.isAccessible
 
 @Suppress("UNCHECKED_CAST")
 abstract class ServiceTemplate<T : BaseEntity>(
@@ -31,127 +26,90 @@ abstract class ServiceTemplate<T : BaseEntity>(
     private val eventProducer: EntityEventProducer,
     private val objectMapper: ObjectMapper,
     private val pseudoPropertyRepository: EntityRepository<out BasePseudoProperty, UUID>,
-    private val retriever: Retriever
+    private val retriever: Retriever,
+    private val utility: ServiceUtility<T>
 ) : IService<T> {
 
     @Transactional
     override fun create(request: CreateRequest<T>): T {
-        val requestPropertyMap = request.data::class.memberProperties.associateBy { it.name }
-
-        val entityConstructor = entityClass.constructors.firstOrNull()
-            ?: throw IllegalArgumentException("No suitable constructor found for ${entityClass.simpleName}")
-
-        val entityConstructorParams = entityConstructor.parameters.associateWith { param ->
-            val requestProperty = requestPropertyMap[param.name]
-            val value = requestProperty?.getter?.call(request.data)
-
-            if (value == null && !param.type.isMarkedNullable) {
-                throw IllegalArgumentException("Field ${param.name} must be provided and cannot be null.")
-            }
-            value
+        val newInstance = utility.constructEntity(request.data::class.memberProperties.associateBy { it.name }) { name ->
+            request.data::class.memberProperties.firstOrNull { it.name == name }?.getter?.call(request.data)
         }
 
-        val newInstance = entityConstructor.callBy(entityConstructorParams)
+        utility.handlePseudoPropertiesIfPresent(newInstance, request.data)
 
-        val targetPropertyMap = newInstance::class.memberProperties.associateBy { it.name }
+        return utility.saveAndEmitEvent(newInstance, EntityEventType.CREATE, null)
+    }
 
-        targetPropertyMap.values
-            .filterIsInstance<KMutableProperty<*>>()
-            .forEach { property ->
-                property.isAccessible = true
-                val matchingRequestProperty = requestPropertyMap[property.name.removePrefix("_")]
-                val value = matchingRequestProperty?.getter?.call(request.data)
-
-                if (value != null) {
-                    property.setter.call(newInstance, value)
-                }
-            }
-
-        if (newInstance is ExpandableBaseEntity && request.data is ExpandableBaseEntity) {
-            val pseudoPropertiesFromRequest = objectMapper.readValue(
-                request.data.pseudoProperties, object : TypeReference<Map<String, Any?>>() {}
-            )
-
-            if (pseudoPropertiesFromRequest.isNotEmpty()) {
-                validatePseudoPropertiesFromRequest(newInstance, pseudoPropertiesFromRequest)
-                newInstance.pseudoProperties = objectMapper.writeValueAsString(pseudoPropertiesFromRequest)
-            }
+    @Transactional
+    override fun createByEvent(event: EntityEvent<T>) {
+        val newInstance = utility.constructEntity(event.properties) { name ->
+            event.properties[name]
         }
 
-        val savedEntity = adapter.save(newInstance)
-        val changes = EntityChangeTracker<T>().getChangedProperties(null, savedEntity)
-        eventProducer.emit(entityClass.java, savedEntity.id, EntityEventType.CREATE, changes)
+        utility.handlePseudoPropertiesIfPresent(newInstance, event.properties)
 
-        return savedEntity
+        adapter.save(newInstance)
     }
 
     @Transactional
     override fun update(request: UpdateRequest): T {
         val originalEntity = getSingle(request.id)
-        if (originalEntity::class != entityClass) {
+
+        if (originalEntity != entityClass) {
             throw IllegalArgumentException(
-                "Entity type mismatch. Expected ${entityClass.simpleName} but found ${originalEntity::class.simpleName}."
+                "Entity type mismatch. Expected ${entityClass.simpleName} but found ${originalEntity::class.java.simpleName}."
             )
         }
 
-        val requestPropertyMap = request.properties
+        val updatedEntity = utility.mapPropertiesToEntity(originalEntity.copy() as T, request.properties)
 
-        val updatedEntity = (originalEntity.copy() as T)
+        utility.handlePseudoPropertiesIfPresent(updatedEntity, request.properties)
 
-        val targetPropertyMap = updatedEntity::class.memberProperties
-            .filterIsInstance<KMutableProperty<*>>()
-            .associateBy { it.name }
-
-        targetPropertyMap.forEach { (name, property) ->
-            val requestValue = requestPropertyMap[name.removePrefix("_")]
-            property.isAccessible = true
-
-            when {
-                requestValue == null && !property.returnType.isMarkedNullable -> {
-                    throw IllegalArgumentException("Field $name cannot be set to null.")
-                }
-                requestValue != null && requestValue::class.createType() != property.returnType -> {
-                    throw IllegalArgumentException("Field $name must be of type ${property.returnType}")
-                }
-                requestValue != null -> {
-                    property.setter.call(updatedEntity, requestValue)
-                }
-            }
-        }
-
-        if (updatedEntity is ExpandableBaseEntity) {
-            val pseudoPropertiesFromRequest = requestPropertyMap["pseudoProperties"] as? Map<String, Any?> ?: emptyMap()
-
-            if (pseudoPropertiesFromRequest.isNotEmpty()) {
-                validatePseudoPropertiesFromRequest(updatedEntity, pseudoPropertiesFromRequest)
-
-                val existingPseudoProperties: Map<String, Any?> = objectMapper.readValue(
-                    updatedEntity.pseudoProperties, object : TypeReference<Map<String, Any?>>() {}
-                )
-                val mergedPseudoProperties = existingPseudoProperties + pseudoPropertiesFromRequest
-                updatedEntity.pseudoProperties = objectMapper.writeValueAsString(mergedPseudoProperties)
-            }
-        }
-
-        val savedEntity = adapter.save(updatedEntity)
-        val changes = EntityChangeTracker<T>().getChangedProperties(originalEntity, savedEntity)
-        eventProducer.emit(entityClass.java, savedEntity.id, EntityEventType.UPDATE, changes)
-
-        return savedEntity
+        return utility.saveAndEmitEvent(updatedEntity, EntityEventType.UPDATE, originalEntity)
     }
 
+    @Transactional
+    override fun updateByEvent(event: EntityEvent<T>) {
+        val originalEntity = getSingle(event.id)
+
+        val updatedEntity = utility.mapPropertiesToEntity(originalEntity.copy() as T, event.properties)
+
+        utility.handlePseudoPropertiesIfPresent(updatedEntity, event.properties)
+
+        adapter.save(updatedEntity)
+    }
 
     @Transactional
     override fun delete(id: UUID): HttpStatus {
-        val entity = getSingle(id)
-        adapter.delete(entity.id)
-        eventProducer.emit(
-            entity::class.java,
-            id,
-            EntityEventType.DELETE,
-            mutableMapOf()
-        ) //Fixme: should this be mutable?
-        return HttpStatus.OK
+        return try {
+            val entity = utility.handleMissingEntity { getSingle(id) } ?: return HttpStatus.NOT_FOUND
+            adapter.delete(entity.id)
+            eventProducer.emit(
+                entity::class.java,
+                id,
+                EntityEventType.DELETE,
+                mutableMapOf()
+            )
+            HttpStatus.OK
+        } catch (e: Exception) {
+            println("Error deleting entity with ID $id: ${e.message}")
+            e.printStackTrace()
+            HttpStatus.INTERNAL_SERVER_ERROR
+        }
+    }
+
+    @Transactional
+    override fun deleteByEvent(event: EntityEvent<T>) {
+        try {
+            val entity = utility.handleMissingEntity { getSingle(event.id) }
+            if (entity != null) {
+                adapter.delete(entity.id)
+            }
+        } catch (e: Exception) {
+            println("Error deleting entity with ID ${event.id}: ${e.message}")
+            e.printStackTrace()
+        }
     }
 
     override fun getSingle(id: UUID): T = adapter.getById(id)
@@ -159,32 +117,4 @@ abstract class ServiceTemplate<T : BaseEntity>(
     override fun getMultiple(ids: List<UUID>): List<T> = adapter.getAllByIds(ids)
 
     override fun search(request: SearchRequest): List<T> = retriever.executeSearch(request, entityClass)
-
-
-    private fun validatePseudoPropertiesFromRequest(
-        updatedEntity: ExpandableBaseEntity, pseudoPropertiesFromRequest: Map<String, Any?>
-    ) {
-        val validPseudoProperties: Map<String, Any> = getValidPseudoProperties(updatedEntity)
-
-        pseudoPropertiesFromRequest.forEach { (key, value) ->
-            val expectedType = validPseudoProperties[key]
-                ?: throw IllegalArgumentException("Invalid pseudo-property: $key")
-
-            if (value != null && value::class.qualifiedName != expectedType::class.qualifiedName) {
-                throw IllegalArgumentException("Pseudo-property $key must be of type $expectedType")
-            }
-        }
-    }
-
-    private fun getValidPseudoProperties(updatedEntity: ExpandableBaseEntity): Map<String, Any> {
-        if (pseudoPropertyRepository is IPseudoPropertyRepository<*>) {
-            return pseudoPropertyRepository
-                .findAllByEntitySimpleName(updatedEntity::class.simpleName!!)
-                .associateBy { it.key }
-                .mapValues {
-                    objectMapper.readValue(it.value.typeDescriptor, object : TypeReference<Any>() {})
-                }
-        }
-        throw IllegalStateException("Repository must implement IPseudoPropertyRepository")
-    }
 }
