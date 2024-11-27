@@ -201,9 +201,10 @@ abstract class ServiceTemplate<T : BaseEntity>(
             .filterIsInstance<KMutableProperty<*>>()
             .forEach { property ->
                 property.isAccessible = true
-                val matchingRequestProperty = propertyMap[property.name.removePrefix("_")]
-                if (matchingRequestProperty != null) {
-                    property.setter.call(newInstance, matchingRequestProperty)
+                val resolvedValue = valueProvider(property.name.removePrefix("_"))
+
+                if (resolvedValue != null) {
+                    property.setter.call(newInstance, resolvedValue)
                 }
             }
 
@@ -241,20 +242,21 @@ abstract class ServiceTemplate<T : BaseEntity>(
             .associateBy { it.name }
 
         targetPropertyMap.forEach { (name, property) ->
-            val requestValue = properties[name.removePrefix("_")]
             property.isAccessible = true
 
+            val resolvedValue =properties[name] ?: properties[name.removePrefix("_")]
+
             when {
-                requestValue == null && !property.returnType.isMarkedNullable -> {
+                resolvedValue == null && !property.returnType.isMarkedNullable -> {
                     throw IllegalArgumentException("Field $name cannot be set to null.")
                 }
 
-                requestValue != null && requestValue::class.createType() != property.returnType -> {
+                resolvedValue != null && resolvedValue::class.createType() != property.returnType -> {
                     throw IllegalArgumentException("Field $name must be of type ${property.returnType}")
                 }
 
-                requestValue != null -> {
-                    property.setter.call(entity, requestValue)
+                resolvedValue != null -> {
+                    property.setter.call(entity, resolvedValue)
                 }
             }
         }
