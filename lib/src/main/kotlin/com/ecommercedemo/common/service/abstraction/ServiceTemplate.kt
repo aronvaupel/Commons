@@ -196,6 +196,7 @@ abstract class ServiceTemplate<T : BaseEntity>(
         val newInstance = entityConstructor.callBy(entityConstructorParams)
 
         val targetPropertyMap = newInstance::class.memberProperties.associateBy { it.name }
+
         targetPropertyMap.values
             .filterIsInstance<KMutableProperty<*>>()
             .forEach { property ->
@@ -240,7 +241,7 @@ abstract class ServiceTemplate<T : BaseEntity>(
             .associateBy { it.name }
 
         targetPropertyMap.forEach { (name, property) ->
-            val value = properties[name.removePrefix("_")]
+            val value = properties[name.removePrefix("_")] // Handles `_password` resolution
             property.isAccessible = true
 
             when {
