@@ -37,7 +37,7 @@ abstract class ServiceTemplate<T : BaseEntity>(
 
     @Transactional
     override fun create(request: CreateRequest<T>): T {
-        val newInstance = constructEntity(request.data::class.memberProperties.associateBy { it.name }) { name ->
+        val newInstance = constructEntity { name ->
             request.data::class.memberProperties.firstOrNull { it.name == name }?.getter?.call(request.data)
         }
 
@@ -48,7 +48,7 @@ abstract class ServiceTemplate<T : BaseEntity>(
 
     @Transactional
     override fun createByEvent(event: EntityEvent<T>) {
-        val newInstance = constructEntity(event.properties) { name ->
+        val newInstance = constructEntity { name ->
             event.properties[name]
         }
 
@@ -61,7 +61,7 @@ abstract class ServiceTemplate<T : BaseEntity>(
     override fun update(request: UpdateRequest): T {
         val originalEntity = getSingle(request.id)
 
-        if (originalEntity != entityClass) {
+        if (originalEntity::class != entityClass) {
             throw IllegalArgumentException(
                 "Entity type mismatch. Expected ${entityClass.simpleName} but found ${originalEntity::class.java.simpleName}."
             )
@@ -179,7 +179,6 @@ abstract class ServiceTemplate<T : BaseEntity>(
     }
 
     private fun constructEntity(
-        propertyMap: Map<String, Any?>,
         valueProvider: (String) -> Any?
     ): T {
         val entityConstructor = entityClass.constructors.firstOrNull()
