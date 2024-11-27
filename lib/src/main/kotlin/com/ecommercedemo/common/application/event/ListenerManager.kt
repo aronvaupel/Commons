@@ -31,7 +31,10 @@ class ListenerManager @Autowired constructor(
 
     @Scheduled(fixedRate = 30000, initialDelay = 10000)
     fun manageListeners() {
-        if (downstreamEntities.isEmpty()) println("No downstream entities found. No listeners to manage.")
+        if (downstreamEntities.isEmpty()) {
+            println("No downstream entities found. No listeners to manage.")
+            return
+        }
         val kafkaTopics = redisService.getKafkaRegistry()
         downstreamEntities.forEach { entity ->
             val topicDetails = kafkaTopics.topics[entity]
@@ -43,11 +46,10 @@ class ListenerManager @Autowired constructor(
             } else {
                if (listenerContainers.contains(entity)) {
                    stopKafkaListener(entity)
+                   println("Topic not found: $entity. Listener stopped.")
                }
             }
         }
-        if ((downstreamEntities - kafkaTopics.topics.keys).isNotEmpty())
-        println("Warning: no producers found for topics: ${downstreamEntities - kafkaTopics.topics.keys}")
     }
 
 

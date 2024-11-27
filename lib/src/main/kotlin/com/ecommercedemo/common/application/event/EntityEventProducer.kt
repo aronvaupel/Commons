@@ -1,6 +1,7 @@
 package com.ecommercedemo.common.application.event
 
 import com.ecommercedemo.common.application.cache.RedisService
+import com.ecommercedemo.common.model.abstraction.BaseEntity
 
 import org.springframework.kafka.core.KafkaTemplate
 import org.springframework.stereotype.Service
@@ -12,7 +13,7 @@ class EntityEventProducer(
     private val redisService: RedisService
 ) {
 
-    fun <T : Any> emit(
+    fun <T : BaseEntity> emit(
         entityClass: Class<T>,
         id: UUID,
         entityEventType: EntityEventType,
@@ -23,6 +24,7 @@ class EntityEventProducer(
 
         if (kafkaRegistry.topics.containsKey(topic)) {
             val event = EntityEvent(
+                entityClass = entityClass,
                 id = id,
                 type = entityEventType,
                 properties = properties
