@@ -63,7 +63,7 @@ abstract class ServiceTemplate<T : BaseEntity>(
 
         if (originalEntity::class != entityClass) {
             throw IllegalArgumentException(
-                "Entity type mismatch. Expected ${entityClass.simpleName} but found ${originalEntity::class.java.simpleName}."
+                "Entity type mismatch. Expected ${entityClass.simpleName} but found ${originalEntity::class.simpleName}."
             )
         }
 
@@ -236,26 +236,30 @@ abstract class ServiceTemplate<T : BaseEntity>(
     }
 
     private fun mapPropertiesToEntity(entity: T, properties: Map<String, Any?>): T {
-        val targetPropertyMap = entity::class.memberProperties
+        val entityProperties = entity::class.memberProperties
             .filterIsInstance<KMutableProperty<*>>()
             .associateBy { it.name }
 
-        targetPropertyMap.forEach { (name, property) ->
+        properties.forEach { (key, value) ->
+            val property = entityProperties[key] ?: entityProperties[key.removePrefix("_")]
+
+            if (property == null) {
+                throw IllegalArgumentException("Field $key does not exist in the entity.")
+            }
+
             property.isAccessible = true
 
-            val resolvedValue =properties[name] ?: properties[name.removePrefix("_")]
-
             when {
-                resolvedValue == null && !property.returnType.isMarkedNullable -> {
-                    throw IllegalArgumentException("Field $name cannot be set to null.")
+                value == null && !property.returnType.isMarkedNullable -> {
+                    throw IllegalArgumentException("Field $key cannot be set to null.")
                 }
 
-                resolvedValue != null && resolvedValue::class.createType() != property.returnType -> {
-                    throw IllegalArgumentException("Field $name must be of type ${property.returnType}")
+                value != null && value::class.createType() != property.returnType -> {
+                    throw IllegalArgumentException("Field $key must be of type ${property.returnType}.")
                 }
 
-                resolvedValue != null -> {
-                    property.setter.call(entity, resolvedValue)
+                else -> {
+                    property.setter.call(entity, value)
                 }
             }
         }
