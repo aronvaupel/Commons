@@ -3,7 +3,6 @@ package com.ecommercedemo.common.application.event
 import com.ecommercedemo.common.application.EntityScanner
 import com.ecommercedemo.common.application.cache.RedisService
 import jakarta.annotation.PostConstruct
-import org.apache.kafka.clients.consumer.ConsumerRecord
 import org.apache.kafka.common.errors.WakeupException
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
@@ -13,6 +12,7 @@ import org.springframework.context.annotation.DependsOn
 import org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory
 import org.springframework.kafka.listener.ContainerProperties
 import org.springframework.kafka.listener.KafkaMessageListenerContainer
+import org.springframework.kafka.listener.MessageListener
 import org.springframework.kafka.listener.MessageListenerContainer
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Service
@@ -81,16 +81,17 @@ class ListenerManager @Autowired constructor(
 
         val containerProperties = ContainerProperties(topic).apply {
             this.groupId = groupId
-            setMessageListener { message: ConsumerRecord<String, Any> ->
-                log.info("Received message from topic $topic: ${message.value()}")
+            // Use a concrete implementation of MessageListener
+            this.setMessageListener(MessageListener<String, Any> { record ->
+                log.info("Received message from topic $topic: ${record.value()}")
                 try {
-                    val event = message.value() as? EntityEvent<*>
+                    val event = record.value() as? EntityEvent<*>
                         ?: throw IllegalArgumentException("Invalid event type received from topic $topic")
                     eventHandler.handle(event)
                 } catch (e: Exception) {
                     log.error("Error while processing message from topic $topic", e)
                 }
-            }
+            })
         }
 
         val listenerContainer = KafkaMessageListenerContainer(
@@ -102,6 +103,7 @@ class ListenerManager @Autowired constructor(
         listenerContainers[topic] = listenerContainer
         log.info("Kafka listener started for topic: $topic with group ID: $groupId")
     }
+
 
 
     private fun stopKafkaListener(topic: String) {
