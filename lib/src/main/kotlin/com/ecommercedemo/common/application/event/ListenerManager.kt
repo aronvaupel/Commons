@@ -4,11 +4,14 @@ import com.ecommercedemo.common.application.EntityScanner
 import com.ecommercedemo.common.application.cache.RedisService
 import jakarta.annotation.PostConstruct
 import org.apache.kafka.clients.consumer.ConsumerRecord
+import org.apache.kafka.common.errors.WakeupException
+import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass
 import org.springframework.context.annotation.DependsOn
 import org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory
-import org.springframework.kafka.listener.MessageListener
+import org.springframework.kafka.listener.ContainerProperties
+import org.springframework.kafka.listener.KafkaMessageListenerContainer
 import org.springframework.kafka.listener.MessageListenerContainer
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Service
@@ -17,73 +20,91 @@ import org.springframework.stereotype.Service
 @ConditionalOnClass(name = ["org.springframework.data.jpa.repository.JpaRepository"])
 @DependsOn("entityScanner")
 class ListenerManager @Autowired constructor(
-    private val eventHandler: EventHandler,
+    private val redisService: RedisService,
     private val entityScanner: EntityScanner,
     private val kafkaListenerContainerFactory: ConcurrentKafkaListenerContainerFactory<String, Any>,
-    private val redisService: RedisService,
+    private val eventHandler: EventHandler,
 ) {
+    private val log = LoggerFactory.getLogger(ListenerManager::class.java)
+
     private val listenerContainers = mutableMapOf<String, MessageListenerContainer>()
     private lateinit var downstreamEntities: List<String>
 
     @PostConstruct
     fun init() {
+        log.info("Scanning for downstream entities")
         downstreamEntities = entityScanner.getDownstreamEntityNames()
-        println("Downstream entities found: $downstreamEntities")
+        log.info("Downstream entities found: $downstreamEntities")
         manageListeners()
     }
 
     @Scheduled(fixedRate = 30000, initialDelay = 10000)
     fun manageListeners() {
         if (downstreamEntities.isEmpty()) {
-            println("No downstream entities found. No listeners to manage.")
+            log.warn("No downstream entities found. No listeners to manage.")
             return
         }
+
         val kafkaTopics = redisService.getKafkaRegistry()
-        println("Kafka topics fetched from Redis: $kafkaTopics")
+        log.info("Kafka topics fetched from Redis: $kafkaTopics")
 
         downstreamEntities.forEach { entity ->
             val topicDetails = kafkaTopics.topics[entity]
+
             if (topicDetails != null) {
                 if (!listenerContainers.containsKey(entity)) {
-                    createKafkaListener(entity)
-                    redisService.registerConsumer(entity)
-                    println("Topic found: $entity. Listener started.")
+                    try {
+                        createKafkaListener(entity)
+                        redisService.registerConsumer(entity)
+                        log.info("Listener successfully created and registered for topic: $entity")
+                    } catch (e: Exception) {
+                        log.error("Failed to create listener for topic: $entity", e)
+                    }
                 }
-            } else {
-               if (listenerContainers.contains(entity)) {
-                   stopKafkaListener(entity)
-                   println("Topic not found: $entity. Listener stopped.")
-               }
+            } else if (listenerContainers.containsKey(entity)) {
+                stopKafkaListener(entity)
+                log.info("Listener stopped for topic: $entity")
             }
         }
     }
 
-
     private fun createKafkaListener(topic: String) {
-        val listenerContainer = kafkaListenerContainerFactory.createContainer(topic)
-        listenerContainer.setupMessageListener(createMessageListener(topic))
+        log.info("Creating Kafka listener for topic: $topic")
+
+        val containerProperties = ContainerProperties(topic).apply {
+            setMessageListener { message: ConsumerRecord<String, Any> ->
+                log.info("Received message from topic $topic: ${message.value()}")
+                try {
+                    val event = message.value() as? EntityEvent<*>
+                        ?: throw IllegalArgumentException("Invalid event type received from topic $topic")
+                    eventHandler.handle(event)
+                } catch (e: Exception) {
+                    log.error("Error while processing message from topic $topic", e)
+                }
+            }
+        }
+
+        val listenerContainer = KafkaMessageListenerContainer(
+            kafkaListenerContainerFactory.consumerFactory,
+            containerProperties
+        )
+
         listenerContainer.start()
         listenerContainers[topic] = listenerContainer
-        println("Kafka listener started for topic: $topic")
+        log.info("Kafka listener started for topic: $topic")
     }
 
     private fun stopKafkaListener(topic: String) {
-        listenerContainers[topic]?.stop()
-        listenerContainers.remove(topic)
-        println("Kafka listener stopped for topic: $topic")
-    }
-
-    private fun createMessageListener(topic: String): MessageListener<String, Any> {
-        return MessageListener { record: ConsumerRecord<String, Any> ->
-            println("Received message from topic $topic: ${record.value()}")
+        listenerContainers[topic]?.let { container ->
             try {
-                val event = record.value() as? EntityEvent<*>
-                    ?: throw IllegalArgumentException("Invalid event type received from topic $topic")
-                eventHandler.handle(event)
+                container.stop()
+                log.info("Successfully stopped listener for topic: $topic")
+            } catch (e: WakeupException) {
+                log.warn("Listener wakeup during stop for topic $topic", e)
             } catch (e: Exception) {
-                println("Error processing message from topic $topic: ${e.message}")
-                e.printStackTrace()
+                log.error("Error stopping listener for topic $topic", e)
             }
+            listenerContainers.remove(topic)
         }
     }
 }
