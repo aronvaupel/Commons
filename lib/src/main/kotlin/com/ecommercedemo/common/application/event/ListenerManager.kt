@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass
 import org.springframework.context.annotation.DependsOn
 import org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory
+import org.springframework.kafka.listener.MessageListener
 import org.springframework.kafka.listener.MessageListenerContainer
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Service
@@ -16,9 +17,10 @@ import org.springframework.stereotype.Service
 @ConditionalOnClass(name = ["org.springframework.data.jpa.repository.JpaRepository"])
 @DependsOn("entityScanner")
 class ListenerManager @Autowired constructor(
-    private val redisService: RedisService,
+    private val eventHandler: EventHandler,
     private val entityScanner: EntityScanner,
     private val kafkaListenerContainerFactory: ConcurrentKafkaListenerContainerFactory<String, Any>,
+    private val redisService: RedisService,
 ) {
     private val listenerContainers = mutableMapOf<String, MessageListenerContainer>()
     private lateinit var downstreamEntities: List<String>
@@ -38,6 +40,7 @@ class ListenerManager @Autowired constructor(
         }
         val kafkaTopics = redisService.getKafkaRegistry()
         println("Kafka topics fetched from Redis: $kafkaTopics")
+
         downstreamEntities.forEach { entity ->
             val topicDetails = kafkaTopics.topics[entity]
             if (topicDetails != null) {
@@ -58,9 +61,7 @@ class ListenerManager @Autowired constructor(
 
     private fun createKafkaListener(topic: String) {
         val listenerContainer = kafkaListenerContainerFactory.createContainer(topic)
-        listenerContainer.setupMessageListener { message: ConsumerRecord<String, Any> ->
-            println("Received message from topic $topic: ${message.value()}")
-        }
+        listenerContainer.setupMessageListener(createMessageListener(topic))
         listenerContainer.start()
         listenerContainers[topic] = listenerContainer
         println("Kafka listener started for topic: $topic")
@@ -70,5 +71,19 @@ class ListenerManager @Autowired constructor(
         listenerContainers[topic]?.stop()
         listenerContainers.remove(topic)
         println("Kafka listener stopped for topic: $topic")
+    }
+
+    private fun createMessageListener(topic: String): MessageListener<String, Any> {
+        return MessageListener { record: ConsumerRecord<String, Any> ->
+            println("Received message from topic $topic: ${record.value()}")
+            try {
+                val event = record.value() as? EntityEvent<*>
+                    ?: throw IllegalArgumentException("Invalid event type received from topic $topic")
+                eventHandler.handle(event)
+            } catch (e: Exception) {
+                println("Error processing message from topic $topic: ${e.message}")
+                e.printStackTrace()
+            }
+        }
     }
 }

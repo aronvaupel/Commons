@@ -2,11 +2,11 @@ package com.ecommercedemo.common.application.event
 
 import com.ecommercedemo.common.model.abstraction.BaseEntity
 import org.springframework.context.ApplicationContext
-import org.springframework.kafka.annotation.KafkaListener
+import org.springframework.stereotype.Service
 import java.lang.reflect.ParameterizedType
 
 @Suppress("UNCHECKED_CAST", "unused")
-@KafkaListener(topics = ["\${kafka.topic}"])
+@Service
 class EventHandler(
     private val applicationContext: ApplicationContext
 ) {
