@@ -76,7 +76,8 @@ class ListenerManager @Autowired constructor(
     }
 
     private fun createKafkaListener(topic: String) {
-        val groupId = "$serviceName-$topic" // Use the injected service name
+        log.info("Creating Kafka listener for topic: $topic")
+        val groupId = "$serviceName-$topic"
 
         val containerProperties = ContainerProperties(topic).apply {
             this.groupId = groupId
@@ -101,6 +102,7 @@ class ListenerManager @Autowired constructor(
         listenerContainers[topic] = listenerContainer
         log.info("Kafka listener started for topic: $topic with group ID: $groupId")
     }
+
 
     private fun stopKafkaListener(topic: String) {
         listenerContainers[topic]?.let { container ->
