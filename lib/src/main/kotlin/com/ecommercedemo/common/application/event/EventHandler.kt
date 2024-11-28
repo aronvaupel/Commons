@@ -12,6 +12,7 @@ class EventHandler(
 ) {
 
     fun <T : BaseEntity> handle(event: EntityEvent<T>) {
+        println("Received event for ${event.entityClass.simpleName} with ID: ${event.id}")
         try {
            determineUseCaseForEvent(event).applyChanges(event)
         } catch (e: Exception) {
@@ -23,8 +24,13 @@ class EventHandler(
     }
 
     private fun <T : BaseEntity> determineUseCaseForEvent(event: EntityEvent<T>): IEventTypeUseCase<T> {
+        println("Determining use case for event: $event")
         val useCaseClass = when (event.type) {
-            EntityEventType.CREATE -> ICreateTypeUseCase::class.java
+            EntityEventType.CREATE -> {
+                println("Event type is CREATE")
+                ICreateTypeUseCase::class.java
+            }
+
             EntityEventType.UPDATE -> IUpdateTypeUseCase::class.java
             EntityEventType.DELETE -> IDeleteTypeUseCase::class.java
         } as Class<IEventTypeUseCase<T>>
@@ -36,7 +42,9 @@ class EventHandler(
         processorType: Class<P>,
         entityClass: Class<T>
     ): P {
+        println("Attempt to find matching use case")
         val beans = applicationContext.getBeansOfType(processorType).values
+        println("Found following beans: $beans")
         return beans.find { processor ->
             (processor::class.java.genericInterfaces.firstOrNull() as? ParameterizedType)
                 ?.actualTypeArguments?.firstOrNull() == entityClass
