@@ -38,7 +38,7 @@ open class KafkaConfig {
         return factory
     }
 
-    private fun producerProperties(): Map<String, Any> {
+    open fun producerProperties(): Map<String, Any> {
         return mapOf(
             ProducerConfig.BOOTSTRAP_SERVERS_CONFIG to "kafka:9092",
             ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG to StringSerializer::class.java,
@@ -46,7 +46,7 @@ open class KafkaConfig {
         )
     }
 
-    private fun consumerProperties(): Map<String, Any> {
+    open fun consumerProperties(): Map<String, Any> {
         return mapOf(
             ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG to "kafka:9092",
             ConsumerConfig.GROUP_ID_CONFIG to "default-group",
