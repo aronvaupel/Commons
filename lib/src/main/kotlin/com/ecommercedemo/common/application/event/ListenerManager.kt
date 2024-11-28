@@ -55,11 +55,12 @@ class ListenerManager @Autowired constructor(
         val kafkaTopics = redisService.getKafkaRegistry()
         log.info("Kafka topics fetched from Redis: $kafkaTopics")
 
-        downstreamEntities.forEach { entity ->
-            val topicDetails = kafkaTopics.topics[entity.removePrefix("_")]
+        downstreamEntities.forEach { prefixedEntity ->
+            val entity = prefixedEntity.removePrefix("_")
+            val topicDetails = kafkaTopics.topics[entity]
 
             if (topicDetails != null) {
-                if (!listenerContainers.containsKey(entity.removePrefix("_"))) {
+                if (!listenerContainers.containsKey(entity)) {
                     try {
                         createKafkaListener(entity)
                         redisService.registerConsumer(entity)
@@ -69,7 +70,7 @@ class ListenerManager @Autowired constructor(
                     }
                 }
             } else if (listenerContainers.containsKey(entity)) {
-                stopKafkaListener(entity)
+                stopKafkaListener(prefixedEntity)
                 log.info("Listener stopped for topic: $entity")
             }
         }
