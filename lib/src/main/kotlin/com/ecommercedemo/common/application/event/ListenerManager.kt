@@ -7,6 +7,7 @@ import org.apache.kafka.clients.consumer.ConsumerRecord
 import org.apache.kafka.common.errors.WakeupException
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass
 import org.springframework.context.annotation.DependsOn
 import org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory
@@ -16,14 +17,15 @@ import org.springframework.kafka.listener.MessageListenerContainer
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Service
 
-@Service
 @ConditionalOnClass(name = ["org.springframework.data.jpa.repository.JpaRepository"])
 @DependsOn("entityScanner")
+@Service
 class ListenerManager @Autowired constructor(
     private val redisService: RedisService,
     private val entityScanner: EntityScanner,
     private val kafkaListenerContainerFactory: ConcurrentKafkaListenerContainerFactory<String, Any>,
     private val eventHandler: EventHandler,
+    @Value("\${spring.application.name}") private val serviceName: String // Mandatory service name
 ) {
     private val log = LoggerFactory.getLogger(ListenerManager::class.java)
 
@@ -32,6 +34,11 @@ class ListenerManager @Autowired constructor(
 
     @PostConstruct
     fun init() {
+        if (serviceName.isBlank()) {
+            throw IllegalStateException("The service name is not configured. Please set 'spring.application.name' in your application.yml or properties.")
+        }
+        log.info("Service name is: $serviceName")
+
         log.info("Scanning for downstream entities")
         downstreamEntities = entityScanner.getDownstreamEntityNames()
         log.info("Downstream entities found: $downstreamEntities")
@@ -69,9 +76,10 @@ class ListenerManager @Autowired constructor(
     }
 
     private fun createKafkaListener(topic: String) {
-        log.info("Creating Kafka listener for topic: $topic")
+        val groupId = "$serviceName-$topic" // Use the injected service name
 
         val containerProperties = ContainerProperties(topic).apply {
+            this.groupId = groupId
             setMessageListener { message: ConsumerRecord<String, Any> ->
                 log.info("Received message from topic $topic: ${message.value()}")
                 try {
@@ -91,7 +99,7 @@ class ListenerManager @Autowired constructor(
 
         listenerContainer.start()
         listenerContainers[topic] = listenerContainer
-        log.info("Kafka listener started for topic: $topic")
+        log.info("Kafka listener started for topic: $topic with group ID: $groupId")
     }
 
     private fun stopKafkaListener(topic: String) {
@@ -102,7 +110,7 @@ class ListenerManager @Autowired constructor(
             } catch (e: WakeupException) {
                 log.warn("Listener wakeup during stop for topic $topic", e)
             } catch (e: Exception) {
-                log.error("Error stopping listener for topic $topic", e)
+                log.error("Error stopping listener for topic: $topic", e)
             }
             listenerContainers.remove(topic)
         }
