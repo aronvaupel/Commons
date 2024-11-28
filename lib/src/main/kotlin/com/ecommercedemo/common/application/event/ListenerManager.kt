@@ -49,7 +49,7 @@ class ListenerManager @Autowired constructor(
         log.info("Kafka topics fetched from Redis: $kafkaTopics")
 
         downstreamEntities.forEach { entity ->
-            val topicDetails = kafkaTopics.topics[entity]
+            val topicDetails = kafkaTopics.topics[entity.removePrefix("_")]
 
             if (topicDetails != null) {
                 if (!listenerContainers.containsKey(entity)) {
