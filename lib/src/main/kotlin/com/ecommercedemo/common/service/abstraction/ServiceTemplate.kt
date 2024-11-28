@@ -67,7 +67,7 @@ abstract class ServiceTemplate<T : BaseEntity>(
             )
         }
 
-        val updatedEntity = mapPropertiesToEntity(originalEntity.copy() as T, request.properties)
+        val updatedEntity = applyPropertiesToExistingEntity(originalEntity.copy() as T, request.properties)
 
         handlePseudoPropertiesIfPresent(updatedEntity, request.properties)
 
@@ -78,7 +78,7 @@ abstract class ServiceTemplate<T : BaseEntity>(
     override fun updateByEvent(event: EntityEvent<T>) {
         val originalEntity = getSingle(event.id)
 
-        val updatedEntity = mapPropertiesToEntity(originalEntity.copy() as T, event.properties)
+        val updatedEntity = applyPropertiesToExistingEntity(originalEntity.copy() as T, event.properties)
 
         handlePseudoPropertiesIfPresent(updatedEntity, event.properties)
 
@@ -127,7 +127,10 @@ abstract class ServiceTemplate<T : BaseEntity>(
         val savedEntity = adapter.save(entity)
 
         val changes =
-            originalEntity?.let { EntityChangeTracker<T>().getChangedProperties(it, savedEntity) } ?: mutableMapOf()
+            originalEntity?.let { EntityChangeTracker<T>().getChangedProperties(it, savedEntity) } ?: EntityChangeTracker<T>().getChangedProperties(
+                null,
+                savedEntity
+            )
 
         eventProducer.emit(entityClass.java, savedEntity.id, eventType, changes)
 
@@ -235,7 +238,7 @@ abstract class ServiceTemplate<T : BaseEntity>(
         }
     }
 
-    private fun mapPropertiesToEntity(entity: T, properties: Map<String, Any?>): T {
+    private fun applyPropertiesToExistingEntity(entity: T, properties: Map<String, Any?>): T {
         val entityProperties = entity::class.memberProperties
             .filterIsInstance<KMutableProperty<*>>()
             .associateBy { it.name }
