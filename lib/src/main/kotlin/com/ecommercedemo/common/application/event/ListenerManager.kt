@@ -59,7 +59,7 @@ class ListenerManager @Autowired constructor(
             val topicDetails = kafkaTopics.topics[entity.removePrefix("_")]
 
             if (topicDetails != null) {
-                if (!listenerContainers.containsKey(entity)) {
+                if (!listenerContainers.containsKey(entity.removePrefix("_"))) {
                     try {
                         createKafkaListener(entity)
                         redisService.registerConsumer(entity)
