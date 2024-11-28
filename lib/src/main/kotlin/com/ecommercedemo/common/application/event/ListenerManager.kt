@@ -26,6 +26,7 @@ class ListenerManager @Autowired constructor(
     @PostConstruct
     fun init() {
         downstreamEntities = entityScanner.getDownstreamEntityNames()
+        println("Downstream entities found: $downstreamEntities")
         manageListeners()
     }
 
@@ -36,12 +37,14 @@ class ListenerManager @Autowired constructor(
             return
         }
         val kafkaTopics = redisService.getKafkaRegistry()
+        println("Kafka topics fetched from Redis: $kafkaTopics")
         downstreamEntities.forEach { entity ->
             val topicDetails = kafkaTopics.topics[entity]
             if (topicDetails != null) {
                 if (!listenerContainers.containsKey(entity)) {
                     createKafkaListener(entity)
                     redisService.registerConsumer(entity)
+                    println("Topic found: $entity. Listener started.")
                 }
             } else {
                if (listenerContainers.contains(entity)) {
