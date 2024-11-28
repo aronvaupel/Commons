@@ -56,7 +56,7 @@ class RedisService(
 
     fun registerConsumer(downstreamEntity: String) {
         val kafkaRegistry = getKafkaRegistry()
-        val topicDetails = kafkaRegistry.topics[downstreamEntity]
+        val topicDetails = kafkaRegistry.topics[downstreamEntity.removePrefix("_")]
 
         when {
             topicDetails == null -> throw Exception("Topic $downstreamEntity does not exist.")

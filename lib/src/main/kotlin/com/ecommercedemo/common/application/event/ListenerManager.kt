@@ -81,8 +81,7 @@ class ListenerManager @Autowired constructor(
 
         val containerProperties = ContainerProperties(topic).apply {
             this.groupId = groupId
-            // Use a concrete implementation of MessageListener
-            this.setMessageListener(MessageListener<String, Any> { record ->
+            this.messageListener = MessageListener<String, Any> { record ->
                 log.info("Received message from topic $topic: ${record.value()}")
                 try {
                     val event = record.value() as? EntityEvent<*>
@@ -91,7 +90,7 @@ class ListenerManager @Autowired constructor(
                 } catch (e: Exception) {
                     log.error("Error while processing message from topic $topic", e)
                 }
-            })
+            }
         }
 
         val listenerContainer = KafkaMessageListenerContainer(
