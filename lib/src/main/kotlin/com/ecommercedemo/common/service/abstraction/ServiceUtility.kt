@@ -18,7 +18,6 @@ import kotlin.reflect.jvm.isAccessible
 @Service
 @Suppress("UNCHECKED_CAST")
 class ServiceUtility<T: BaseEntity>(
-    private val entityClass: KClass<T>,
     private val objectMapper: ObjectMapper,
     private val pseudoPropertyRepository: EntityRepository<out BasePseudoProperty, UUID>,
 ) {
@@ -48,7 +47,7 @@ class ServiceUtility<T: BaseEntity>(
         valueProvider: (String) -> Any?
     ): E {
         val entityConstructor = instanceClass.constructors.firstOrNull()
-            ?: throw IllegalArgumentException("No suitable constructor found for ${entityClass.simpleName}")
+            ?: throw IllegalArgumentException("No suitable constructor found for ${instanceClass.simpleName}")
 
         val entityConstructorParams = entityConstructor.parameters.associateWith { param ->
             val value = valueProvider(param.name!!)
