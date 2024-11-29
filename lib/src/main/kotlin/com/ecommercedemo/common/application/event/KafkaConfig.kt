@@ -31,8 +31,9 @@ open class KafkaConfig(
 
     @Bean
     open fun consumerFactory(): ConsumerFactory<String, Any> {
-        val jsonDeserializer = JsonDeserializer(Any::class.java, objectMapper)
-        jsonDeserializer.addTrustedPackages("*")
+        val jsonDeserializer = JsonDeserializer(Any::class.java, objectMapper).apply {
+            addTrustedPackages("*")
+        }
         return DefaultKafkaConsumerFactory(consumerProperties(), StringDeserializer(), jsonDeserializer)
     }
 
