@@ -1,5 +1,6 @@
 package com.ecommercedemo.common.application.event
 
+import com.fasterxml.jackson.databind.ObjectMapper
 import org.apache.kafka.clients.consumer.ConsumerConfig
 import org.apache.kafka.clients.producer.ProducerConfig
 import org.apache.kafka.common.serialization.StringDeserializer
@@ -14,7 +15,9 @@ import org.springframework.kafka.support.serializer.JsonSerializer
 
 
 @Configuration
-open class KafkaConfig {
+open class KafkaConfig(
+    private val objectMapper: ObjectMapper
+) {
 
     @Bean
     open fun producerFactory(): ProducerFactory<String, Any> {
@@ -28,7 +31,9 @@ open class KafkaConfig {
 
     @Bean
     open fun consumerFactory(): ConsumerFactory<String, Any> {
-        return DefaultKafkaConsumerFactory(consumerProperties())
+        val jsonDeserializer = JsonDeserializer(Any::class.java, objectMapper)
+        jsonDeserializer.addTrustedPackages("*")
+        return DefaultKafkaConsumerFactory(consumerProperties(), StringDeserializer(), jsonDeserializer)
     }
 
     @Bean
