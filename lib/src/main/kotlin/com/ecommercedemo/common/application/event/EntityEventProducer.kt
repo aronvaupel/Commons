@@ -11,7 +11,8 @@ import java.util.*
 @Service
 class EntityEventProducer(
     private val kafkaTemplate: KafkaTemplate<String, Any>,
-    private val redisService: RedisService
+    private val redisService: RedisService,
+    private val objectMapper: ObjectMapper
 ) {
 
     fun <T : BaseEntity> emit(
@@ -31,7 +32,7 @@ class EntityEventProducer(
                 properties = properties
             )
 
-            val serializedEvent = ObjectMapper().writeValueAsString(event)
+            val serializedEvent = objectMapper.writeValueAsString(event)
             println("Serialized payload for topic $topic: $serializedEvent")
 
 
