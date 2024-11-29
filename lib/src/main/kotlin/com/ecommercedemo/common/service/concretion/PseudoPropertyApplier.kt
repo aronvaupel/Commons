@@ -12,7 +12,7 @@ import org.springframework.beans.factory.NoSuchBeanDefinitionException
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.stereotype.Service
 import java.util.*
-
+//Todo: Due for deletion
 @Service
 @Suppress("UNCHECKED_CAST")
 open class PseudoPropertyApplier(

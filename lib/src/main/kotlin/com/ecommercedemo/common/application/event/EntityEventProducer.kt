@@ -2,6 +2,7 @@ package com.ecommercedemo.common.application.event
 
 import com.ecommercedemo.common.application.cache.RedisService
 import com.ecommercedemo.common.model.abstraction.BaseEntity
+import com.fasterxml.jackson.databind.ObjectMapper
 
 import org.springframework.kafka.core.KafkaTemplate
 import org.springframework.stereotype.Service
@@ -29,6 +30,11 @@ class EntityEventProducer(
                 type = entityEventType,
                 properties = properties
             )
+
+            val serializedEvent = ObjectMapper().writeValueAsString(event)
+            println("Serialized payload for topic $topic: $serializedEvent")
+
+
             kafkaTemplate.send(topic, event)
             println("Produced event for topic: $topic, event: $event")
         } else {
