@@ -34,7 +34,6 @@ open class KafkaConfig(
         println("Registered Modules in ObjectMapper: ${objectMapper.registeredModuleIds}")
         val jsonDeserializer = JsonDeserializer(Any::class.java, objectMapper).apply {
             addTrustedPackages("*")
-            setUseTypeMapperForKey(true)
         }
         return DefaultKafkaConsumerFactory(consumerProperties(), StringDeserializer(), jsonDeserializer)
     }
