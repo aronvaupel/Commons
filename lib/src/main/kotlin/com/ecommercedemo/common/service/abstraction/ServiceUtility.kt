@@ -70,10 +70,9 @@ class ServiceUtility(
                 if (resolvedValue != null) {
                     val finalValue = if (newInstance is BasePseudoProperty && property.name == "typeDescriptor" && resolvedValue !is String) {
                         ObjectMapper().writeValueAsString(resolvedValue)
-                    } else {
-                        resolvedValue
-                    }
-
+                    } else resolvedValue
+                    println("Property: ${property.name}, Expected: ${property.returnType}, Actual: ${resolvedValue.javaClass.name}")
+                    println("Resolved Value: $resolvedValue, Final Value: $finalValue")
                     property.setter.call(newInstance, finalValue)
                 }
             }
