@@ -9,15 +9,11 @@ import kotlin.reflect.KClass
 @Suppress("UNCHECKED_CAST", "unused")
 abstract class EventServiceTemplate<T: BaseEntity, R: BaseEntity>(
     private val adapter: IEntityPersistenceAdapter<R>,
-    private val serviceUtility: ServiceUtility<T>
+    private val serviceUtility: ServiceUtility<T>,
+    private val downstreamEntityClass: KClass<R>
 ): IEventService<T, R> {
     @Transactional
     override fun createByEvent(event: EntityEvent<T>) {
-        val downstreamEntityClass = try {
-            Class.forName("_${event.entityClass.simpleName}").kotlin as KClass<R>
-        } catch (e: ClassNotFoundException) {
-            throw IllegalArgumentException("Downstream entity class not found for ${event.entityClass.simpleName}")
-        }
         val newInstance = serviceUtility.instantiateEntity(downstreamEntityClass) { name ->
             event.properties[name]
         }
