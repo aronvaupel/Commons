@@ -9,7 +9,7 @@ import kotlin.reflect.KClass
 @Suppress("UNCHECKED_CAST", "unused")
 abstract class EventServiceTemplate<T: BaseEntity, R: BaseEntity>(
     private val adapter: IEntityPersistenceAdapter<R>,
-    private val serviceUtility: ServiceUtility<T>,
+    private val serviceUtility: ServiceUtility,
     private val downstreamEntityClass: KClass<R>
 ): IEventService<T, R> {
     @Transactional

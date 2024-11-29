@@ -15,7 +15,7 @@ open class PseudoPropertyRestService(
     adapter: IEntityPersistenceAdapter<PseudoProperty>,
     eventProducer: EntityEventProducer,
     retriever: Retriever,
-    serviceUtility: ServiceUtility<PseudoProperty>,
+    serviceUtility: ServiceUtility,
 ) : RestServiceTemplate<PseudoProperty>(
     adapter,
     PseudoProperty::class,

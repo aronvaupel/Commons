@@ -17,7 +17,7 @@ import kotlin.reflect.jvm.isAccessible
 
 @Service
 @Suppress("UNCHECKED_CAST")
-class ServiceUtility<T: BaseEntity>(
+class ServiceUtility(
     private val objectMapper: ObjectMapper,
     private val pseudoPropertyRepository: EntityRepository<out BasePseudoProperty, UUID>,
 ) {
@@ -68,7 +68,13 @@ class ServiceUtility<T: BaseEntity>(
                 val resolvedValue = valueProvider(property.name.removePrefix("_"))
 
                 if (resolvedValue != null) {
-                    property.setter.call(newInstance, resolvedValue)
+                    val finalValue = if (newInstance is BasePseudoProperty && property.name == "typeDescriptor" && resolvedValue !is String) {
+                        ObjectMapper().writeValueAsString(resolvedValue)
+                    } else {
+                        resolvedValue
+                    }
+
+                    property.setter.call(newInstance, finalValue)
                 }
             }
 
