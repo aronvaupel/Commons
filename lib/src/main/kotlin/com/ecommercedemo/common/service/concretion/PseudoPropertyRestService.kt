@@ -4,25 +4,22 @@ import com.ecommercedemo.common.application.event.EntityEventProducer
 import com.ecommercedemo.common.controller.abstraction.util.Retriever
 import com.ecommercedemo.common.model.concretion.PseudoProperty
 import com.ecommercedemo.common.persistence.abstraction.IEntityPersistenceAdapter
-import com.ecommercedemo.common.persistence.concretion.PseudoPropertyRepository
-import com.ecommercedemo.common.service.abstraction.ServiceTemplate
-import com.fasterxml.jackson.databind.ObjectMapper
+import com.ecommercedemo.common.service.abstraction.RestServiceTemplate
+import com.ecommercedemo.common.service.abstraction.ServiceUtility
 import jakarta.transaction.Transactional
 import org.springframework.stereotype.Service
 
 @Transactional
 @Service
-open class PseudoPropertyService(
+open class PseudoPropertyRestService(
     adapter: IEntityPersistenceAdapter<PseudoProperty>,
     eventProducer: EntityEventProducer,
-    objectMapper: ObjectMapper,
-    pseudoPropertyRepository: PseudoPropertyRepository,
     retriever: Retriever,
-) : ServiceTemplate<PseudoProperty>(
+    serviceUtility: ServiceUtility<PseudoProperty>,
+) : RestServiceTemplate<PseudoProperty>(
     adapter,
     PseudoProperty::class,
     eventProducer,
-    objectMapper,
-    pseudoPropertyRepository,
     retriever,
+    serviceUtility
 )
