@@ -1,5 +1,6 @@
 package com.ecommercedemo.common.model.concretion
 
+import com.ecommercedemo.common.application.validation.type.TypeCategory
 import com.ecommercedemo.common.application.validation.type.ValueType
 import com.ecommercedemo.common.controller.abstraction.util.PrimitiveDescriptor
 import com.ecommercedemo.common.model.abstraction.BasePseudoProperty
@@ -36,7 +37,7 @@ open class PseudoProperty(
         UUID.randomUUID(),
         "DUMMY_CLASS",
         "DUMMY_KEY",
-        ObjectMapper().writeValueAsString(PrimitiveDescriptor(ValueType.STRING, true))
+        ObjectMapper().writeValueAsString(PrimitiveDescriptor(TypeCategory.PRIMITIVE, ValueType.STRING, true))
     )
 
     companion object {
