@@ -62,18 +62,20 @@ class ServiceUtility(
                     }
 
                     property.name == "pseudoProperties" -> {
-                        if (
-                            newInstance is ExpandableBaseEntity
-                            && resolvedValue is Map<*, *>
-                            && resolvedValue.isNotEmpty()) {
+                        if (newInstance is ExpandableBaseEntity) {
                             val requestPseudoProperties = resolvedValue as? Map<String, Any?>
-                                ?: throw IllegalArgumentException("pseudoProperties must be a Map<String, Any?>")
-                            println("Request pseudo-properties: $requestPseudoProperties")
+                                ?: emptyMap()
 
-                            validatePseudoPropertiesFromRequest(newInstance, requestPseudoProperties)
-                            val existingPseudoProperties = deserializeJsonBProperty(newInstance.pseudoProperties)
-                            val mergedPseudoProperties = mergePseudoProperties(existingPseudoProperties, requestPseudoProperties)
-                            property.setter.call(newInstance, mergedPseudoProperties)
+                            if (requestPseudoProperties.isNotEmpty()) {
+                                println("Request pseudo-properties: $requestPseudoProperties")
+
+                                validatePseudoPropertiesFromRequest(newInstance, requestPseudoProperties)
+
+                                val existingPseudoProperties = deserializeJsonBProperty(newInstance.pseudoProperties)
+                                val mergedPseudoProperties = mergePseudoProperties(existingPseudoProperties, requestPseudoProperties)
+
+                                property.setter.call(newInstance, mergedPseudoProperties)
+                            }
                         } else {
                             throw IllegalArgumentException("Entity does not support pseudoProperties")
                         }
