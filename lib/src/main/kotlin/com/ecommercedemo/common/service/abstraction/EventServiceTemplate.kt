@@ -14,24 +14,20 @@ abstract class EventServiceTemplate<T: BaseEntity, R: BaseEntity>(
 ): IEventService<T, R> {
     @Transactional
     override fun createByEvent(event: EntityEvent<T>) {
-        val newInstance = serviceUtility.instantiateEntity(downstreamEntityClass) { name ->
+        val newInstance = serviceUtility.createNewInstance(downstreamEntityClass) { name ->
             event.properties[name]
         }
-
-        serviceUtility.handlePseudoPropertiesIfPresent(newInstance, event.properties)
 
         adapter.save(newInstance)
     }
 
     @Transactional
     override fun updateByEvent(event: EntityEvent<T>) {
-        val originalEntity = adapter.getById(event.id)
+        val original = adapter.getById(event.id)
 
-        val updatedEntity = serviceUtility.applyPropertiesToExistingEntity(originalEntity.copy() as R, event.properties)
+        val updated = serviceUtility.updateExistingInstance(original.copy() as R, event.properties)
 
-        serviceUtility.handlePseudoPropertiesIfPresent(updatedEntity, event.properties)
-
-        adapter.save(updatedEntity)
+        adapter.save(updated)
     }
 
     @Transactional

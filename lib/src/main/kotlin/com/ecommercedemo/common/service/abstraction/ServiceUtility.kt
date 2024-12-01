@@ -1,5 +1,6 @@
 package com.ecommercedemo.common.service.abstraction
 
+import com.ecommercedemo.common.controller.abstraction.util.TypeDescriptor
 import com.ecommercedemo.common.model.abstraction.BaseEntity
 import com.ecommercedemo.common.model.abstraction.BasePseudoProperty
 import com.ecommercedemo.common.model.abstraction.ExpandableBaseEntity
@@ -21,29 +22,8 @@ class ServiceUtility(
     private val objectMapper: ObjectMapper,
     private val _pseudoPropertyRepository: EntityRepository<out BasePseudoProperty, UUID>,
 ) {
-    private fun getValidPseudoProperties(updatedEntity: ExpandableBaseEntity): Map<String, Any> {
-        if (_pseudoPropertyRepository is IPseudoPropertyRepository<*>) {
-            return _pseudoPropertyRepository
-                .findAllByEntitySimpleName(updatedEntity::class.simpleName!!)
-                .associateBy { it.key }
-                .mapValues {
-                    objectMapper.readValue(it.value.typeDescriptor, object : TypeReference<Any>() {})
-                }
-        }
-        throw IllegalStateException("Repository must implement IPseudoPropertyRepository")
-    }
 
-    fun <E: BaseEntity> handlePseudoPropertiesIfPresent(entity:E, source: Any?) {
-        if ((source is ExpandableBaseEntity && source.pseudoProperties.isNotEmpty()) ||
-            (source is Map<*, *> && source.containsKey("pseudoProperties"))
-        ) {
-            println("Handling pseudo-properties for entity: $entity")
-            handlePseudoProperties(entity, source)
-        }
-    }
-
-
-    fun <E: BaseEntity> instantiateEntity(
+    fun <E : BaseEntity> createNewInstance(
         instanceClass: KClass<E>,
         valueProvider: (String) -> Any?
     ): E {
@@ -66,61 +46,34 @@ class ServiceUtility(
             .filterIsInstance<KMutableProperty<*>>()
             .forEach { property ->
                 property.isAccessible = true
-                val resolvedValue = valueProvider(property.name.removePrefix("_"))
+                val deserializedJsonString = when (property.name) {
+                    "pseudoProperties" -> deserializeJsonBProperty(property.getter.call(newInstance) as String)
+                    "typeDescriptor" -> deserializeJsonBProperty(property.getter.call(newInstance) as String)
+                    else -> null
+                }
+
+                val resolvedValue =
+                    if (property.name == "pseudoProperties" || property.name == "typeDescriptor") deserializedJsonString
+                    else valueProvider(property.name.removePrefix("_"))
 
                 if (resolvedValue != null) {
-                    val finalValue = if (newInstance is BasePseudoProperty && property.name == "typeDescriptor" && resolvedValue !is String) {
-                        ObjectMapper().writeValueAsString(resolvedValue)
-                    } else resolvedValue
                     println("Property: ${property.name}, Expected: ${property.returnType}, Actual: ${resolvedValue.javaClass.name}")
-                    println("Resolved Value: $resolvedValue, Final Value: $finalValue")
-                    property.setter.call(newInstance, finalValue)
+                    println("Resolved Value: $resolvedValue, Final Value: $resolvedValue")
+                    property.setter.call(newInstance, resolvedValue)
                 }
             }
 
         return newInstance
     }
 
-    private fun <E: BaseEntity> handlePseudoProperties(entity: E, source: Any?) {
-        if (entity !is ExpandableBaseEntity) {
-            return
-        }
-        println("Entering handlePseudoProperties")
-        val pseudoPropertiesFromSource: Map<String, Any?> = when (source) {
-            is ExpandableBaseEntity -> {
-                val deserializedProperties = objectMapper.readValue(
-                    source.pseudoProperties, object : TypeReference<Map<String, Any?>>() {}
-                )
-                println("Pseudo-properties from source: $deserializedProperties")
-                deserializedProperties
-            }
-
-            is Map<*, *> -> {
-                val resolvedSource = source["pseudoProperties"] as? Map<String, Any?> ?: emptyMap()
-                println("Pseudo-properties from source: $resolvedSource")
-                resolvedSource
-            }
-            else -> emptyMap()
-        }
-
-        if (pseudoPropertiesFromSource.isNotEmpty()) {
-            validatePseudoPropertiesFromRequest(entity, pseudoPropertiesFromSource)
-
-            val existingPseudoProperties: Map<String, Any?> = objectMapper.readValue(
-                entity.pseudoProperties, object : TypeReference<Map<String, Any?>>() {}
-            )
-            val mergedPseudoProperties = existingPseudoProperties + pseudoPropertiesFromSource
-            entity.pseudoProperties = objectMapper.writeValueAsString(mergedPseudoProperties)
-        }
-    }
-
-    fun <E: BaseEntity> applyPropertiesToExistingEntity(entity: E, properties: Map<String, Any?>): E {
+    fun <E : BaseEntity> updateExistingInstance(entity: E, propertiesFromRequest: Map<String, Any?>): E {
         println("Attempting to apply properties to existing entity: $entity")
         val entityProperties = entity::class.memberProperties
             .filterIsInstance<KMutableProperty<*>>()
             .associateBy { it.name }
         println("Entity properties: $entityProperties")
-        properties.forEach { (key, value) ->
+
+        propertiesFromRequest.forEach { (key, value) ->
             val property = entityProperties[key] ?: entityProperties[key.removePrefix("_")]
             println("Property: $property")
 
@@ -135,7 +88,38 @@ class ServiceUtility(
                     throw IllegalArgumentException("Field $key cannot be set to null.")
                 }
 
-                value != null && value::class.createType() != property.returnType -> {
+                key == "pseudoProperties" -> {
+                    println("Handling pseudoProperties during applyProperties...")
+                    if (entity is ExpandableBaseEntity) {
+                        val pseudoPropertiesFromSource = value as? Map<String, Any?>
+                            ?: throw IllegalArgumentException("pseudoProperties must be a Map<String, Any?>")
+
+                        validatePseudoPropertiesFromRequest(entity, pseudoPropertiesFromSource)
+                        val existingPseudoProperties = deserializeJsonBProperty(entity.pseudoProperties)
+                        val mergedPseudoProperties =
+                            mergePseudoProperties(existingPseudoProperties, pseudoPropertiesFromSource)
+                        property.setter.call(entity, mergedPseudoProperties)
+                    } else {
+                        throw IllegalArgumentException("Entity does not support pseudoProperties")
+                    }
+                }
+
+                key == "typeDescriptor" -> {
+                    println("Handling typeDescriptor during applyProperties...")
+                    if (entity is BasePseudoProperty) {
+                        val typeDescriptor = value as TypeDescriptor
+
+                        val typeDescriptorAsString = objectMapper.writeValueAsString(typeDescriptor)
+                        property.setter.call(entity, typeDescriptorAsString)
+                    } else {
+                        throw IllegalArgumentException("Entity does not support typeDescriptor")
+                    }
+                }
+
+                value != null
+                        && key != "typeDescriptor"
+                        && key != "pseudoProperties"
+                        && value::class.createType() != property.returnType -> {
                     throw IllegalArgumentException("Field $key must be of type ${property.returnType}.")
                 }
 
@@ -149,11 +133,21 @@ class ServiceUtility(
         return entity
     }
 
+    private fun deserializeJsonBProperty(pseudoPropertiesAsString: String): Map<String, Any?> {
+        return try {
+            objectMapper.readValue(pseudoPropertiesAsString, object : TypeReference<Map<String, Any?>>() {})
+        } catch (e: Exception) {
+            throw IllegalArgumentException("Failed to deserialize pseudoProperties for entity: ${e.message}", e)
+        }
+    }
+
     private fun validatePseudoPropertiesFromRequest(
-        updatedEntity: ExpandableBaseEntity, pseudoPropertiesFromRequest: Map<String, Any?>
+        updatedEntity: ExpandableBaseEntity,
+        pseudoPropertiesFromRequest: Map<String, Any?>
     ) {
-        val validPseudoProperties: Map<String, Any> = getValidPseudoProperties(updatedEntity)
+        val validPseudoProperties = getValidPseudoProperties(updatedEntity)
         println("Valid pseudo-properties: $validPseudoProperties")
+
         pseudoPropertiesFromRequest.forEach { (key, value) ->
             val expectedType = validPseudoProperties[key]
                 ?: throw IllegalArgumentException("Invalid pseudo-property: $key")
@@ -162,5 +156,24 @@ class ServiceUtility(
                 throw IllegalArgumentException("Pseudo-property $key must be of type $expectedType")
             }
         }
+    }
+
+    private fun mergePseudoProperties(
+        existing: Map<String, Any?>,
+        updates: Map<String, Any?>
+    ): String {
+        return objectMapper.writeValueAsString(existing + updates)
+    }
+
+    private fun getValidPseudoProperties(updatedEntity: ExpandableBaseEntity): Map<String, Any> {
+        if (_pseudoPropertyRepository is IPseudoPropertyRepository<*>) {
+            return _pseudoPropertyRepository
+                .findAllByEntitySimpleName(updatedEntity::class.simpleName!!)
+                .associateBy { it.key }
+                .mapValues {
+                    objectMapper.readValue(it.value.typeDescriptor, object : TypeReference<Any>() {})
+                }
+        }
+        throw IllegalStateException("Repository must implement IPseudoPropertyRepository")
     }
 }

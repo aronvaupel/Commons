@@ -26,32 +26,28 @@ abstract class RestServiceTemplate<T : BaseEntity>(
 
     @Transactional
     override fun create(request: CreateRequest<T>): T {
-        val newInstance = serviceUtility.instantiateEntity(request.data::class) { name ->
+        val newInstance = serviceUtility.createNewInstance(request.data::class) { name ->
             request.data::class.memberProperties.firstOrNull { it.name == name }?.getter?.call(request.data)
         }
 
-        serviceUtility.handlePseudoPropertiesIfPresent(newInstance, request.data)
-
-        return saveAndEmitEvent(newInstance, EntityEventType.CREATE, null)
+        return saveAndEmitEvent(null, newInstance, EntityEventType.CREATE, )
     }
 
     @Transactional
     override fun update(request: UpdateRequest): T {
         println("Attempting to update entity with ID ${request.id}")
-        val originalEntity = getSingle(request.id)
-        println("Original entity: $originalEntity")
-        if (originalEntity::class != entityClass) {
+        val original = getSingle(request.id)
+        println("Original entity: $original")
+        if (original::class != entityClass) {
             throw IllegalArgumentException(
-                "Entity type mismatch. Expected ${entityClass.simpleName} but found ${originalEntity::class.simpleName}."
+                "Entity type mismatch. Expected ${entityClass.simpleName} but found ${original::class.simpleName}."
             )
         }
 
-        val updatedEntity = serviceUtility.applyPropertiesToExistingEntity(originalEntity.copy() as T, request.properties)
-        println("Updated entity: $updatedEntity")
+        val updated = serviceUtility.updateExistingInstance(original.copy() as T, request.properties)
+        println("Updated entity: $updated")
 
-        serviceUtility.handlePseudoPropertiesIfPresent(updatedEntity, request.properties)
-
-        return saveAndEmitEvent(updatedEntity, EntityEventType.UPDATE, originalEntity)
+        return saveAndEmitEvent( original, updated, EntityEventType.UPDATE,)
     }
 
     @Transactional
@@ -79,11 +75,11 @@ abstract class RestServiceTemplate<T : BaseEntity>(
 
     override fun search(request: SearchRequest): List<T> = retriever.executeSearch(request, entityClass)
 
-    private fun saveAndEmitEvent(entity: T, eventType: EntityEventType, originalEntity: T?): T {
-        val savedEntity = adapter.save(entity)
+    private fun saveAndEmitEvent(original: T?, updated: T, eventType: EntityEventType, ): T {
+        val savedEntity = adapter.save(updated)
 
         val tracker = EntityChangeTracker<T>()
-        val changes = originalEntity?.let { tracker.getChangedProperties(it, savedEntity) }
+        val changes = original?.let { tracker.getChangedProperties(it, savedEntity) }
             ?: tracker.getChangedProperties(null, savedEntity)
 
         eventProducer.emit(entityClass.java, savedEntity.id, eventType, changes)
