@@ -115,12 +115,14 @@ class ServiceUtility(
     }
 
     fun <E: BaseEntity> applyPropertiesToExistingEntity(entity: E, properties: Map<String, Any?>): E {
+        println("Attempting to apply properties to existing entity: $entity")
         val entityProperties = entity::class.memberProperties
             .filterIsInstance<KMutableProperty<*>>()
             .associateBy { it.name }
-
+        println("Entity properties: $entityProperties")
         properties.forEach { (key, value) ->
             val property = entityProperties[key] ?: entityProperties[key.removePrefix("_")]
+            println("Property: $property")
 
             if (property == null) {
                 throw IllegalArgumentException("Field $key does not exist in the entity.")
@@ -138,6 +140,7 @@ class ServiceUtility(
                 }
 
                 else -> {
+                    println("Attempting to set property $key to value $value")
                     property.setter.call(entity, value)
                 }
             }
