@@ -62,7 +62,10 @@ class ServiceUtility(
                     }
 
                     property.name == "pseudoProperties" -> {
-                        if (newInstance is ExpandableBaseEntity && resolvedValue != emptyMap<String, Any?>()) {
+                        if (
+                            newInstance is ExpandableBaseEntity
+                            && resolvedValue is Map<*, *>
+                            && resolvedValue.isNotEmpty()) {
                             val requestPseudoProperties = resolvedValue as? Map<String, Any?>
                                 ?: throw IllegalArgumentException("pseudoProperties must be a Map<String, Any?>")
                             println("Request pseudo-properties: $requestPseudoProperties")
@@ -187,9 +190,11 @@ class ServiceUtility(
             val registeredPseudoProperty = validPseudoProperties.firstOrNull { it.key == key }
                 ?: throw IllegalArgumentException("Invalid pseudo-property: $key")
             println("Registered pseudo-property: $registeredPseudoProperty")
+
             val registeredPseudoPropertyTypeDescriptor =
                 objectMapper.readValue<TypeDescriptor>(registeredPseudoProperty.typeDescriptor)
             println("Registered pseudo-property type descriptor: $registeredPseudoPropertyTypeDescriptor")
+
             if (!ValueType.validateValueAgainstDescriptor(registeredPseudoPropertyTypeDescriptor, value)) {
                 throw IllegalArgumentException(
                     "Pseudo-property '$key' does not match the expected type. " +

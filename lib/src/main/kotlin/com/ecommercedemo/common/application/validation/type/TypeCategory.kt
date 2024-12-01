@@ -4,6 +4,7 @@ enum class TypeCategory {
     PRIMITIVE,
     TIME,
     COLLECTION,
+    MAP,
     COMPLEX,
     GENERIC
 }

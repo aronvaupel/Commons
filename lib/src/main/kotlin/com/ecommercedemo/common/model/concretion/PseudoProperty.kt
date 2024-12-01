@@ -36,7 +36,7 @@ open class PseudoProperty(
         UUID.randomUUID(),
         "DUMMY_CLASS",
         "DUMMY_KEY",
-        ObjectMapper().writeValueAsString(PrimitiveDescriptor(ValueType.STRING))
+        ObjectMapper().writeValueAsString(PrimitiveDescriptor(ValueType.STRING, true))
     )
 
     companion object {
