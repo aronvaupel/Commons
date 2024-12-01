@@ -31,10 +31,10 @@ abstract class RestControllerTemplate<T : BaseEntity>(
 
     @PatchMapping("/{id}")
     open fun update(
-        @PathVariable id: String,
+        @PathVariable id: UUID,
         @RequestBody request: SaveRequest
     ): ResponseEntity<T> {
-        return ResponseEntity.ok(service.update(request))
+        return ResponseEntity.ok(service.update(id, request))
     }
 
     @DeleteMapping("/{id}")
