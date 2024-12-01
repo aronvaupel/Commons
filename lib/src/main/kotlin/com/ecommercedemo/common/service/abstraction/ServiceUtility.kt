@@ -61,7 +61,7 @@ class ServiceUtility(
                         throw IllegalArgumentException("Field '${property.name}' is non-nullable and cannot be set to null.")
                     }
 
-                    property.name == "pseudoProperties" -> {
+                    property.name == ExpandableBaseEntity::pseudoProperties.name -> {
                         if (newInstance is ExpandableBaseEntity) {
                             val requestPseudoProperties = resolvedValue as? Map<String, Any?>
                                 ?: emptyMap()
@@ -81,10 +81,12 @@ class ServiceUtility(
                         }
                     }
 
-                    property.name == "typeDescriptor" -> {
-                        if (resolvedValue !is TypeDescriptor) {
+                    property.name == BasePseudoProperty::typeDescriptor.name -> {
+                        val deserializedValue = objectMapper.readValue(resolvedValue as String, TypeDescriptor::class.java)
+                        if (deserializedValue !is TypeDescriptor) {
                             throw IllegalArgumentException("typeDescriptor must be of type TypeDescriptor, found: ${resolvedValue?.javaClass?.name}")
                         }
+
                         property.setter.call(newInstance, resolvedValue)
                     }
 
