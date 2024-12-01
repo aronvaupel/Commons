@@ -1,5 +1,6 @@
 package com.ecommercedemo.common.service.abstraction
 
+import com.ecommercedemo.common.application.validation.type.ValueType
 import com.ecommercedemo.common.controller.abstraction.util.TypeDescriptor
 import com.ecommercedemo.common.model.abstraction.BaseEntity
 import com.ecommercedemo.common.model.abstraction.BasePseudoProperty
@@ -8,6 +9,7 @@ import com.ecommercedemo.common.persistence.abstraction.EntityRepository
 import com.ecommercedemo.common.persistence.abstraction.IPseudoPropertyRepository
 import com.fasterxml.jackson.core.type.TypeReference
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.module.kotlin.readValue
 import org.springframework.stereotype.Service
 import java.util.*
 import kotlin.reflect.KClass
@@ -29,6 +31,7 @@ class ServiceUtility(
     ): E {
         val entityConstructor = instanceClass.constructors.firstOrNull()
             ?: throw IllegalArgumentException("No suitable constructor found for ${instanceClass.simpleName}")
+        println("Entity constructor: $entityConstructor")
 
         val entityConstructorParams = entityConstructor.parameters.associateWith { param ->
             val value = valueProvider(param.name!!)
@@ -37,29 +40,59 @@ class ServiceUtility(
             }
             value
         }
+        println("Entity constructor parameters: $entityConstructorParams")
 
         val newInstance = entityConstructor.callBy(entityConstructorParams)
+        println("New instance: $newInstance")
 
         val targetPropertyMap = newInstance::class.memberProperties.associateBy { it.name }
+        println("Target property map: $targetPropertyMap")
 
         targetPropertyMap.values
             .filterIsInstance<KMutableProperty<*>>()
             .forEach { property ->
                 property.isAccessible = true
-                val deserializedJsonString = when (property.name) {
-                    "pseudoProperties" -> deserializeJsonBProperty(property.getter.call(newInstance) as String)
-                    "typeDescriptor" -> deserializeJsonBProperty(property.getter.call(newInstance) as String)
-                    else -> null
-                }
 
-                val resolvedValue =
-                    if (property.name == "pseudoProperties" || property.name == "typeDescriptor") deserializedJsonString
-                    else valueProvider(property.name.removePrefix("_"))
+                val resolvedValue = valueProvider(property.name.removePrefix("_"))
+                println("Resolved value for property ${property.name}: $resolvedValue")
 
-                if (resolvedValue != null) {
-                    println("Property: ${property.name}, Expected: ${property.returnType}, Actual: ${resolvedValue.javaClass.name}")
-                    println("Resolved Value: $resolvedValue, Final Value: $resolvedValue")
-                    property.setter.call(newInstance, resolvedValue)
+                when {
+                    resolvedValue == null && !property.returnType.isMarkedNullable -> {
+                        throw IllegalArgumentException("Field '${property.name}' is non-nullable and cannot be set to null.")
+                    }
+
+                    property.name == "pseudoProperties" -> {
+                        if (newInstance is ExpandableBaseEntity) {
+                            val requestPseudoProperties = resolvedValue as? Map<String, Any?>
+                                ?: throw IllegalArgumentException("pseudoProperties must be a Map<String, Any?>")
+                            println("Request pseudo-properties: $requestPseudoProperties")
+
+                            validatePseudoPropertiesFromRequest(newInstance, requestPseudoProperties)
+                            val existingPseudoProperties = deserializeJsonBProperty(newInstance.pseudoProperties)
+                            val mergedPseudoProperties = mergePseudoProperties(existingPseudoProperties, requestPseudoProperties)
+                            property.setter.call(newInstance, mergedPseudoProperties)
+                        } else {
+                            throw IllegalArgumentException("Entity does not support pseudoProperties")
+                        }
+                    }
+
+                    property.name == "typeDescriptor" -> {
+                        if (resolvedValue !is TypeDescriptor) {
+                            throw IllegalArgumentException("typeDescriptor must be of type TypeDescriptor, found: ${resolvedValue?.javaClass?.name}")
+                        }
+                        property.setter.call(newInstance, resolvedValue)
+                    }
+
+                    resolvedValue != null && resolvedValue::class.createType() != property.returnType -> {
+                        throw IllegalArgumentException(
+                            "Type mismatch for property '${property.name}': " +
+                                    "Expected ${property.returnType}, Found ${resolvedValue::class.createType()}"
+                        )
+                    }
+
+                    else -> {
+                        property.setter.call(newInstance, resolvedValue)
+                    }
                 }
             }
 
@@ -74,17 +107,17 @@ class ServiceUtility(
         println("Entity properties: $entityProperties")
 
         propertiesFromRequest.forEach { (key, value) ->
-            val property = entityProperties[key] ?: entityProperties[key.removePrefix("_")]
-            println("Property: $property")
+            val correspondingEntityProperty = entityProperties[key] ?: entityProperties[key.removePrefix("_")]
+            println("Property from request: $key corresponds to property: $correspondingEntityProperty")
 
-            if (property == null) {
+            if (correspondingEntityProperty == null) {
                 throw IllegalArgumentException("Field $key does not exist in the entity.")
             }
 
-            property.isAccessible = true
+            correspondingEntityProperty.isAccessible = true
 
             when {
-                value == null && !property.returnType.isMarkedNullable -> {
+                value == null && !correspondingEntityProperty.returnType.isMarkedNullable -> {
                     throw IllegalArgumentException("Field $key cannot be set to null.")
                 }
 
@@ -96,9 +129,11 @@ class ServiceUtility(
 
                         validatePseudoPropertiesFromRequest(entity, pseudoPropertiesFromSource)
                         val existingPseudoProperties = deserializeJsonBProperty(entity.pseudoProperties)
+                        println("Deserialized existing pseudo-properties: $existingPseudoProperties")
                         val mergedPseudoProperties =
                             mergePseudoProperties(existingPseudoProperties, pseudoPropertiesFromSource)
-                        property.setter.call(entity, mergedPseudoProperties)
+                        correspondingEntityProperty.setter.call(entity, mergedPseudoProperties)
+                        println("Merged pseudo-properties: $mergedPseudoProperties")
                     } else {
                         throw IllegalArgumentException("Entity does not support pseudoProperties")
                     }
@@ -110,7 +145,7 @@ class ServiceUtility(
                         val typeDescriptor = value as TypeDescriptor
 
                         val typeDescriptorAsString = objectMapper.writeValueAsString(typeDescriptor)
-                        property.setter.call(entity, typeDescriptorAsString)
+                        correspondingEntityProperty.setter.call(entity, typeDescriptorAsString)
                     } else {
                         throw IllegalArgumentException("Entity does not support typeDescriptor")
                     }
@@ -119,13 +154,13 @@ class ServiceUtility(
                 value != null
                         && key != "typeDescriptor"
                         && key != "pseudoProperties"
-                        && value::class.createType() != property.returnType -> {
-                    throw IllegalArgumentException("Field $key must be of type ${property.returnType}.")
+                        && value::class.createType() != correspondingEntityProperty.returnType -> {
+                    throw IllegalArgumentException("Field $key must be of type ${correspondingEntityProperty.returnType}.")
                 }
 
                 else -> {
                     println("Attempting to set property $key to value $value")
-                    property.setter.call(entity, value)
+                    correspondingEntityProperty.setter.call(entity, value)
                 }
             }
         }
@@ -149,11 +184,17 @@ class ServiceUtility(
         println("Valid pseudo-properties: $validPseudoProperties")
 
         pseudoPropertiesFromRequest.forEach { (key, value) ->
-            val expectedType = validPseudoProperties[key]
+            val registeredPseudoProperty = validPseudoProperties.firstOrNull { it.key == key }
                 ?: throw IllegalArgumentException("Invalid pseudo-property: $key")
-
-            if (value != null && value::class.qualifiedName != expectedType::class.qualifiedName) {
-                throw IllegalArgumentException("Pseudo-property $key must be of type $expectedType")
+            println("Registered pseudo-property: $registeredPseudoProperty")
+            val registeredPseudoPropertyTypeDescriptor =
+                objectMapper.readValue<TypeDescriptor>(registeredPseudoProperty.typeDescriptor)
+            println("Registered pseudo-property type descriptor: $registeredPseudoPropertyTypeDescriptor")
+            if (!ValueType.validateValueAgainstDescriptor(registeredPseudoPropertyTypeDescriptor, value)) {
+                throw IllegalArgumentException(
+                    "Pseudo-property '$key' does not match the expected type. " +
+                            "Descriptor: ${registeredPseudoPropertyTypeDescriptor.type.typeInfo}, Found: ${value?.javaClass?.name}"
+                )
             }
         }
     }
@@ -165,14 +206,9 @@ class ServiceUtility(
         return objectMapper.writeValueAsString(existing + updates)
     }
 
-    private fun getValidPseudoProperties(updatedEntity: ExpandableBaseEntity): Map<String, Any> {
+    private fun getValidPseudoProperties(entity: ExpandableBaseEntity): List<BasePseudoProperty> {
         if (_pseudoPropertyRepository is IPseudoPropertyRepository<*>) {
-            return _pseudoPropertyRepository
-                .findAllByEntitySimpleName(updatedEntity::class.simpleName!!)
-                .associateBy { it.key }
-                .mapValues {
-                    objectMapper.readValue(it.value.typeDescriptor, object : TypeReference<Any>() {})
-                }
+            return _pseudoPropertyRepository.findAllByEntitySimpleName(entity::class.simpleName!!)
         }
         throw IllegalStateException("Repository must implement IPseudoPropertyRepository")
     }
