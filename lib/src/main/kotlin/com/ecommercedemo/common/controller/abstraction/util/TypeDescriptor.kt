@@ -1,5 +1,6 @@
 package com.ecommercedemo.common.controller.abstraction.util
 
+import com.ecommercedemo.common.application.validation.type.TypeCategory
 import com.ecommercedemo.common.application.validation.type.ValueType
 import com.fasterxml.jackson.annotation.JsonSubTypes
 import com.fasterxml.jackson.annotation.JsonTypeInfo
@@ -14,6 +15,7 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo
     JsonSubTypes.Type(value = ComplexObjectDescriptor::class, name = "COMPLEX")
 )
 interface TypeDescriptor {
+    val category: TypeCategory
     val type: ValueType
 }
 
