@@ -3,9 +3,8 @@ package com.ecommercedemo.common.service.abstraction
 import com.ecommercedemo.common.application.EntityChangeTracker
 import com.ecommercedemo.common.application.event.EntityEventProducer
 import com.ecommercedemo.common.application.event.EntityEventType
-import com.ecommercedemo.common.controller.abstraction.request.CreateRequest
+import com.ecommercedemo.common.controller.abstraction.request.SaveRequest
 import com.ecommercedemo.common.controller.abstraction.request.SearchRequest
-import com.ecommercedemo.common.controller.abstraction.request.UpdateRequest
 import com.ecommercedemo.common.controller.abstraction.util.Retriever
 import com.ecommercedemo.common.model.abstraction.BaseEntity
 import com.ecommercedemo.common.persistence.abstraction.IEntityPersistenceAdapter
@@ -13,7 +12,6 @@ import jakarta.transaction.Transactional
 import org.springframework.http.HttpStatus
 import java.util.*
 import kotlin.reflect.KClass
-import kotlin.reflect.full.memberProperties
 
 @Suppress("UNCHECKED_CAST")
 abstract class RestServiceTemplate<T : BaseEntity>(
@@ -25,18 +23,17 @@ abstract class RestServiceTemplate<T : BaseEntity>(
 ) : IRestService<T> {
 
     @Transactional
-    override fun create(request: CreateRequest<T>): T {
-        val newInstance = serviceUtility.createNewInstance(request.data::class) { name ->
-            request.data::class.memberProperties.firstOrNull { it.name == name }?.getter?.call(request.data)
+    override fun create(request: SaveRequest): T {
+        val newInstance = serviceUtility.createNewInstance(entityClass) { name ->
+            request.properties[name]
         }
 
         return saveAndEmitEvent(null, newInstance, EntityEventType.CREATE, )
     }
 
     @Transactional
-    override fun update(request: UpdateRequest): T {
-        println("Attempting to update entity with ID ${request.id}")
-        val original = getSingle(request.id)
+    override fun update(id: UUID, request: SaveRequest): T {
+        val original = getSingle(id)
         println("Original entity: $original")
         if (original::class != entityClass) {
             throw IllegalArgumentException(
