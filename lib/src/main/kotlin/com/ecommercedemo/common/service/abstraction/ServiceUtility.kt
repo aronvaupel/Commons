@@ -62,7 +62,7 @@ class ServiceUtility(
                     }
 
                     property.name == "pseudoProperties" -> {
-                        if (newInstance is ExpandableBaseEntity && resolvedValue != null) {
+                        if (newInstance is ExpandableBaseEntity && resolvedValue != emptyMap<String, Any?>()) {
                             val requestPseudoProperties = resolvedValue as? Map<String, Any?>
                                 ?: throw IllegalArgumentException("pseudoProperties must be a Map<String, Any?>")
                             println("Request pseudo-properties: $requestPseudoProperties")
