@@ -19,11 +19,11 @@ import kotlin.reflect.jvm.isAccessible
 @Suppress("UNCHECKED_CAST")
 class ServiceUtility(
     private val objectMapper: ObjectMapper,
-    private val pseudoPropertyRepository: EntityRepository<out BasePseudoProperty, UUID>,
+    private val _pseudoPropertyRepository: EntityRepository<out BasePseudoProperty, UUID>,
 ) {
     private fun getValidPseudoProperties(updatedEntity: ExpandableBaseEntity): Map<String, Any> {
-        if (pseudoPropertyRepository is IPseudoPropertyRepository<*>) {
-            return pseudoPropertyRepository
+        if (_pseudoPropertyRepository is IPseudoPropertyRepository<*>) {
+            return _pseudoPropertyRepository
                 .findAllByEntitySimpleName(updatedEntity::class.simpleName!!)
                 .associateBy { it.key }
                 .mapValues {
