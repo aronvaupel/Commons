@@ -1,6 +1,7 @@
 package com.ecommercedemo.common.controller.abstraction.util
 
 import com.ecommercedemo.common.model.abstraction.BaseEntity
+import com.ecommercedemo.common.model.abstraction.ExpandableBaseEntity
 import jakarta.persistence.criteria.Path
 import jakarta.persistence.criteria.Root
 import org.springframework.stereotype.Service
@@ -20,7 +21,7 @@ class PathResolver(
 
         segments.forEachIndexed { index, segment ->
             validator.validateFieldExistsAndIsAccessible(segment, currentClass)
-            if (segment == "pseudoProperties") {
+            if (segment == ExpandableBaseEntity::pseudoProperties.name) {
                 val jsonSegments = segments.drop(index + 1)
                 val actualValue = deserializer.convertAnyIfNeeded(params.searchValue, currentClass)
                 return ResolvedSearchParam(actualValue, jpaPath = currentPath.get<Any>(segment), jsonSegments = jsonSegments)
