@@ -37,8 +37,9 @@ abstract class RestServiceTemplate<T : BaseEntity>(
 
     @Transactional
     override fun update(request: UpdateRequest): T {
+        println("Attempting to update entity with ID ${request.id}")
         val originalEntity = getSingle(request.id)
-
+        println("Original entity: $originalEntity")
         if (originalEntity::class != entityClass) {
             throw IllegalArgumentException(
                 "Entity type mismatch. Expected ${entityClass.simpleName} but found ${originalEntity::class.simpleName}."
@@ -46,6 +47,7 @@ abstract class RestServiceTemplate<T : BaseEntity>(
         }
 
         val updatedEntity = serviceUtility.applyPropertiesToExistingEntity(originalEntity.copy() as T, request.properties)
+        println("Updated entity: $updatedEntity")
 
         serviceUtility.handlePseudoPropertiesIfPresent(updatedEntity, request.properties)
 

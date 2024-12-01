@@ -37,6 +37,7 @@ class ServiceUtility(
         if ((source is ExpandableBaseEntity && source.pseudoProperties.isNotEmpty()) ||
             (source is Map<*, *> && source.containsKey("pseudoProperties"))
         ) {
+            println("Handling pseudo-properties for entity: $entity")
             handlePseudoProperties(entity, source)
         }
     }
@@ -84,13 +85,21 @@ class ServiceUtility(
         if (entity !is ExpandableBaseEntity) {
             return
         }
-
+        println("Entering handlePseudoProperties")
         val pseudoPropertiesFromSource: Map<String, Any?> = when (source) {
-            is ExpandableBaseEntity -> objectMapper.readValue(
-                source.pseudoProperties, object : TypeReference<Map<String, Any?>>() {}
-            )
+            is ExpandableBaseEntity -> {
+                val deserializedProperties = objectMapper.readValue(
+                    source.pseudoProperties, object : TypeReference<Map<String, Any?>>() {}
+                )
+                println("Pseudo-properties from source: $deserializedProperties")
+                deserializedProperties
+            }
 
-            is Map<*, *> -> source["pseudoProperties"] as? Map<String, Any?> ?: emptyMap()
+            is Map<*, *> -> {
+                val resolvedSource = source["pseudoProperties"] as? Map<String, Any?> ?: emptyMap()
+                println("Pseudo-properties from source: $resolvedSource")
+                resolvedSource
+            }
             else -> emptyMap()
         }
 
@@ -141,7 +150,7 @@ class ServiceUtility(
         updatedEntity: ExpandableBaseEntity, pseudoPropertiesFromRequest: Map<String, Any?>
     ) {
         val validPseudoProperties: Map<String, Any> = getValidPseudoProperties(updatedEntity)
-
+        println("Valid pseudo-properties: $validPseudoProperties")
         pseudoPropertiesFromRequest.forEach { (key, value) ->
             val expectedType = validPseudoProperties[key]
                 ?: throw IllegalArgumentException("Invalid pseudo-property: $key")

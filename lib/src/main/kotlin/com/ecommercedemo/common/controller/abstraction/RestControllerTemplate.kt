@@ -34,6 +34,7 @@ abstract class RestControllerTemplate<T : BaseEntity>(
     open fun update(
         @RequestBody request: UpdateRequest
     ): ResponseEntity<T> {
+        println("Attempting to update entity with ID ${request.id}")
         return ResponseEntity.ok(service.update(request))
     }
 
