@@ -11,7 +11,7 @@ import org.hibernate.annotations.Type
 @Suppress("unused")
 abstract class ExpandableBaseEntity: BaseEntity() {
     @Type(JsonBinaryType::class)
-    @Column(name = "pseudo_property", columnDefinition = "jsonb")
+    @Column(name = "pseudo_properties", columnDefinition = "jsonb")
     open var pseudoProperties: String = "{}"
 
     fun getPseudoProperty(key: String): Any? {
