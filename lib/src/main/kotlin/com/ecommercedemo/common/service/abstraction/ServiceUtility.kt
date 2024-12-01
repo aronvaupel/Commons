@@ -85,7 +85,7 @@ class ServiceUtility(
                         if (resolvedValue !is TypeDescriptor) {
                             throw IllegalArgumentException("typeDescriptor must be of type TypeDescriptor, found: ${resolvedValue?.javaClass?.name}")
                         }
-                        property.setter.call(newInstance, objectMapper.writeValueAsString(resolvedValue))
+                        property.setter.call(newInstance, resolvedValue)
                     }
 
                     resolvedValue != null && resolvedValue::class.createType() != property.returnType -> {
