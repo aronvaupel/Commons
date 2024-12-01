@@ -6,7 +6,7 @@ plugins {
 }
 
 group = "com.github.aronvaupel"
-version = "3.2.4"
+version = "3.4.0"
 
 repositories {
     mavenCentral()
@@ -22,7 +22,7 @@ dependencies {
     implementation("io.jsonwebtoken:jjwt:0.9.1")
     implementation("jakarta.servlet:jakarta.servlet-api:5.0.0")
     implementation ("jakarta.validation:jakarta.validation-api:3.0.2")
-    implementation("javax.xml.bind:jaxb-api:2.4.1")
+    implementation("javax.xml.bind:jaxb-api:2.3.1")
     // This dependency is used internally, and not exposed to consumers on their own compile classpath.
     implementation(libs.guava)
     testImplementation(libs.junit.jupiter)
