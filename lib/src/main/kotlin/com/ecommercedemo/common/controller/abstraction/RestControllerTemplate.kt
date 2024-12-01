@@ -1,8 +1,7 @@
 package com.ecommercedemo.common.controller.abstraction
 
-import com.ecommercedemo.common.controller.abstraction.request.CreateRequest
+import com.ecommercedemo.common.controller.abstraction.request.SaveRequest
 import com.ecommercedemo.common.controller.abstraction.request.SearchRequest
-import com.ecommercedemo.common.controller.abstraction.request.UpdateRequest
 import com.ecommercedemo.common.model.abstraction.BaseEntity
 import com.ecommercedemo.common.service.abstraction.RestServiceTemplate
 import jakarta.annotation.PostConstruct
@@ -25,16 +24,16 @@ abstract class RestControllerTemplate<T : BaseEntity>(
 
     @PostMapping
     open fun create(
-        @RequestBody request: CreateRequest<T>
+        @RequestBody request: SaveRequest
     ): ResponseEntity<T> {
         return ResponseEntity.ok(service.create(request))
     }
 
-    @PatchMapping
+    @PatchMapping("/{id}")
     open fun update(
-        @RequestBody request: UpdateRequest
+        @PathVariable id: String,
+        @RequestBody request: SaveRequest
     ): ResponseEntity<T> {
-        println("Attempting to update entity with ID ${request.id}")
         return ResponseEntity.ok(service.update(request))
     }
 

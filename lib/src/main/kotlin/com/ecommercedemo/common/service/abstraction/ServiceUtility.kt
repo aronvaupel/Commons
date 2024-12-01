@@ -85,7 +85,7 @@ class ServiceUtility(
                         if (resolvedValue !is TypeDescriptor) {
                             throw IllegalArgumentException("typeDescriptor must be of type TypeDescriptor, found: ${resolvedValue?.javaClass?.name}")
                         }
-                        property.setter.call(newInstance, resolvedValue)
+                        property.setter.call(newInstance, objectMapper.writeValueAsString(resolvedValue))
                     }
 
                     resolvedValue != null && resolvedValue::class.createType() != property.returnType -> {
@@ -126,7 +126,7 @@ class ServiceUtility(
                     throw IllegalArgumentException("Field $key cannot be set to null.")
                 }
 
-                key == "pseudoProperties" -> {
+                key == ExpandableBaseEntity::pseudoProperties.name -> {
                     println("Handling pseudoProperties during applyProperties...")
                     if (entity is ExpandableBaseEntity) {
                         val pseudoPropertiesFromSource = value as? Map<String, Any?>
@@ -144,7 +144,7 @@ class ServiceUtility(
                     }
                 }
 
-                key == "typeDescriptor" -> {
+                key == BasePseudoProperty::typeDescriptor.name -> {
                     println("Handling typeDescriptor during applyProperties...")
                     if (entity is BasePseudoProperty) {
                         val typeDescriptor = value as TypeDescriptor
@@ -157,8 +157,8 @@ class ServiceUtility(
                 }
 
                 value != null
-                        && key != "typeDescriptor"
-                        && key != "pseudoProperties"
+                        && key != BasePseudoProperty::typeDescriptor.name
+                        && key != ExpandableBaseEntity::pseudoProperties.name
                         && value::class.createType() != correspondingEntityProperty.returnType -> {
                     throw IllegalArgumentException("Field $key must be of type ${correspondingEntityProperty.returnType}.")
                 }
