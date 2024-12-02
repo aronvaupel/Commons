@@ -82,13 +82,15 @@ class ServiceUtility(
                     }
 
                     property.name == BasePseudoProperty::typeDescriptor.name -> {
-                        val deserializedValue = objectMapper.convertValue(resolvedValue, TypeDescriptor::class.java)
-
-                        if (deserializedValue !is TypeDescriptor) {
-                            throw IllegalArgumentException("typeDescriptor must be of type TypeDescriptor, found: ${resolvedValue?.javaClass?.name}")
+                        val typeDescriptorObject = try {
+                            objectMapper.readValue(resolvedValue.toString(), TypeDescriptor::class.java)
+                        } catch (e: Exception) {
+                            throw IllegalArgumentException("Failed to deserialize typeDescriptor: ${e.message}", e)
                         }
+                        println("Successfully deserialized TypeDescriptor: $typeDescriptorObject")
 
-                        property.setter.call(newInstance, resolvedValue)
+                        val typeDescriptorAsString = objectMapper.writeValueAsString(typeDescriptorObject)
+                        property.setter.call(newInstance, typeDescriptorAsString)
                     }
 
                     resolvedValue != null && resolvedValue::class.createType() != property.returnType -> {
