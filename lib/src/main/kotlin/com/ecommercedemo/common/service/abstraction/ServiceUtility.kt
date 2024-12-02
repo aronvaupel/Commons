@@ -72,7 +72,8 @@ class ServiceUtility(
                                 validatePseudoPropertiesFromRequest(newInstance, requestPseudoProperties)
 
                                 val existingPseudoProperties = deserializeJsonBProperty(newInstance.pseudoProperties)
-                                val mergedPseudoProperties = mergePseudoProperties(existingPseudoProperties, requestPseudoProperties)
+                                val mergedPseudoProperties =
+                                    mergePseudoProperties(existingPseudoProperties, requestPseudoProperties)
 
                                 property.setter.call(newInstance, mergedPseudoProperties)
                             }
@@ -117,6 +118,7 @@ class ServiceUtility(
         println("Entity properties: $entityProperties")
 
         propertiesFromRequest.forEach { (key, value) ->
+            println("Processing property: $key with value: $value")
             val correspondingEntityProperty = entityProperties[key] ?: entityProperties[key.removePrefix("_")]
             println("Property from request: $key corresponds to property: $correspondingEntityProperty")
 
@@ -136,7 +138,7 @@ class ServiceUtility(
                     if (entity is ExpandableBaseEntity) {
                         val pseudoPropertiesFromSource = value as? Map<String, Any?>
                             ?: throw IllegalArgumentException("pseudoProperties must be a Map<String, Any?>")
-
+                        println("Pseudo-properties from source: $pseudoPropertiesFromSource")
                         validatePseudoPropertiesFromRequest(entity, pseudoPropertiesFromSource)
                         val existingPseudoProperties = deserializeJsonBProperty(entity.pseudoProperties)
                         println("Deserialized existing pseudo-properties: $existingPseudoProperties")
@@ -191,7 +193,7 @@ class ServiceUtility(
         pseudoPropertiesFromRequest: Map<String, Any?>
     ) {
         val validPseudoProperties = getValidPseudoProperties(updatedEntity)
-        println("Valid pseudo-properties: $validPseudoProperties")
+        println("Valid pseudo-properties in validatePseudoPropertiesFromRequest: $validPseudoProperties")
 
         pseudoPropertiesFromRequest.forEach { (key, value) ->
             val registeredPseudoProperty = validPseudoProperties.firstOrNull { it.key == key }
@@ -215,12 +217,16 @@ class ServiceUtility(
         existing: Map<String, Any?>,
         updates: Map<String, Any?>
     ): String {
-        return objectMapper.writeValueAsString(existing + updates)
+        val result = objectMapper.writeValueAsString(existing + updates)
+        println("Merged pseudo-properties: $result")
+        return result
     }
 
     private fun getValidPseudoProperties(entity: ExpandableBaseEntity): List<BasePseudoProperty> {
         if (_pseudoPropertyRepository is IPseudoPropertyRepository<*>) {
-            return _pseudoPropertyRepository.findAllByEntitySimpleName(entity::class.simpleName!!)
+            val result = _pseudoPropertyRepository.findAllByEntitySimpleName(entity::class.simpleName!!)
+            println("Valid pseudo-properties for entity ${entity::class.simpleName}: $result")
+            return result
         }
         throw IllegalStateException("Repository must implement IPseudoPropertyRepository")
     }
