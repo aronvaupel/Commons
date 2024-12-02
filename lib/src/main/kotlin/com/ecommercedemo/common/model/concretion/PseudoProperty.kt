@@ -36,7 +36,7 @@ open class PseudoProperty(
         UUID.randomUUID(),
         "DUMMY_CLASS",
         "DUMMY_KEY",
-        TypeDescriptor.PrimitiveDescriptor(TypeCategory.PRIMITIVE, ValueType.STRING, true)
+        TypeDescriptor.PrimitiveDescriptor(TypeCategory.PRIMITIVE.name, ValueType.STRING, true)
     )
 
     companion object {

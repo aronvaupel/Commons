@@ -14,5 +14,5 @@ abstract class BasePseudoProperty: BaseEntity() {
     open var key: String = ""
     @Type(JsonBinaryType::class)
     @Column(name = "type_descriptor", columnDefinition = "jsonb")
-    open var typeDescriptor: TypeDescriptor = TypeDescriptor.PrimitiveDescriptor(TypeCategory.PRIMITIVE, ValueType.STRING, true)
+    open var typeDescriptor: TypeDescriptor = TypeDescriptor.PrimitiveDescriptor(TypeCategory.PRIMITIVE.name, ValueType.STRING, true)
 }
