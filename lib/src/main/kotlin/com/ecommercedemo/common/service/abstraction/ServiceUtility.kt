@@ -80,7 +80,7 @@ class ServiceUtility(
                             throw IllegalArgumentException("Entity does not support pseudoProperties")
                         }
                     }
-
+                    //Todo: rethink this. Sending TypeDescriptor as a string is not ideal. Deserializing and serializing again is also not cool. Maybe change CreateRequest?
                     property.name == BasePseudoProperty::typeDescriptor.name -> {
                         val typeDescriptorObject = try {
                             objectMapper.readValue(resolvedValue.toString(), TypeDescriptor::class.java)
