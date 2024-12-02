@@ -1,8 +1,5 @@
 package com.ecommercedemo.common.model.abstraction
 
-import com.ecommercedemo.common.application.validation.type.TypeCategory
-import com.ecommercedemo.common.application.validation.type.ValueType
-import com.ecommercedemo.common.controller.abstraction.util.TypeDescriptor
 import io.hypersistence.utils.hibernate.type.json.JsonBinaryType
 import jakarta.persistence.Column
 import jakarta.persistence.MappedSuperclass
@@ -14,5 +11,5 @@ abstract class BasePseudoProperty: BaseEntity() {
     open var key: String = ""
     @Type(JsonBinaryType::class)
     @Column(name = "type_descriptor", columnDefinition = "jsonb")
-    open var typeDescriptor: TypeDescriptor = TypeDescriptor.PrimitiveDescriptor(TypeCategory.PRIMITIVE.name, ValueType.STRING, true)
+    open var typeDescriptor: String = ""
 }
