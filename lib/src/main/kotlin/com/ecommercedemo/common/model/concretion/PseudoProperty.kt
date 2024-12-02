@@ -31,7 +31,7 @@ open class PseudoProperty(
     @Type(JsonBinaryType::class)
     @Column(columnDefinition = "jsonb", updatable = false)
     @JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, include = JsonTypeInfo.As.PROPERTY, property = "@class")
-    override var typeDescriptor: String
+    override var typeDescriptor: String = ""
 ) : BasePseudoProperty() {
     constructor() : this(
         UUID.randomUUID(),
