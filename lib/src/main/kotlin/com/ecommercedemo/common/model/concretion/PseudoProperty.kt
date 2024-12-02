@@ -2,7 +2,6 @@ package com.ecommercedemo.common.model.concretion
 
 import com.ecommercedemo.common.application.validation.type.TypeCategory
 import com.ecommercedemo.common.application.validation.type.ValueType
-import com.ecommercedemo.common.controller.abstraction.util.PrimitiveDescriptor
 import com.ecommercedemo.common.controller.abstraction.util.TypeDescriptor
 import com.ecommercedemo.common.model.abstraction.BasePseudoProperty
 import com.fasterxml.jackson.annotation.JsonTypeInfo
@@ -37,7 +36,7 @@ open class PseudoProperty(
         UUID.randomUUID(),
         "DUMMY_CLASS",
         "DUMMY_KEY",
-        PrimitiveDescriptor(TypeCategory.PRIMITIVE, ValueType.STRING, true)
+        TypeDescriptor.PrimitiveDescriptor(TypeCategory.PRIMITIVE, ValueType.STRING, true)
     )
 
     companion object {

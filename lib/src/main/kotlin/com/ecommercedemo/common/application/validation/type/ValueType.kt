@@ -41,7 +41,7 @@ enum class ValueType(
     // === COLLECTION TYPES ===
     LIST(TypeCategory.COLLECTION, List::class.java) {
         override fun validate(value: Any?, descriptor: TypeDescriptor): Boolean {
-            if (descriptor !is CollectionDescriptor || descriptor.type != LIST) {
+            if (descriptor !is TypeDescriptor.CollectionDescriptor || descriptor.type != LIST) {
                 throw IllegalArgumentException("Descriptor must be a CollectionDescriptor for LIST type")
             }
             return validateCollection(descriptor, value)
@@ -49,7 +49,7 @@ enum class ValueType(
     },
     ARRAY_LIST(TypeCategory.COLLECTION, ArrayList::class.java) {
         override fun validate(value: Any?, descriptor: TypeDescriptor): Boolean {
-            if (descriptor !is CollectionDescriptor || descriptor.type != ARRAY_LIST) {
+            if (descriptor !is TypeDescriptor.CollectionDescriptor || descriptor.type != ARRAY_LIST) {
                 throw IllegalArgumentException("Descriptor must be a CollectionDescriptor for ARRAY_LIST type")
             }
             if (value !is ArrayList<*>) {
@@ -61,7 +61,7 @@ enum class ValueType(
     },
     LINKED_LIST(TypeCategory.COLLECTION, LinkedList::class.java) {
         override fun validate(value: Any?, descriptor: TypeDescriptor): Boolean {
-            if (descriptor !is CollectionDescriptor || descriptor.type != LINKED_LIST) {
+            if (descriptor !is TypeDescriptor.CollectionDescriptor || descriptor.type != LINKED_LIST) {
                 throw IllegalArgumentException("Descriptor must be a CollectionDescriptor for LINKED_LIST type")
             }
             if (value !is LinkedList<*>) {
@@ -73,7 +73,7 @@ enum class ValueType(
     },
     VECTOR(TypeCategory.COLLECTION, Vector::class.java) {
         override fun validate(value: Any?, descriptor: TypeDescriptor): Boolean {
-            if (descriptor !is CollectionDescriptor || descriptor.type != VECTOR) {
+            if (descriptor !is TypeDescriptor.CollectionDescriptor || descriptor.type != VECTOR) {
                 throw IllegalArgumentException("Descriptor must be a CollectionDescriptor for VECTOR type")
             }
             if (value !is Vector<*>) {
@@ -85,7 +85,7 @@ enum class ValueType(
     },
     SET(TypeCategory.COLLECTION, Set::class.java) {
         override fun validate(value: Any?, descriptor: TypeDescriptor): Boolean {
-            if (descriptor !is CollectionDescriptor || descriptor.type != SET) {
+            if (descriptor !is TypeDescriptor.CollectionDescriptor || descriptor.type != SET) {
                 throw IllegalArgumentException("Descriptor must be a CollectionDescriptor for SET type")
             }
             return validateCollection(descriptor, value)
@@ -93,7 +93,7 @@ enum class ValueType(
     },
     COLLECTION(TypeCategory.COLLECTION, Collection::class.java) {
         override fun validate(value: Any?, descriptor: TypeDescriptor): Boolean {
-            if (descriptor !is CollectionDescriptor || descriptor.type != COLLECTION) {
+            if (descriptor !is TypeDescriptor.CollectionDescriptor || descriptor.type != COLLECTION) {
                 throw IllegalArgumentException("Descriptor must be a CollectionDescriptor for COLLECTION type")
             }
             return validateCollection(descriptor, value)
@@ -101,7 +101,7 @@ enum class ValueType(
     },
     ITERABLE(TypeCategory.COLLECTION, Iterable::class.java) {
         override fun validate(value: Any?, descriptor: TypeDescriptor): Boolean {
-            if (descriptor !is CollectionDescriptor || descriptor.type != ITERABLE) {
+            if (descriptor !is TypeDescriptor.CollectionDescriptor || descriptor.type != ITERABLE) {
                 throw IllegalArgumentException("Descriptor must be a CollectionDescriptor for ITERABLE type")
             }
             return validateCollection(descriptor, value)
@@ -109,7 +109,7 @@ enum class ValueType(
     },
     ARRAY(TypeCategory.COLLECTION, Array<Any>::class.java) {
         override fun validate(value: Any?, descriptor: TypeDescriptor): Boolean {
-            if (descriptor !is CollectionDescriptor || descriptor.type != ARRAY) {
+            if (descriptor !is TypeDescriptor.CollectionDescriptor || descriptor.type != ARRAY) {
                 throw IllegalArgumentException("Descriptor must be a CollectionDescriptor for ARRAY type")
             }
             return validateCollection(descriptor, value)
@@ -117,7 +117,7 @@ enum class ValueType(
     },
     QUEUE(TypeCategory.COLLECTION, java.util.Queue::class.java) {
         override fun validate(value: Any?, descriptor: TypeDescriptor): Boolean {
-            if (descriptor !is CollectionDescriptor || descriptor.type != QUEUE) {
+            if (descriptor !is TypeDescriptor.CollectionDescriptor || descriptor.type != QUEUE) {
                 throw IllegalArgumentException("Descriptor must be a CollectionDescriptor for QUEUE type")
             }
             if (value !is Queue<*>) {
@@ -129,7 +129,7 @@ enum class ValueType(
     },
     DEQUE(TypeCategory.COLLECTION, java.util.Deque::class.java) {
         override fun validate(value: Any?, descriptor: TypeDescriptor): Boolean {
-            if (descriptor !is CollectionDescriptor || descriptor.type != DEQUE) {
+            if (descriptor !is TypeDescriptor.CollectionDescriptor || descriptor.type != DEQUE) {
                 throw IllegalArgumentException("Descriptor must be a CollectionDescriptor for DEQUE type")
             }
             if (value !is Deque<*>) {
@@ -141,7 +141,7 @@ enum class ValueType(
     },
     STACK(TypeCategory.COLLECTION, java.util.Stack::class.java) {
         override fun validate(value: Any?, descriptor: TypeDescriptor): Boolean {
-            if (descriptor !is CollectionDescriptor || descriptor.type != STACK) {
+            if (descriptor !is TypeDescriptor.CollectionDescriptor || descriptor.type != STACK) {
                 throw IllegalArgumentException("Descriptor must be a CollectionDescriptor for STACK type")
             }
             if (value !is Stack<*>) {
@@ -155,7 +155,7 @@ enum class ValueType(
     // === MAP TYPES ===
     MAP(TypeCategory.COLLECTION, Map::class.java) {
         override fun validate(value: Any?, descriptor: TypeDescriptor): Boolean {
-            if (descriptor !is MapDescriptor || descriptor.type != MAP) {
+            if (descriptor !is TypeDescriptor.MapDescriptor || descriptor.type != MAP) {
                 throw IllegalArgumentException("Descriptor must be a MapDescriptor for MAP type")
             }
             return validateMap(value, descriptor, Map::class.java)
@@ -164,7 +164,7 @@ enum class ValueType(
 
     HASH_MAP(TypeCategory.COLLECTION, java.util.HashMap::class.java) {
         override fun validate(value: Any?, descriptor: TypeDescriptor): Boolean {
-            if (descriptor !is MapDescriptor || descriptor.type != HASH_MAP) {
+            if (descriptor !is TypeDescriptor.MapDescriptor || descriptor.type != HASH_MAP) {
                 throw IllegalArgumentException("Descriptor must be a MapDescriptor for map validation")
             }
             if (value !is HashMap<*,*>) {
@@ -176,7 +176,7 @@ enum class ValueType(
     },
     TREE_MAP(TypeCategory.COLLECTION, java.util.TreeMap::class.java) {
         override fun validate(value: Any?, descriptor: TypeDescriptor): Boolean {
-            if (descriptor !is MapDescriptor || descriptor.type != TREE_MAP) {
+            if (descriptor !is TypeDescriptor.MapDescriptor || descriptor.type != TREE_MAP) {
                 throw IllegalArgumentException("Descriptor must be a MapDescriptor for map validation")
             }
             if (value !is TreeMap<*,*>) {
@@ -188,7 +188,7 @@ enum class ValueType(
     },
     LINKED_HASH_MAP(TypeCategory.COLLECTION, java.util.LinkedHashMap::class.java) {
         override fun validate(value: Any?, descriptor: TypeDescriptor): Boolean {
-            if (descriptor !is MapDescriptor || descriptor.type != LINKED_HASH_MAP) {
+            if (descriptor !is TypeDescriptor.MapDescriptor || descriptor.type != LINKED_HASH_MAP) {
                 throw IllegalArgumentException("Descriptor must be a MapDescriptor for map validation")
             }
             if (value !is LinkedHashMap<*,*>) {
@@ -202,7 +202,7 @@ enum class ValueType(
     // === COMPLEX TYPES ===
     OBJECT(TypeCategory.COMPLEX, Any::class.java) {
         override fun validate(value: Any?, descriptor: TypeDescriptor): Boolean {
-            return validateComplexObject(value, descriptor as ComplexObjectDescriptor)
+            return validateComplexObject(value, descriptor as TypeDescriptor.ComplexObjectDescriptor)
         }
     },
 
@@ -215,21 +215,20 @@ enum class ValueType(
             throw IllegalArgumentException("Descriptor type mismatch. Expected: $this, Found: ${descriptor.type}")
         }
 
-        if (descriptor is NullableTypeDescriptor && value == null) {
-            return descriptor.isNullable
-        }
+        isNullable(value, descriptor)
+
         return when (this.category) {
             TypeCategory.PRIMITIVE, TypeCategory.TIME -> typeInfo.isInstance(value)
             TypeCategory.COLLECTION -> {
-                if (descriptor !is CollectionDescriptor) return false
+                if (descriptor !is TypeDescriptor.CollectionDescriptor) return false
                 validateCollection(descriptor, value)
             }
             TypeCategory.MAP -> {
-                if (descriptor !is MapDescriptor) return false
+                if (descriptor !is TypeDescriptor.MapDescriptor) return false
                 validateMap(value, descriptor, typeInfo)
             }
             TypeCategory.COMPLEX -> {
-                if (descriptor !is ComplexObjectDescriptor) return false
+                if (descriptor !is TypeDescriptor.ComplexObjectDescriptor) return false
                 validateComplexObject(value, descriptor)
             }
             else -> false
@@ -239,19 +238,16 @@ enum class ValueType(
     companion object {
         fun validateValueAgainstDescriptor(descriptor: TypeDescriptor, value: Any?): Boolean {
             return when (descriptor) {
-                is PrimitiveDescriptor -> descriptor.type.validate(value, descriptor)
-                is TimeDescriptor -> descriptor.type.validate(value, descriptor)
-                is CollectionDescriptor -> descriptor.type.validate(value, descriptor)
-                is MapDescriptor -> descriptor.type.validate(value, descriptor)
-                is ComplexObjectDescriptor -> descriptor.type.validate(value, descriptor)
-                else -> {
-                    throw IllegalArgumentException("Unsupported descriptor type: ${descriptor::class.simpleName}")
-                }
+                is TypeDescriptor.PrimitiveDescriptor -> descriptor.type.validate(value, descriptor)
+                is TypeDescriptor.TimeDescriptor -> descriptor.type.validate(value, descriptor)
+                is TypeDescriptor.CollectionDescriptor -> descriptor.type.validate(value, descriptor)
+                is TypeDescriptor.MapDescriptor -> descriptor.type.validate(value, descriptor)
+                is TypeDescriptor.ComplexObjectDescriptor -> descriptor.type.validate(value, descriptor)
             }
         }
     }
 
-    fun validateMap(value: Any?, descriptor: MapDescriptor, expectedMapType: Class<*>): Boolean {
+    fun validateMap(value: Any?, descriptor: TypeDescriptor.MapDescriptor, expectedMapType: Class<*>): Boolean {
         if (value !is Map<*, *>) return false
         if (!expectedMapType.isInstance(value)) {
             throw IllegalArgumentException("Value must be of type ${expectedMapType.simpleName}")
@@ -270,7 +266,7 @@ enum class ValueType(
         }
     }
 
-    fun validateCollection(descriptor: CollectionDescriptor, value: Any?): Boolean {
+    fun validateCollection(descriptor: TypeDescriptor.CollectionDescriptor, value: Any?): Boolean {
         if (value !is Collection<*>) return false
 
         if (value.size < descriptor.minElements) {
@@ -286,7 +282,7 @@ enum class ValueType(
         }
     }
 
-    fun validateComplexObject(value: Any?, descriptor: ComplexObjectDescriptor): Boolean {
+    fun validateComplexObject(value: Any?, descriptor: TypeDescriptor.ComplexObjectDescriptor): Boolean {
         if (value == null) return descriptor.isNullable
 
         if (value !is Map<*, *>) {
@@ -296,12 +292,30 @@ enum class ValueType(
         return descriptor.fields.all { (fieldName, fieldDescriptor) ->
             val fieldValue = value[fieldName]
 
-            if (fieldValue == null && fieldDescriptor is NullableTypeDescriptor && !fieldDescriptor.isNullable) {
-                throw IllegalArgumentException("Field '$fieldName' is required but was not provided.")
-            }
+            isNullable(fieldValue, fieldDescriptor)
 
             ValueType.validateValueAgainstDescriptor(fieldDescriptor, fieldValue)
         }
+    }
+
+    private fun supportsNullable(descriptor: TypeDescriptor): Boolean {
+        return when (descriptor) {
+            is TypeDescriptor.PrimitiveDescriptor,
+            is TypeDescriptor.TimeDescriptor,
+            is TypeDescriptor.ComplexObjectDescriptor -> true
+            else -> false
+        }
+    }
+
+    private fun isNullable(value: Any?, descriptor: TypeDescriptor): Boolean {
+        return  if (value == null) {
+            when (descriptor) {
+                is TypeDescriptor.PrimitiveDescriptor -> descriptor.isNullable
+                is TypeDescriptor.TimeDescriptor -> descriptor.isNullable
+                is TypeDescriptor.ComplexObjectDescriptor -> descriptor.isNullable
+                else -> false
+            }
+        } else false
     }
 }
 
