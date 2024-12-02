@@ -5,12 +5,11 @@ import com.ecommercedemo.common.application.validation.type.TypeCategory
 import com.ecommercedemo.common.application.validation.type.ValueType
 import com.fasterxml.jackson.annotation.JsonSubTypes
 import com.fasterxml.jackson.annotation.JsonTypeInfo
-import com.fasterxml.jackson.annotation.JsonTypeName
 
 @JsonTypeInfo(
     use = JsonTypeInfo.Id.NAME,
     include = JsonTypeInfo.As.PROPERTY,
-    property = "category" // Use the "category" field for type discrimination
+    property = "category"
 )
 @JsonSubTypes(
     JsonSubTypes.Type(value = TypeDescriptor.PrimitiveDescriptor::class, name = "PRIMITIVE"),
@@ -20,35 +19,31 @@ import com.fasterxml.jackson.annotation.JsonTypeName
     JsonSubTypes.Type(value = TypeDescriptor.ComplexObjectDescriptor::class, name = "COMPLEX")
 )
 sealed class TypeDescriptor {
-    abstract val category: TypeCategory
+    abstract val category: String
     abstract val type: ValueType
 
-    @JsonTypeName("PRIMITIVE")
     data class PrimitiveDescriptor(
-        override val category: TypeCategory = TypeCategory.PRIMITIVE,
+        override val category: String = TypeCategory.PRIMITIVE.name,
         override val type: ValueType,
         val isNullable: Boolean
     ) : TypeDescriptor()
 
-    @JsonTypeName("TIME")
     data class TimeDescriptor(
-        override val category: TypeCategory = TypeCategory.TIME,
+        override val category: String = TypeCategory.TIME.name,
         override val type: ValueType,
         val isNullable: Boolean
     ) : TypeDescriptor()
 
-    @JsonTypeName("COLLECTION")
     data class CollectionDescriptor(
-        override val category: TypeCategory = TypeCategory.COLLECTION,
+        override val category: String = TypeCategory.COLLECTION.name,
         override val type: ValueType,
         val itemDescriptor: TypeDescriptor,
         val minElements: Int,
         val maxElements: Int?
     ) : TypeDescriptor()
 
-    @JsonTypeName("MAP")
     data class MapDescriptor(
-        override val category: TypeCategory = TypeCategory.MAP,
+        override val category: String = TypeCategory.MAP.name,
         override val type: ValueType,
         val keyDescriptor: TypeDescriptor,
         val valueDescriptor: TypeDescriptor,
@@ -56,9 +51,8 @@ sealed class TypeDescriptor {
         val maxEntries: Int?
     ) : TypeDescriptor()
 
-    @JsonTypeName("COMPLEX")
     data class ComplexObjectDescriptor(
-        override val category: TypeCategory = TypeCategory.COMPLEX,
+        override val category: String = TypeCategory.COMPLEX.name,
         override val type: ValueType,
         val isNullable: Boolean,
         val fields: Map<String, TypeDescriptor>
