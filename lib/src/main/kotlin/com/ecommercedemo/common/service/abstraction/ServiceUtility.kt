@@ -195,6 +195,7 @@ class ServiceUtility(
         println("Valid pseudo-properties in validatePseudoPropertiesFromRequest: $validPseudoProperties")
 
         pseudoPropertiesFromRequest.forEach { (key, value) ->
+            println("Validating pseudo-property: $key with value: $value")
             val registeredPseudoProperty = validPseudoProperties.firstOrNull { it.key == key }
                 ?: throw IllegalArgumentException("Invalid pseudo-property: $key")
             println("Registered pseudo-property: $registeredPseudoProperty")
@@ -202,8 +203,7 @@ class ServiceUtility(
             val registeredPseudoPropertyTypeDescriptor =
                 objectMapper.readValue(registeredPseudoProperty.typeDescriptor, TypeDescriptor::class.java)
             println("Registered pseudo-property type descriptor: $registeredPseudoPropertyTypeDescriptor")
-
-            if (!ValueType.validateValueAgainstDescriptor(registeredPseudoPropertyTypeDescriptor, value)) {
+            if (!ValueType.validateValueAgainstDescriptor(registeredPseudoPropertyTypeDescriptor, objectMapper.readValue(value.toString(), registeredPseudoPropertyTypeDescriptor.type.typeInfo ))) {
                 throw IllegalArgumentException(
                     "Pseudo-property '$key' does not match the expected type. " +
                             "Descriptor: ${registeredPseudoPropertyTypeDescriptor.type.typeInfo}, Found: ${value?.javaClass?.name}"
