@@ -27,6 +27,7 @@ abstract class RestControllerTemplate<T : BaseEntity>(
     open fun create(
         @RequestBody request: CreateRequest<T>
     ): ResponseEntity<T> {
+        println(request)
         return ResponseEntity.ok(service.create(request))
     }
 
