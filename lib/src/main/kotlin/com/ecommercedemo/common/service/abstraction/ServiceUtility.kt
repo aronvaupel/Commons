@@ -9,7 +9,7 @@ import com.ecommercedemo.common.persistence.abstraction.EntityRepository
 import com.ecommercedemo.common.persistence.abstraction.IPseudoPropertyRepository
 import com.fasterxml.jackson.core.type.TypeReference
 import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.module.kotlin.readValue
+import com.fasterxml.jackson.module.kotlin.convertValue
 import org.springframework.stereotype.Service
 import java.util.*
 import kotlin.reflect.KClass
@@ -82,7 +82,8 @@ class ServiceUtility(
                     }
 
                     property.name == BasePseudoProperty::typeDescriptor.name -> {
-                        val deserializedValue = objectMapper.readValue(resolvedValue as String, TypeDescriptor::class.java)
+                        val deserializedValue = objectMapper.convertValue(resolvedValue, TypeDescriptor::class.java)
+
                         if (deserializedValue !is TypeDescriptor) {
                             throw IllegalArgumentException("typeDescriptor must be of type TypeDescriptor, found: ${resolvedValue?.javaClass?.name}")
                         }
@@ -196,7 +197,7 @@ class ServiceUtility(
             println("Registered pseudo-property: $registeredPseudoProperty")
 
             val registeredPseudoPropertyTypeDescriptor =
-                objectMapper.readValue<TypeDescriptor>(registeredPseudoProperty.typeDescriptor)
+                objectMapper.convertValue<TypeDescriptor>(registeredPseudoProperty.typeDescriptor)
             println("Registered pseudo-property type descriptor: $registeredPseudoPropertyTypeDescriptor")
 
             if (!ValueType.validateValueAgainstDescriptor(registeredPseudoPropertyTypeDescriptor, value)) {
