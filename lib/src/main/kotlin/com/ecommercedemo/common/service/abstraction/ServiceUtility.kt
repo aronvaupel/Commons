@@ -9,7 +9,6 @@ import com.ecommercedemo.common.persistence.abstraction.EntityRepository
 import com.ecommercedemo.common.persistence.abstraction.IPseudoPropertyRepository
 import com.fasterxml.jackson.core.type.TypeReference
 import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.module.kotlin.convertValue
 import org.springframework.stereotype.Service
 import java.util.*
 import kotlin.reflect.KClass
@@ -201,7 +200,7 @@ class ServiceUtility(
             println("Registered pseudo-property: $registeredPseudoProperty")
 
             val registeredPseudoPropertyTypeDescriptor =
-                objectMapper.convertValue<TypeDescriptor>(registeredPseudoProperty.typeDescriptor)
+                objectMapper.readValue(registeredPseudoProperty.typeDescriptor, TypeDescriptor::class.java)
             println("Registered pseudo-property type descriptor: $registeredPseudoPropertyTypeDescriptor")
 
             if (!ValueType.validateValueAgainstDescriptor(registeredPseudoPropertyTypeDescriptor, value)) {
