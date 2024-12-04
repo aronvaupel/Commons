@@ -13,20 +13,24 @@ class EntityChangeTracker<T : BaseEntity>(
 ) {
 
     fun getChangedProperties(entityBefore: T?, entityAfter: T): MutableMap<String, Any?> {
+        println("EntityChangeTracker: ORIGINAL ENTITY: $entityBefore with properties: ${entityBefore?.let { it::class.memberProperties.filterIsInstance<KProperty1<T, *>>() }}")
         val changedProperties = mutableMapOf<String, Any?>()
-        val properties = entityAfter::class.memberProperties.filterIsInstance<KProperty1<T, *>>()
-        println("Getting changed properties for entity of type ${entityAfter::class.simpleName}, properties: $properties")
-        properties.forEach { property ->
+        val propertiesAfter = entityAfter::class.memberProperties.filterIsInstance<KProperty1<T, *>>()
+        println("EntityChangeTracker: Getting changed properties for ENTITY AFTER of type ${entityAfter::class.simpleName}, properties: $propertiesAfter")
+        propertiesAfter.forEach { property ->
+            println("EntityChangeTracker: Checking property in updated entity: ${property.name}")
             property.isAccessible = true
             val oldValue = entityBefore?.let {
                 if (property.name == ExpandableBaseEntity::pseudoProperties.name)
                     serviceUtility.deserializeJsonBProperty(property.get(it) as String)
                 else property.get(it)
             }
+            println("EntityChangeTracker: OLD VALUE: $oldValue")
 
             val newValue = if (property.name == ExpandableBaseEntity::pseudoProperties.name)
                 serviceUtility.deserializeJsonBProperty(property.get(entityAfter) as String)
             else property.get(entityAfter)
+            println("EntityChangeTracker: NEW VALUE: $newValue")
 
             if (oldValue != newValue) {
                 changedProperties[property.name] = if (property.name == ExpandableBaseEntity::pseudoProperties.name)
