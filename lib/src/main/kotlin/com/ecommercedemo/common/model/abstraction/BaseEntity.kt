@@ -49,7 +49,7 @@ abstract class BaseEntity{
 
             property?.getter?.call(this)
         }
-        println(args)
+        println("Args are: $args")
         return constructor.callBy(args)
     }
 
