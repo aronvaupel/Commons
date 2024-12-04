@@ -9,6 +9,7 @@ import com.ecommercedemo.common.persistence.abstraction.EntityRepository
 import com.ecommercedemo.common.persistence.abstraction.IPseudoPropertyRepository
 import com.fasterxml.jackson.core.type.TypeReference
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.module.kotlin.readValue
 import org.springframework.stereotype.Service
 import java.util.*
 import kotlin.reflect.KClass
@@ -42,7 +43,7 @@ class ServiceUtility(
         val newInstance = entityConstructor.callBy(entityConstructorParams)
         if (newInstance is ExpandableBaseEntity) validatePseudoPropertiesFromRequest(
             newInstance as ExpandableBaseEntity,
-            valueProvider(ExpandableBaseEntity::pseudoProperties.name) as Map<String, Any?>
+            objectMapper.readValue(objectMapper.writeValueAsString(valueProvider(ExpandableBaseEntity::pseudoProperties.name)))
         )
 
         val targetPropertyMap = newInstance::class.memberProperties.associateBy { it.name }
