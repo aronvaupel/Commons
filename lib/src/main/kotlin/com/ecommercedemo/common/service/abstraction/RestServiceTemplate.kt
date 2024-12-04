@@ -41,6 +41,17 @@ abstract class RestServiceTemplate<T : BaseEntity>(
         println("Attempting to update entity with ID ${request.id}")
         val original = getSingle(request.id)
         println("Original entity: $original")
+        //Todo: Remove this block
+        original::class.memberProperties
+            .filterIsInstance<KProperty1<Any, *>>()
+            .forEach { property ->
+                try {
+                    val value = property.get(original) // Safely get property value
+                    println("${property.name} = $value")
+                } catch (e: Exception) {
+                    println("${property.name} = [Error accessing value: ${e.message}]")
+                }
+            }
         if (original::class != entityClass) {
             throw IllegalArgumentException(
                 "Entity type mismatch. Expected ${entityClass.simpleName} but found ${original::class.simpleName}."
