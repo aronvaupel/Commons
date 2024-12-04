@@ -42,7 +42,7 @@ open class PseudoProperty(
         ObjectMapper().writeValueAsString(
             TypeDescriptor.PrimitiveDescriptor(
                 category = TypeCategory.PRIMITIVE.name,
-                type = ValueType.STRING,
+                type = ValueType.INTEGER,
                 isNullable = true
             )
         )
