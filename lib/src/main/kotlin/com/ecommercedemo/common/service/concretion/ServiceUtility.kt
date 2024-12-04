@@ -190,19 +190,20 @@ class ServiceUtility(
         }
 
         val validationErrors = pseudoPropertiesFromRequest.mapNotNull { (key, value) ->
-            println("PROPERTY FROM REQUEST: $key, VALUE: $value")
             val registeredPseudoProperty = validPseudoProperties.firstOrNull { it.key == key }
-            println("REGISTERED PSEUDO PROPERTY: $registeredPseudoProperty")
-            registeredPseudoProperty?.let {
-                println("REGISTERED PSEUDO PROPERTY INSIDE LET: $it")
+            if (registeredPseudoProperty == null) {
+                "Pseudo-property '$key' is not registered for this entity."
+            } else
+            registeredPseudoProperty.let {
                 val typeDescriptor = objectMapper.readValue(it.typeDescriptor, TypeDescriptor::class.java)
+                println("TYPE DESCRIPTOR: $typeDescriptor")
                 if (!ValueType.validateValueAgainstDescriptor(typeDescriptor, objectMapper.readValue(
                         objectMapper.writeValueAsString(value),
                         typeDescriptor.type.typeInfo
                     ))) {
                     "Pseudo-property '$key' does not match the expected type or constraints. Descriptor: $typeDescriptor, Value: $value"
                 } else null
-            } ?: "Invalid pseudo-property: $key"
+            }
         }
 
         if (validationErrors.isNotEmpty()) {
