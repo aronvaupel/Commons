@@ -140,6 +140,7 @@ class ServiceUtility(
                             ?: throw IllegalArgumentException("pseudoProperties must be a Map<String, Any?>")
                         println("Pseudo-properties from source: $pseudoPropertiesFromSource")
                         validatePseudoPropertiesFromRequest(entity, pseudoPropertiesFromSource)
+                        println("Entity's pseudo-properties: ${entity.pseudoProperties}")
                         val existingPseudoProperties = deserializeJsonBProperty(entity.pseudoProperties)
                         println("Deserialized existing pseudo-properties: $existingPseudoProperties")
                         val mergedPseudoProperties =
@@ -182,7 +183,7 @@ class ServiceUtility(
 
     fun deserializeJsonBProperty(pseudoPropertiesAsString: String): Map<String, Any?> {
         return try {
-            objectMapper.readValue(pseudoPropertiesAsString, object : TypeReference<Map<String, Any?>>() {})
+            objectMapper.readValue(objectMapper.writeValueAsString(pseudoPropertiesAsString), object : TypeReference<Map<String, Any?>>() {})
         } catch (e: Exception) {
             throw IllegalArgumentException("Failed to deserialize pseudoProperties for entity: ${e.message}", e)
         }
