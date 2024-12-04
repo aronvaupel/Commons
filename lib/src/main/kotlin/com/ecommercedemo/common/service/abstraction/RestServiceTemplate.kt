@@ -14,6 +14,7 @@ import jakarta.transaction.Transactional
 import org.springframework.http.HttpStatus
 import java.util.*
 import kotlin.reflect.KClass
+import kotlin.reflect.KProperty1
 import kotlin.reflect.full.memberProperties
 
 @Suppress("UNCHECKED_CAST")
@@ -30,6 +31,7 @@ abstract class RestServiceTemplate<T : BaseEntity>(
         val newInstance = serviceUtility.createNewInstance(request.data::class) { name ->
             request.data::class.memberProperties.firstOrNull { it.name == name }?.getter?.call(request.data)
         }
+        println("New instance: $newInstance with properties: ${newInstance::class.memberProperties.filterIsInstance<KProperty1<T, *>>()}")
 
         return saveAndEmitEvent(null, newInstance, EntityEventType.CREATE)
     }
@@ -77,8 +79,9 @@ abstract class RestServiceTemplate<T : BaseEntity>(
     override fun search(request: SearchRequest): List<T> = retriever.executeSearch(request, entityClass)
 
     private fun saveAndEmitEvent(original: T?, updated: T, eventType: EntityEventType, ): T {
+        println("SaveAndEmitEvent: Original entity: $original with properties: ${original?.let { it::class.memberProperties.filterIsInstance<KProperty1<T, *>>() }}")
         val savedEntity = adapter.save(updated)
-        println("SaveAndEmitEvent: Saved entity: $savedEntity")
+        println("SaveAndEmitEvent: Saved entity: $savedEntity with properties: ${savedEntity::class.memberProperties.filterIsInstance<KProperty1<T, *>>()}")
         val tracker = EntityChangeTracker<T>(serviceUtility)
         val changes = original?.let { tracker.getChangedProperties(it, savedEntity) }
             ?: tracker.getChangedProperties(null, savedEntity)
