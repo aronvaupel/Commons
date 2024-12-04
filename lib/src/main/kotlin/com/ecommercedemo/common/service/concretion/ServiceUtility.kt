@@ -90,6 +90,7 @@ class ServiceUtility(
                         println("Successfully deserialized TypeDescriptor: $typeDescriptorObject")
 
                         val typeDescriptorAsString = objectMapper.writeValueAsString(typeDescriptorObject)
+                        println("TYPE_DESCRIPTOR_AS_STRING: $typeDescriptorAsString")
                         property.setter.call(newInstance, typeDescriptorAsString)
                     }
 
