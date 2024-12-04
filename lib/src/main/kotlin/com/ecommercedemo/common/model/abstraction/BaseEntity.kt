@@ -1,10 +1,12 @@
 package com.ecommercedemo.common.model.abstraction
 
+import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize
 import com.fasterxml.jackson.databind.annotation.JsonSerialize
 import com.fasterxml.jackson.datatype.jsr310.deser.LocalDateTimeDeserializer
 import com.fasterxml.jackson.datatype.jsr310.ser.LocalDateTimeSerializer
 import jakarta.persistence.*
+import org.hibernate.annotations.Type
 import java.time.LocalDateTime
 import java.util.*
 import kotlin.reflect.full.memberProperties
@@ -45,12 +47,21 @@ abstract class BaseEntity{
             ?: throw IllegalStateException("No primary constructor for ${this::class.simpleName}")
 
         val args = constructor.parameters.associateWith { param ->
-            this::class.memberProperties
-                .firstOrNull { it.name == param.name }
-                ?.getter
-                ?.call(this)
-        }
+            val property = this::class.memberProperties.firstOrNull { it.name == param.name }
 
-        return constructor.callBy(args)
+        if (property != null && property.annotations.any { it.annotationClass == Type::class }) {
+            val value = property.getter.call(this)
+            if (value is String) {
+                ObjectMapper().writeValueAsString(ObjectMapper().readValue(value, Any::class.java))
+            } else {
+                value
+            }
+        } else {
+            property?.getter?.call(this)
+        }
+    }
+
+
+    return constructor.callBy(args)
     }
 }
