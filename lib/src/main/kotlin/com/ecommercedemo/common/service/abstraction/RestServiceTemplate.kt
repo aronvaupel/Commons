@@ -79,7 +79,7 @@ abstract class RestServiceTemplate<T : BaseEntity>(
     private fun saveAndEmitEvent(original: T?, updated: T, eventType: EntityEventType, ): T {
         val savedEntity = adapter.save(updated)
         println("SaveAndEmitEvent: Saved entity: $savedEntity")
-        val tracker = EntityChangeTracker<T>()
+        val tracker = EntityChangeTracker<T>(serviceUtility)
         val changes = original?.let { tracker.getChangedProperties(it, savedEntity) }
             ?: tracker.getChangedProperties(null, savedEntity)
         println("SaveAndEmitEvent: Changes: $changes")
