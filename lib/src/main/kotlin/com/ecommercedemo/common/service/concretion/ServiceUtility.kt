@@ -64,7 +64,7 @@ class ServiceUtility(
 
                                 validatePseudoPropertiesFromRequest(newInstance, requestPseudoProperties)
 
-                                val existingPseudoProperties = deserializeJsonBProperty(newInstance.pseudoProperties)
+                                val existingPseudoProperties = deserializePseudoProperty(newInstance.pseudoProperties)
                                 val mergedPseudoProperties =
                                     mergePseudoProperties(existingPseudoProperties, requestPseudoProperties)
 
@@ -126,7 +126,7 @@ class ServiceUtility(
                         val pseudoPropertiesFromSource = value as? Map<String, Any?>
                             ?: throw IllegalArgumentException("pseudoProperties must be a Map<String, Any?>")
                         validatePseudoPropertiesFromRequest(entity, pseudoPropertiesFromSource)
-                        val existingPseudoProperties = deserializeJsonBProperty(entity.pseudoProperties)
+                        val existingPseudoProperties = deserializePseudoProperty(entity.pseudoProperties)
                         val mergedPseudoProperties =
                             mergePseudoProperties(existingPseudoProperties, pseudoPropertiesFromSource)
                         correspondingEntityProperty.setter.call(entity, mergedPseudoProperties)
@@ -162,9 +162,9 @@ class ServiceUtility(
         return entity
     }
 
-    fun deserializeJsonBProperty(pseudoPropertiesAsString: String): Map<String, Any?> {
+    fun deserializePseudoProperty(asString: String): Map<String, Any?> {
         return try {
-            objectMapper.readValue(pseudoPropertiesAsString, object : TypeReference<Map<String, Any?>>() {})
+            objectMapper.readValue(asString, object : TypeReference<Map<String, Any?>>() {})
         } catch (e: Exception) {
             throw IllegalArgumentException("Failed to deserialize pseudoProperties for entity: ${e.message}", e)
         }
@@ -176,26 +176,44 @@ class ServiceUtility(
     ) {
         val validPseudoProperties = getValidPseudoProperties(updatedEntity)
 
-        pseudoPropertiesFromRequest.forEach { (key, value) ->
-            val registeredPseudoProperty = validPseudoProperties.firstOrNull { it.key == key }
-                ?: throw IllegalArgumentException("Invalid pseudo-property: $key")
-
-            val registeredPseudoPropertyTypeDescriptor =
-                objectMapper.readValue(registeredPseudoProperty.typeDescriptor, TypeDescriptor::class.java)
-            if (!ValueType.validateValueAgainstDescriptor(
-                    registeredPseudoPropertyTypeDescriptor,
-                    objectMapper.readValue(
-                        objectMapper.writeValueAsString(value),
-                        registeredPseudoPropertyTypeDescriptor.type.typeInfo
-                    )
-            )
-                ) {
-                throw IllegalArgumentException(
-                    "Pseudo-property '$key' does not match the expected type. " +
-                            "Descriptor: ${registeredPseudoPropertyTypeDescriptor.type.typeInfo}, Found: ${value?.javaClass?.name}"
-                )
-            }
+        val requiredPseudoProperties = validPseudoProperties.filter {
+            val typeDescriptor = objectMapper.readValue(it.typeDescriptor, TypeDescriptor::class.java)
+            !typeDescriptor.isNullable() && typeDescriptor.hasMinElementsOrEntries()
         }
+
+        val missingPseudoProperties = requiredPseudoProperties.filterNot {
+            pseudoPropertiesFromRequest.containsKey(it.key)
+        }
+        if (missingPseudoProperties.isNotEmpty()) {
+            throw IllegalArgumentException("Missing required pseudo-properties: ${missingPseudoProperties.joinToString(", ") { it.key }}")
+        }
+
+        val validationErrors = pseudoPropertiesFromRequest.mapNotNull { (key, value) ->
+            val registeredPseudoProperty = validPseudoProperties.firstOrNull { it.key == key }
+            registeredPseudoProperty?.let {
+                val typeDescriptor = objectMapper.readValue(it.typeDescriptor, TypeDescriptor::class.java)
+                if (!ValueType.validateValueAgainstDescriptor(typeDescriptor, value)) {
+                    "Pseudo-property '$key' does not match the expected type or constraints. Descriptor: $typeDescriptor, Value: $value"
+                } else null
+            } ?: "Invalid pseudo-property: $key"
+        }
+
+        if (validationErrors.isNotEmpty()) {
+            throw IllegalArgumentException("Pseudo-property validation failed with the following errors:\n${validationErrors.joinToString("\n")}")
+        }
+    }
+
+    private fun TypeDescriptor.isNullable() = when (this) {
+        is TypeDescriptor.PrimitiveDescriptor -> isNullable
+        is TypeDescriptor.TimeDescriptor -> isNullable
+        is TypeDescriptor.ComplexObjectDescriptor -> isNullable
+        else -> false
+    }
+
+    private fun TypeDescriptor.hasMinElementsOrEntries() = when (this) {
+        is TypeDescriptor.CollectionDescriptor -> minElements > 0
+        is TypeDescriptor.MapDescriptor -> minEntries > 0
+        else -> false
     }
 
     private fun mergePseudoProperties(

@@ -23,12 +23,12 @@ class EntityChangeTracker<T : BaseEntity>(
                     ?: throw IllegalArgumentException("Property ${property.name} not found in entity before.")
                 matchingProperty.isAccessible = true
                 if (property.name == ExpandableBaseEntity::pseudoProperties.name)
-                    serviceUtility.deserializeJsonBProperty(matchingProperty.get(beforeEntity) as String)
+                    serviceUtility.deserializePseudoProperty(matchingProperty.get(beforeEntity) as String)
                 else matchingProperty.get(beforeEntity)
             }
 
             val newValue = if (property.name == ExpandableBaseEntity::pseudoProperties.name)
-                serviceUtility.deserializeJsonBProperty(property.get(entityAfter) as String)
+                serviceUtility.deserializePseudoProperty(property.get(entityAfter) as String)
             else property.get(entityAfter)
 
             if (oldValue != newValue) {
