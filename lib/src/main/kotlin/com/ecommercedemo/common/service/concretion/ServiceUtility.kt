@@ -183,7 +183,7 @@ class ServiceUtility(
 
     fun deserializeJsonBProperty(pseudoPropertiesAsString: String): Map<String, Any?> {
         return try {
-            objectMapper.readValue(objectMapper.writeValueAsString(pseudoPropertiesAsString), object : TypeReference<Map<String, Any?>>() {})
+            objectMapper.readValue(pseudoPropertiesAsString, object : TypeReference<Map<String, Any?>>() {})
         } catch (e: Exception) {
             throw IllegalArgumentException("Failed to deserialize pseudoProperties for entity: ${e.message}", e)
         }
