@@ -196,8 +196,11 @@ class ServiceUtility(
         println("VALID PSEUDO PROPERTIES: $validPseudoProperties")
 
         val requiredPseudoProperties = validPseudoProperties.filter {
-            val typeDescriptor = objectMapper.readValue(it.typeDescriptor, TypeDescriptor::class.java)
-            !typeDescriptor.isNullable() && typeDescriptor.hasMinElementsOrEntries()
+            when (val typeDescriptor = objectMapper.readValue(it.typeDescriptor, TypeDescriptor::class.java)) {
+                is TypeDescriptor.CollectionDescriptor, is TypeDescriptor.MapDescriptor ->
+                    typeDescriptor.hasMinElementsOrEntries()
+                else -> !typeDescriptor.isNullable()
+            }
         }
 
         val missingPseudoProperties = requiredPseudoProperties.filterNot {
@@ -242,7 +245,7 @@ class ServiceUtility(
         is TypeDescriptor.PrimitiveDescriptor -> isNullable
         is TypeDescriptor.TimeDescriptor -> isNullable
         is TypeDescriptor.ComplexObjectDescriptor -> isNullable
-        else -> false
+        else -> true
     }
 
     private fun TypeDescriptor.hasMinElementsOrEntries() = when (this) {
