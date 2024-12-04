@@ -46,11 +46,10 @@ abstract class BaseEntity{
 
         val args = constructor.parameters.associateWith { param ->
             val property = this::class.memberProperties.firstOrNull { it.name == param.name }
-                ?: return@associateWith null
 
-            property.getter.call(this)
+            property?.getter?.call(this)
         }
-
+        println(args)
         return constructor.callBy(args)
     }
 
