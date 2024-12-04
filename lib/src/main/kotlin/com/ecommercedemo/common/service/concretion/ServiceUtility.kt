@@ -40,6 +40,10 @@ class ServiceUtility(
         }
 
         val newInstance = entityConstructor.callBy(entityConstructorParams)
+        if (newInstance is ExpandableBaseEntity) validatePseudoPropertiesFromRequest(
+            newInstance as ExpandableBaseEntity,
+            valueProvider(ExpandableBaseEntity::pseudoProperties.name) as Map<String, Any?>
+        )
 
         val targetPropertyMap = newInstance::class.memberProperties.associateBy { it.name }
 
@@ -194,20 +198,29 @@ class ServiceUtility(
             if (registeredPseudoProperty == null) {
                 "Pseudo-property '$key' is not registered for this entity."
             } else
-            registeredPseudoProperty.let {
-                val typeDescriptor = objectMapper.readValue(it.typeDescriptor, TypeDescriptor::class.java)
-                println("TYPE DESCRIPTOR: $typeDescriptor")
-                if (!ValueType.validateValueAgainstDescriptor(typeDescriptor, objectMapper.readValue(
-                        objectMapper.writeValueAsString(value),
-                        typeDescriptor.type.typeInfo
-                    ))) {
-                    "Pseudo-property '$key' does not match the expected type or constraints. Descriptor: $typeDescriptor, Value: $value"
-                } else null
-            }
+                registeredPseudoProperty.let {
+                    val typeDescriptor = objectMapper.readValue(it.typeDescriptor, TypeDescriptor::class.java)
+                    println("TYPE DESCRIPTOR: $typeDescriptor")
+                    if (!ValueType.validateValueAgainstDescriptor(
+                            typeDescriptor, objectMapper.readValue(
+                                objectMapper.writeValueAsString(value),
+                                typeDescriptor.type.typeInfo
+                            )
+                        )
+                    ) {
+                        "Pseudo-property '$key' does not match the expected type or constraints. Descriptor: $typeDescriptor, Value: $value"
+                    } else null
+                }
         }
 
         if (validationErrors.isNotEmpty()) {
-            throw IllegalArgumentException("Pseudo-property validation failed with the following errors:\n${validationErrors.joinToString("\n")}")
+            throw IllegalArgumentException(
+                "Pseudo-property validation failed with the following errors:\n${
+                    validationErrors.joinToString(
+                        "\n"
+                    )
+                }"
+            )
         }
     }
 
