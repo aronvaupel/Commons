@@ -10,6 +10,7 @@ import com.ecommercedemo.common.controller.abstraction.util.Retriever
 import com.ecommercedemo.common.model.abstraction.BaseEntity
 import com.ecommercedemo.common.persistence.abstraction.IEntityPersistenceAdapter
 import com.ecommercedemo.common.service.concretion.ServiceUtility
+import jakarta.persistence.EntityManager
 import jakarta.transaction.Transactional
 import org.springframework.http.HttpStatus
 import java.util.*
@@ -21,6 +22,7 @@ import kotlin.reflect.full.memberProperties
 abstract class RestServiceTemplate<T : BaseEntity>(
     private val adapter: IEntityPersistenceAdapter<T>,
     private val entityClass: KClass<T>,
+    private val entityManager: EntityManager,
     private val eventProducer: EntityEventProducer,
     private val retriever: Retriever,
     private val serviceUtility: ServiceUtility
@@ -40,6 +42,7 @@ abstract class RestServiceTemplate<T : BaseEntity>(
     override fun update(request: UpdateRequest): T {
         println("Attempting to update entity with ID ${request.id}")
         val original = getSingle(request.id)
+        entityManager.detach(original)
         println("Original entity: $original")
         //Todo: Remove this block
         original::class.memberProperties
