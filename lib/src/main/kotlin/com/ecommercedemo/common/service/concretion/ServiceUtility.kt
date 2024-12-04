@@ -1,4 +1,4 @@
-package com.ecommercedemo.common.service.abstraction
+package com.ecommercedemo.common.service.concretion
 
 import com.ecommercedemo.common.application.validation.type.ValueType
 import com.ecommercedemo.common.controller.abstraction.util.TypeDescriptor
@@ -203,7 +203,14 @@ class ServiceUtility(
             val registeredPseudoPropertyTypeDescriptor =
                 objectMapper.readValue(registeredPseudoProperty.typeDescriptor, TypeDescriptor::class.java)
             println("Registered pseudo-property type descriptor: $registeredPseudoPropertyTypeDescriptor")
-            if (!ValueType.validateValueAgainstDescriptor(registeredPseudoPropertyTypeDescriptor, objectMapper.readValue(objectMapper.writeValueAsString(value), registeredPseudoPropertyTypeDescriptor.type.typeInfo ))) {
+            if (!ValueType.validateValueAgainstDescriptor(
+                    registeredPseudoPropertyTypeDescriptor,
+                    objectMapper.readValue(
+                        objectMapper.writeValueAsString(value),
+                        registeredPseudoPropertyTypeDescriptor.type.typeInfo
+                    )
+            )
+                ) {
                 throw IllegalArgumentException(
                     "Pseudo-property '$key' does not match the expected type. " +
                             "Descriptor: ${registeredPseudoPropertyTypeDescriptor.type.typeInfo}, Found: ${value?.javaClass?.name}"

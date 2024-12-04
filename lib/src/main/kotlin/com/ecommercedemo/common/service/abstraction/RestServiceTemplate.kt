@@ -9,6 +9,7 @@ import com.ecommercedemo.common.controller.abstraction.request.UpdateRequest
 import com.ecommercedemo.common.controller.abstraction.util.Retriever
 import com.ecommercedemo.common.model.abstraction.BaseEntity
 import com.ecommercedemo.common.persistence.abstraction.IEntityPersistenceAdapter
+import com.ecommercedemo.common.service.concretion.ServiceUtility
 import jakarta.transaction.Transactional
 import org.springframework.http.HttpStatus
 import java.util.*
@@ -30,7 +31,7 @@ abstract class RestServiceTemplate<T : BaseEntity>(
             request.data::class.memberProperties.firstOrNull { it.name == name }?.getter?.call(request.data)
         }
 
-        return saveAndEmitEvent(null, newInstance, EntityEventType.CREATE, )
+        return saveAndEmitEvent(null, newInstance, EntityEventType.CREATE)
     }
 
     @Transactional
@@ -77,11 +78,11 @@ abstract class RestServiceTemplate<T : BaseEntity>(
 
     private fun saveAndEmitEvent(original: T?, updated: T, eventType: EntityEventType, ): T {
         val savedEntity = adapter.save(updated)
-
+        println("SaveAndEmitEvent: Saved entity: $savedEntity")
         val tracker = EntityChangeTracker<T>()
         val changes = original?.let { tracker.getChangedProperties(it, savedEntity) }
             ?: tracker.getChangedProperties(null, savedEntity)
-
+        println("SaveAndEmitEvent: Changes: $changes")
         eventProducer.emit(entityClass.java, savedEntity.id, eventType, changes)
 
         return savedEntity
