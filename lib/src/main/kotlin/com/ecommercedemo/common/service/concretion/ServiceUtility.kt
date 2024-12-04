@@ -189,6 +189,7 @@ class ServiceUtility(
         }
 
         val validationErrors = pseudoPropertiesFromRequest.mapNotNull { (key, value) ->
+            println("PROPERTY FROM REQUEST: $key, VALUE: $value")
             val registeredPseudoProperty = validPseudoProperties.firstOrNull { it.key == key }
             registeredPseudoProperty?.let {
                 val typeDescriptor = objectMapper.readValue(it.typeDescriptor, TypeDescriptor::class.java)
