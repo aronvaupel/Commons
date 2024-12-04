@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service
 import java.util.*
 import kotlin.reflect.KClass
 import kotlin.reflect.KMutableProperty
+import kotlin.reflect.KProperty1
 import kotlin.reflect.full.createType
 import kotlin.reflect.full.memberProperties
 import kotlin.reflect.jvm.isAccessible
@@ -116,6 +117,17 @@ class ServiceUtility(
             .filterIsInstance<KMutableProperty<*>>()
             .associateBy { it.name }
         println("Entity properties: $entityProperties")
+        //Todo: Remove this block
+        entity::class.memberProperties
+            .filterIsInstance<KProperty1<Any, *>>()
+            .forEach { property ->
+                try {
+                    val value = property.get(entity) // Safely get property value
+                    println("${property.name} = $value")
+                } catch (e: Exception) {
+                    println("${property.name} = [Error accessing value: ${e.message}]")
+                }
+            }
 
         propertiesFromRequest.forEach { (key, value) ->
             println("Processing property: $key with value: $value")
