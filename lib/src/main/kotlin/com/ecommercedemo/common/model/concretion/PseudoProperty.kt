@@ -52,18 +52,4 @@ open class PseudoProperty(
         const val STORAGE_NAME = "pseudo_properties"
     }
 
-    override fun copy(): PseudoProperty {
-        return PseudoProperty(
-            id = this.id,
-            entitySimpleName = this.entitySimpleName,
-            key = this.key,
-            typeDescriptor = this.typeDescriptor
-        ).apply {
-            this.createdAt = this@PseudoProperty.createdAt
-            this.updatedAt = this@PseudoProperty.updatedAt
-        }
-    }
 }
-
-
-

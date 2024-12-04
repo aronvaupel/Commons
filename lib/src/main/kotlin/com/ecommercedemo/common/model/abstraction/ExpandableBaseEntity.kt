@@ -24,4 +24,5 @@ abstract class ExpandableBaseEntity: BaseEntity() {
         map[key] = value
         pseudoProperties = ObjectMapper().writeValueAsString(map)
     }
+
 }

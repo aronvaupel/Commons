@@ -7,6 +7,8 @@ import com.fasterxml.jackson.datatype.jsr310.ser.LocalDateTimeSerializer
 import jakarta.persistence.*
 import java.time.LocalDateTime
 import java.util.*
+import kotlin.reflect.full.memberProperties
+import kotlin.reflect.full.primaryConstructor
 
 
 @MappedSuperclass
@@ -38,5 +40,17 @@ abstract class BaseEntity{
         updatedAt = LocalDateTime.now()
     }
 
-    abstract fun copy(): BaseEntity
+    fun copy(): BaseEntity {
+        val constructor = this::class.primaryConstructor
+            ?: throw IllegalStateException("No primary constructor for ${this::class.simpleName}")
+
+        val args = constructor.parameters.associateWith { param ->
+            this::class.memberProperties
+                .firstOrNull { it.name == param.name }
+                ?.getter
+                ?.call(this)
+        }
+
+        return constructor.callBy(args)
+    }
 }
