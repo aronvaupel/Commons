@@ -82,6 +82,17 @@ abstract class RestServiceTemplate<T : BaseEntity>(
         println("SaveAndEmitEvent: Original entity: $original with properties: ${original?.let { it::class.memberProperties.filterIsInstance<KProperty1<T, *>>() }}")
         val savedEntity = adapter.save(updated)
         println("SaveAndEmitEvent: Saved entity: $savedEntity with properties: ${savedEntity::class.memberProperties.filterIsInstance<KProperty1<T, *>>()}")
+        //Todo: Remove this block
+        savedEntity::class.memberProperties
+            .filterIsInstance<KProperty1<Any, *>>()
+            .forEach { property ->
+                try {
+                    val value = property.get(savedEntity) // Safely get property value
+                    println("${property.name} = $value")
+                } catch (e: Exception) {
+                    println("${property.name} = [Error accessing value: ${e.message}]")
+                }
+            }
         val tracker = EntityChangeTracker<T>(serviceUtility)
         val changes = original?.let { tracker.getChangedProperties(it, savedEntity) }
             ?: tracker.getChangedProperties(null, savedEntity)
