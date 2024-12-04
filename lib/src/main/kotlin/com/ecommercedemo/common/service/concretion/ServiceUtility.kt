@@ -179,7 +179,7 @@ class ServiceUtility(
         return entity
     }
 
-    private fun deserializeJsonBProperty(pseudoPropertiesAsString: String): Map<String, Any?> {
+    fun deserializeJsonBProperty(pseudoPropertiesAsString: String): Map<String, Any?> {
         return try {
             objectMapper.readValue(pseudoPropertiesAsString, object : TypeReference<Map<String, Any?>>() {})
         } catch (e: Exception) {
