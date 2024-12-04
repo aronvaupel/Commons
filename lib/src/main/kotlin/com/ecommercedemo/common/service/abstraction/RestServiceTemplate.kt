@@ -57,7 +57,19 @@ abstract class RestServiceTemplate<T : BaseEntity>(
                 "Entity type mismatch. Expected ${entityClass.simpleName} but found ${original::class.simpleName}."
             )
         }
-
+        val copy = original.copy() as T
+        println("Copy entity: $copy")
+        //Todo: Remove this block
+        copy::class.memberProperties
+            .filterIsInstance<KProperty1<Any, *>>()
+            .forEach { property ->
+                try {
+                    val value = property.get(copy) // Safely get property value
+                    println("${property.name} = $value")
+                } catch (e: Exception) {
+                    println("${property.name} = [Error accessing value: ${e.message}]")
+                }
+            }
         val updated = serviceUtility.updateExistingInstance(original.copy() as T, request.properties)
         println("Updated entity: $updated")
 
