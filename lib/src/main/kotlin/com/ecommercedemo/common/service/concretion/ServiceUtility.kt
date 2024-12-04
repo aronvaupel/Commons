@@ -9,7 +9,6 @@ import com.ecommercedemo.common.persistence.abstraction.EntityRepository
 import com.ecommercedemo.common.persistence.abstraction.IPseudoPropertyRepository
 import com.fasterxml.jackson.core.type.TypeReference
 import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.module.kotlin.readValue
 import org.springframework.stereotype.Service
 import java.util.*
 import kotlin.reflect.KClass
@@ -41,10 +40,24 @@ class ServiceUtility(
         }
 
         val newInstance = entityConstructor.callBy(entityConstructorParams)
-        if (newInstance is ExpandableBaseEntity) validatePseudoPropertiesFromRequest(
-            newInstance as ExpandableBaseEntity,
-            objectMapper.readValue(objectMapper.writeValueAsString(valueProvider(ExpandableBaseEntity::pseudoProperties.name)))
-        )
+        if (newInstance is ExpandableBaseEntity) {
+            val pseudoPropertiesValue = valueProvider(ExpandableBaseEntity::pseudoProperties.name)
+            val pseudoPropertiesMap = when (pseudoPropertiesValue) {
+                is String -> {
+                    objectMapper.readValue(pseudoPropertiesValue, object : TypeReference<Map<String, Any?>>() {})
+                }
+
+                is Map<*, *> -> {
+                    pseudoPropertiesValue as Map<String, Any?>
+                }
+
+                else -> {
+                    throw IllegalArgumentException("Invalid pseudoProperties format: $pseudoPropertiesValue")
+                }
+
+            }
+            validatePseudoPropertiesFromRequest(newInstance, pseudoPropertiesMap)
+        }
 
         val targetPropertyMap = newInstance::class.memberProperties.associateBy { it.name }
 
