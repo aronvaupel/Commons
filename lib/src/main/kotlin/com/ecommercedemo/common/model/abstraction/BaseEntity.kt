@@ -59,10 +59,7 @@ abstract class BaseEntity{
                 try {
                     val value = property.getter.call(this)
                     if (property is KMutableProperty<*>) {
-                        println("DEBUG: Copying mutable property '${property.name}' with value: $value")
                         property.setter.call(instance, value)
-                    } else {
-                        println("DEBUG: Skipping immutable property '${property.name}' with value: $value")
                     }
                 } catch (e: Exception) {
                     println("WARNING: Failed to copy property '${property.name}' due to: ${e.message}")

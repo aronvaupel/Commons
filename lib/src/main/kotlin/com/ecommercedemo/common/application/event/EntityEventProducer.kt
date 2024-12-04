@@ -2,8 +2,6 @@ package com.ecommercedemo.common.application.event
 
 import com.ecommercedemo.common.application.cache.RedisService
 import com.ecommercedemo.common.model.abstraction.BaseEntity
-import com.fasterxml.jackson.databind.ObjectMapper
-
 import org.springframework.kafka.core.KafkaTemplate
 import org.springframework.stereotype.Service
 import java.util.*
@@ -12,7 +10,6 @@ import java.util.*
 class EntityEventProducer(
     private val kafkaTemplate: KafkaTemplate<String, Any>,
     private val redisService: RedisService,
-    private val objectMapper: ObjectMapper
 ) {
 
     fun <T : BaseEntity> emit(
@@ -32,12 +29,7 @@ class EntityEventProducer(
                 properties = properties
             )
 
-            val serializedEvent = objectMapper.writeValueAsString(event)
-            println("Serialized payload for topic $topic: $serializedEvent")
-
-
             kafkaTemplate.send(topic, event)
-            println("Produced event for topic: $topic, event: $event")
         } else {
             throw IllegalArgumentException("Topic $topic is not registered in Redis.")
         }
