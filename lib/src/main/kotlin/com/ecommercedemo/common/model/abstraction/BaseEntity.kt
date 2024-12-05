@@ -10,6 +10,7 @@ import java.util.*
 import kotlin.reflect.KMutableProperty
 import kotlin.reflect.full.memberProperties
 import kotlin.reflect.full.primaryConstructor
+import kotlin.reflect.jvm.isAccessible
 
 
 @MappedSuperclass
@@ -50,7 +51,7 @@ abstract class BaseEntity{
                 ?: throw IllegalArgumentException("No property found for parameter '${param.name}'")
 
             try {
-                property.getter.call(this)
+                property.getter.apply { isAccessible = true }.call(this)
             } catch (e: IllegalAccessException) {
                 val publicGetter = this::class.memberProperties.firstOrNull { it.name == param.name?.removePrefix("_") }
                 publicGetter?.getter?.call(this)
