@@ -23,12 +23,12 @@ abstract class EventServiceTemplate<T: BaseEntity, R: BaseEntity>(
     }
 
     @Transactional
-    override fun updateByEvent(event: EntityEvent<T>) {
+    override fun updateByEvent(event: EntityEvent<T>) : R {
         val original = adapter.getById(event.id)
 
         val updated = serviceUtility.updateExistingInstance(original.copy() as R, event.properties)
 
-        adapter.save(updated)
+        return adapter.save(updated)
     }
 
     @Transactional
