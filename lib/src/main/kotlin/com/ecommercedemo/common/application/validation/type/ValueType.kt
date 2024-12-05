@@ -1,6 +1,8 @@
 package com.ecommercedemo.common.application.validation.type
 
 import com.ecommercedemo.common.controller.abstraction.util.*
+import java.math.BigDecimal
+import java.math.BigInteger
 import java.util.*
 
 @Suppress("unused")
@@ -10,24 +12,71 @@ enum class ValueType(
 ) {
 
     // === PRIMITIVE TYPES ===
-    BYTE(TypeCategory.PRIMITIVE, Byte::class.java),
-    UBYTE(TypeCategory.PRIMITIVE, UByte::class.java),
-    SHORT(TypeCategory.PRIMITIVE, Short::class.java),
-    USHORT(TypeCategory.PRIMITIVE, UShort::class.java),
-    INTEGER(TypeCategory.PRIMITIVE, Int::class.java),
-    INT(TypeCategory.PRIMITIVE, Int::class.java),
-    UINT(TypeCategory.PRIMITIVE, UInt::class.java),
-    LONG(TypeCategory.PRIMITIVE, Long::class.java),
-    ULONG(TypeCategory.PRIMITIVE, ULong::class.java),
-    FLOAT(TypeCategory.PRIMITIVE, Float::class.java),
-    DOUBLE(TypeCategory.PRIMITIVE, Double::class.java),
+    BYTE(TypeCategory.PRIMITIVE, Byte::class.java) {
+        override fun validate(value: Any?, descriptor: TypeDescriptor): Boolean {
+            return validateNumber(value, { it.toByte() })
+        }
+    },
+    UBYTE(TypeCategory.PRIMITIVE, UByte::class.java) {
+        override fun validate(value: Any?, descriptor: TypeDescriptor): Boolean {
+            return validateNumber(value, { it.toUByte() }, { it.all { char -> char.isDigit() } })
+        }
+    },
+    SHORT(TypeCategory.PRIMITIVE, Short::class.java) {
+        override fun validate(value: Any?, descriptor: TypeDescriptor): Boolean {
+            return validateNumber(value, { it.toShort() })
+        }
+    },
+    USHORT(TypeCategory.PRIMITIVE, UShort::class.java) {
+        override fun validate(value: Any?, descriptor: TypeDescriptor): Boolean {
+            return validateNumber(value, { it.toUShort() }, { it.all { char -> char.isDigit() } })
+        }
+    },
+    INTEGER(TypeCategory.PRIMITIVE, Int::class.java) {
+        override fun validate(value: Any?, descriptor: TypeDescriptor): Boolean {
+            return validateNumber(value, { it.toInt() })
+        }
+    },
+    UINT(TypeCategory.PRIMITIVE, UInt::class.java) {
+        override fun validate(value: Any?, descriptor: TypeDescriptor): Boolean {
+            return validateNumber(value, { it.toUInt() }, { it.all { char -> char.isDigit() } })
+        }
+    },
+    LONG(TypeCategory.PRIMITIVE, Long::class.java) {
+        override fun validate(value: Any?, descriptor: TypeDescriptor): Boolean {
+            return validateNumber(value, { it.toLong() })
+        }
+    },
+    ULONG(TypeCategory.PRIMITIVE, ULong::class.java) {
+        override fun validate(value: Any?, descriptor: TypeDescriptor): Boolean {
+            return validateNumber(value, { it.toULong() }, { it.all { char -> char.isDigit() } })
+        }
+    },
+    FLOAT(TypeCategory.PRIMITIVE, Float::class.java) {
+        override fun validate(value: Any?, descriptor: TypeDescriptor): Boolean {
+            return validateNumber(value, { it.toFloat() })
+        }
+    },
+    DOUBLE(TypeCategory.PRIMITIVE, Double::class.java) {
+        override fun validate(value: Any?, descriptor: TypeDescriptor): Boolean {
+            return validateNumber(value, { it.toDouble() })
+        }
+    },
+
     CHAR(TypeCategory.PRIMITIVE, Char::class.java),
     BOOLEAN(TypeCategory.PRIMITIVE, Boolean::class.java),
     STRING(TypeCategory.PRIMITIVE, String::class.java),
 
-    BIG_INTEGER(TypeCategory.PRIMITIVE, java.math.BigInteger::class.java),
-    BIG_DECIMAL(TypeCategory.PRIMITIVE, java.math.BigDecimal::class.java),
-
+    BIG_INTEGER(TypeCategory.PRIMITIVE, BigInteger::class.java) {
+        override fun validate(value: Any?, descriptor: TypeDescriptor): Boolean {
+            return validateNumber(value, { BigInteger(it) }, { it.all { char -> char.isDigit() } })
+        }
+    },
+    BIG_DECIMAL(TypeCategory.PRIMITIVE, BigDecimal::class.java) {
+        override fun validate(value: Any?, descriptor: TypeDescriptor): Boolean {
+            return validateNumber(value, { BigDecimal(it) })
+        }
+    },
     // === TIME TYPES ===
     INSTANT(TypeCategory.TIME, java.time.Instant::class.java),
     LOCAL_DATE(TypeCategory.TIME, java.time.LocalDate::class.java),
@@ -37,7 +86,6 @@ enum class ValueType(
     OFFSET_TIME(TypeCategory.TIME, java.time.OffsetTime::class.java),
     DURATION(TypeCategory.TIME, java.time.Duration::class.java),
     PERIOD(TypeCategory.TIME, java.time.Period::class.java),
-
     // === COLLECTION TYPES ===
     LIST(TypeCategory.COLLECTION, List::class.java) {
         override fun validate(value: Any?, descriptor: TypeDescriptor): Boolean {
@@ -316,6 +364,25 @@ enum class ValueType(
                 else -> false
             }
         } else false
+    }
+
+    fun validateNumber(
+        value: Any?,
+        parseFunction: (String) -> Any,
+        unsignedCheck: ((String) -> Boolean)? = null
+    ): Boolean {
+        return when (value) {
+            is Number -> true
+            is String -> try {
+                // Parse the string to ensure it's valid
+                parseFunction(value)
+                // Perform unsigned check if applicable
+                unsignedCheck?.invoke(value) ?: true
+            } catch (e: NumberFormatException) {
+                false
+            }
+            else -> false
+        }
     }
 }
 
