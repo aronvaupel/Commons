@@ -40,24 +40,6 @@ class ServiceUtility(
         }
 
         val newInstance = entityConstructor.callBy(entityConstructorParams)
-        if (newInstance is ExpandableBaseEntity) {
-            val pseudoPropertiesValue = valueProvider(ExpandableBaseEntity::pseudoProperties.name)
-            val pseudoPropertiesMap = when (pseudoPropertiesValue) {
-                is String -> {
-                    objectMapper.readValue(pseudoPropertiesValue, object : TypeReference<Map<String, Any?>>() {})
-                }
-
-                is Map<*, *> -> {
-                    pseudoPropertiesValue as Map<String, Any?>
-                }
-
-                else -> {
-                    throw IllegalArgumentException("Invalid pseudoProperties format: $pseudoPropertiesValue")
-                }
-
-            }
-            validatePseudoPropertiesFromRequest(newInstance, pseudoPropertiesMap)
-        }
 
         val targetPropertyMap = newInstance::class.memberProperties.associateBy { it.name }
 
@@ -75,21 +57,30 @@ class ServiceUtility(
 
                     property.name == ExpandableBaseEntity::pseudoProperties.name -> {
                         if (newInstance is ExpandableBaseEntity) {
-                            val requestPseudoProperties = resolvedValue as? Map<String, Any?>
-                                ?: emptyMap()
+                            val pseudoPropertiesValue = valueProvider(ExpandableBaseEntity::pseudoProperties.name)
+                            val pseudoPropertiesFromRequest = when (pseudoPropertiesValue) {
+                                is String -> {
+                                    objectMapper.readValue(
+                                        pseudoPropertiesValue,
+                                        object : TypeReference<Map<String, Any?>>() {})
+                                }
 
-                            if (requestPseudoProperties.isNotEmpty()) {
+                                is Map<*, *> -> {
+                                    pseudoPropertiesValue as Map<String, Any?>
+                                }
 
-                                validatePseudoPropertiesFromRequest(newInstance, requestPseudoProperties)
+                                else -> {
+                                    throw IllegalArgumentException("Invalid pseudoProperties format: $pseudoPropertiesValue")
+                                }
 
-                                val existingPseudoProperties = deserializePseudoProperty(newInstance.pseudoProperties)
-                                val mergedPseudoProperties =
-                                    mergePseudoProperties(existingPseudoProperties, requestPseudoProperties)
-
-                                property.setter.call(newInstance, mergedPseudoProperties)
                             }
-                        } else {
-                            throw IllegalArgumentException("Entity does not support pseudoProperties")
+                            validatePseudoPropertiesFromRequest(newInstance, pseudoPropertiesFromRequest)
+
+                            val existingPseudoProperties = deserializePseudoProperty(newInstance.pseudoProperties)
+                            val mergedPseudoProperties =
+                                mergePseudoProperties(existingPseudoProperties, pseudoPropertiesFromRequest)
+
+                            property.setter.call(newInstance, mergedPseudoProperties)
                         }
                     }
                     //Todo: rethink this. Sending TypeDescriptor as a string is not ideal. Deserializing and serializing again is also not cool. Maybe change CreateRequest?
@@ -199,6 +190,7 @@ class ServiceUtility(
             when (val typeDescriptor = objectMapper.readValue(it.typeDescriptor, TypeDescriptor::class.java)) {
                 is TypeDescriptor.CollectionDescriptor, is TypeDescriptor.MapDescriptor ->
                     typeDescriptor.hasMinElementsOrEntries()
+
                 else -> !typeDescriptor.isNullable()
             }
         }
