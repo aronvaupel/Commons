@@ -10,7 +10,6 @@ import java.util.*
 import kotlin.reflect.KMutableProperty
 import kotlin.reflect.full.memberProperties
 import kotlin.reflect.full.primaryConstructor
-import kotlin.reflect.jvm.isAccessible
 
 
 @MappedSuperclass
@@ -47,53 +46,38 @@ abstract class BaseEntity{
             ?: throw IllegalStateException("No primary constructor for ${this::class.simpleName}")
 
         val args = constructor.parameters.associateWith { param ->
-            this::class.memberProperties.firstOrNull { it.name == param.name }?.getter?.call(this)
+            val property = this::class.memberProperties.firstOrNull { it.name == param.name }
+                ?: throw IllegalArgumentException("No property found for parameter '${param.name}'")
+
+            try {
+                property.getter.call(this)
+            } catch (e: IllegalAccessException) {
+                val publicGetter = this::class.memberProperties.firstOrNull { it.name == param.name?.removePrefix("_") }
+                publicGetter?.getter?.call(this)
+            }
         }
 
         val instance = constructor.callBy(args)
 
         this::class.memberProperties
-            .filter { property ->
-                constructor.parameters.none { it.name == property.name }
-            }
+            .filter { property -> constructor.parameters.none { it.name == property.name } }
             .forEach { property ->
                 try {
-                    val value = if (property.name.startsWith("_")) {
-                        val publicGetterName = property.name.removePrefix("_")
-                        this::class.memberProperties
-                            .firstOrNull { it.name == publicGetterName }
-                            ?.apply { isAccessible = true }
-                            ?.getter
-                            ?.call(this)
-                            ?: run {
-                                println("WARNING: No public getter for private property '${property.name}'")
-                                null
-                            }
-                    } else {
-                        property.getter.call(this)
+                    val value = when {
+                        property.name.startsWith("_") -> {
+                            val publicGetterName = property.name.removePrefix("_")
+                            this::class.memberProperties
+                                .firstOrNull { it.name == publicGetterName }
+                                ?.getter
+                                ?.call(this)
+                        }
+                        else -> property.getter.call(this)
                     }
-                    if (value != null) {
-                        val setterName = if (property.name.startsWith("_")) {
-                            // Match the public setter for private fields
-                            property.name.removePrefix("_")
-                        } else {
-                            property.name
-                        }
-                        val matchingSetter = this::class.memberProperties
-                            .firstOrNull { it.name == setterName && it is KMutableProperty<*> }
-                                as? KMutableProperty<*>
-
-                        if (matchingSetter != null) {
-                            matchingSetter.setter.call(instance, value)
-                        } else if (property is KMutableProperty<*>) {
-                            // If no matching setter is found, fallback to using the property setter
-                            property.setter.call(instance, value)
-                        } else {
-                            println("WARNING: No matching setter for '${property.name}'. Skipping.")
-                        }
+                    if (property is KMutableProperty<*>) {
+                        property.setter.call(instance, value)
                     }
                 } catch (e: Exception) {
-                    println("ERROR: Failed to copy property '${property.name}': ${e.message}")
+                    println("WARNING: Failed to copy property '${property.name}' due to: ${e.message}")
                 }
             }
 
