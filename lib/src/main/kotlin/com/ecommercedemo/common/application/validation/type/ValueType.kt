@@ -3,6 +3,8 @@ package com.ecommercedemo.common.application.validation.type
 import com.ecommercedemo.common.controller.abstraction.util.*
 import java.math.BigDecimal
 import java.math.BigInteger
+import java.time.*
+import java.time.format.DateTimeParseException
 import java.util.*
 
 @Suppress("unused")
@@ -64,7 +66,13 @@ enum class ValueType(
     },
 
     CHAR(TypeCategory.PRIMITIVE, Char::class.java),
-    BOOLEAN(TypeCategory.PRIMITIVE, Boolean::class.java),
+
+    BOOLEAN(TypeCategory.PRIMITIVE, Boolean::class.java) {
+        override fun validate(value: Any?, descriptor: TypeDescriptor): Boolean {
+            return validateBool(value)
+        }
+    },
+
     STRING(TypeCategory.PRIMITIVE, String::class.java),
 
     BIG_INTEGER(TypeCategory.PRIMITIVE, BigInteger::class.java) {
@@ -77,15 +85,50 @@ enum class ValueType(
             return validateNumber(value, { BigDecimal(it) })
         }
     },
+
     // === TIME TYPES ===
-    INSTANT(TypeCategory.TIME, java.time.Instant::class.java),
-    LOCAL_DATE(TypeCategory.TIME, java.time.LocalDate::class.java),
-    LOCAL_DATE_TIME(TypeCategory.TIME, java.time.LocalDateTime::class.java),
-    ZONED_DATE_TIME(TypeCategory.TIME, java.time.ZonedDateTime::class.java),
-    OFFSET_DATE_TIME(TypeCategory.TIME, java.time.OffsetDateTime::class.java),
-    OFFSET_TIME(TypeCategory.TIME, java.time.OffsetTime::class.java),
-    DURATION(TypeCategory.TIME, java.time.Duration::class.java),
-    PERIOD(TypeCategory.TIME, java.time.Period::class.java),
+    INSTANT(TypeCategory.TIME, java.time.Instant::class.java) {
+        override fun validate(value: Any?, descriptor: TypeDescriptor): Boolean {
+            return validateTime(value, descriptor as TypeDescriptor.TimeDescriptor)
+        }
+    },
+    LOCAL_DATE(TypeCategory.TIME, java.time.LocalDate::class.java) {
+        override fun validate(value: Any?, descriptor: TypeDescriptor): Boolean {
+            return validateTime(value, descriptor as TypeDescriptor.TimeDescriptor)
+        }
+    },
+    LOCAL_DATE_TIME(TypeCategory.TIME, java.time.LocalDateTime::class.java) {
+        override fun validate(value: Any?, descriptor: TypeDescriptor): Boolean {
+            return validateTime(value, descriptor as TypeDescriptor.TimeDescriptor)
+        }
+    },
+    ZONED_DATE_TIME(TypeCategory.TIME, java.time.ZonedDateTime::class.java) {
+        override fun validate(value: Any?, descriptor: TypeDescriptor): Boolean {
+            return validateTime(value, descriptor as TypeDescriptor.TimeDescriptor)
+        }
+    },
+    OFFSET_DATE_TIME(TypeCategory.TIME, java.time.OffsetDateTime::class.java) {
+        override fun validate(value: Any?, descriptor: TypeDescriptor): Boolean {
+            return validateTime(value, descriptor as TypeDescriptor.TimeDescriptor)
+        }
+    },
+    OFFSET_TIME(TypeCategory.TIME, java.time.OffsetTime::class.java) {
+        override fun validate(value: Any?, descriptor: TypeDescriptor): Boolean {
+            return validateTime(value, descriptor as TypeDescriptor.TimeDescriptor)
+        }
+    },
+    DURATION(TypeCategory.TIME, java.time.Duration::class.java) {
+        override fun validate(value: Any?, descriptor: TypeDescriptor): Boolean {
+            return validateTime(value, descriptor as TypeDescriptor.TimeDescriptor)
+        }
+    },
+    PERIOD(TypeCategory.TIME, java.time.Period::class.java) {
+        override fun validate(value: Any?, descriptor: TypeDescriptor): Boolean {
+            return validateTime(value, descriptor as TypeDescriptor.TimeDescriptor)
+        }
+    },
+
+
     // === COLLECTION TYPES ===
     LIST(TypeCategory.COLLECTION, List::class.java) {
         override fun validate(value: Any?, descriptor: TypeDescriptor): Boolean {
@@ -215,7 +258,7 @@ enum class ValueType(
             if (descriptor !is TypeDescriptor.MapDescriptor || descriptor.type != HASH_MAP) {
                 throw IllegalArgumentException("Descriptor must be a MapDescriptor for map validation")
             }
-            if (value !is HashMap<*,*>) {
+            if (value !is HashMap<*, *>) {
                 throw IllegalArgumentException("Value must be an ArrayList.")
             }
 
@@ -227,7 +270,7 @@ enum class ValueType(
             if (descriptor !is TypeDescriptor.MapDescriptor || descriptor.type != TREE_MAP) {
                 throw IllegalArgumentException("Descriptor must be a MapDescriptor for map validation")
             }
-            if (value !is TreeMap<*,*>) {
+            if (value !is TreeMap<*, *>) {
                 throw IllegalArgumentException("Value must be an ArrayList.")
             }
 
@@ -239,7 +282,7 @@ enum class ValueType(
             if (descriptor !is TypeDescriptor.MapDescriptor || descriptor.type != LINKED_HASH_MAP) {
                 throw IllegalArgumentException("Descriptor must be a MapDescriptor for map validation")
             }
-            if (value !is LinkedHashMap<*,*>) {
+            if (value !is LinkedHashMap<*, *>) {
                 throw IllegalArgumentException("Value must be an ArrayList.")
             }
 
@@ -271,14 +314,17 @@ enum class ValueType(
                 if (descriptor !is TypeDescriptor.CollectionDescriptor) return false
                 validateCollection(descriptor, value)
             }
+
             TypeCategory.MAP -> {
                 if (descriptor !is TypeDescriptor.MapDescriptor) return false
                 validateMap(value, descriptor, typeInfo)
             }
+
             TypeCategory.COMPLEX -> {
                 if (descriptor !is TypeDescriptor.ComplexObjectDescriptor) return false
                 validateComplexObject(value, descriptor)
             }
+
             else -> false
         }
     }
@@ -297,6 +343,7 @@ enum class ValueType(
                     }
                     isValid
                 }
+
                 is TypeDescriptor.TimeDescriptor -> {
                     val isValid = descriptor.type.validate(value, descriptor)
                     if (!isValid) {
@@ -304,6 +351,7 @@ enum class ValueType(
                     }
                     isValid
                 }
+
                 is TypeDescriptor.CollectionDescriptor -> {
                     if (value !is Collection<*>) {
                         failureDetails.add("Expected Collection but got ${value?.javaClass?.name} for descriptor '$descriptor'")
@@ -317,6 +365,7 @@ enum class ValueType(
                     failureDetails.addAll(itemFailures)
                     itemFailures.isEmpty()
                 }
+
                 is TypeDescriptor.MapDescriptor -> {
                     if (value !is Map<*, *>) {
                         failureDetails.add("Expected Map but got ${value?.javaClass?.name} for descriptor '$descriptor'")
@@ -335,6 +384,7 @@ enum class ValueType(
                     failureDetails.addAll(keyFailures + valueFailures)
                     keyFailures.isEmpty() && valueFailures.isEmpty()
                 }
+
                 is TypeDescriptor.ComplexObjectDescriptor -> {
                     if (value !is Map<*, *>) {
                         failureDetails.add("Expected ComplexObject but got ${value?.javaClass?.name} for descriptor '$descriptor'")
@@ -389,7 +439,6 @@ enum class ValueType(
     }
 
     fun validateComplexObject(value: Any?, descriptor: TypeDescriptor.ComplexObjectDescriptor): Boolean {
-        if (value == null) return descriptor.isNullable
 
         if (value !is Map<*, *>) {
             throw IllegalArgumentException("Complex object value must be a Map.")
@@ -409,12 +458,13 @@ enum class ValueType(
             is TypeDescriptor.PrimitiveDescriptor,
             is TypeDescriptor.TimeDescriptor,
             is TypeDescriptor.ComplexObjectDescriptor -> true
+
             else -> false
         }
     }
 
     private fun isNullable(value: Any?, descriptor: TypeDescriptor): Boolean {
-        return  if (value == null) {
+        return if (value == null) {
             when (descriptor) {
                 is TypeDescriptor.PrimitiveDescriptor -> descriptor.isNullable
                 is TypeDescriptor.TimeDescriptor -> descriptor.isNullable
@@ -432,13 +482,44 @@ enum class ValueType(
         return when (value) {
             is Number -> true
             is String -> try {
-                // Parse the string to ensure it's valid
                 parseFunction(value)
-                // Perform unsigned check if applicable
                 unsignedCheck?.invoke(value) ?: true
             } catch (e: NumberFormatException) {
                 false
             }
+
+            else -> false
+        }
+    }
+
+    fun validateTime(value: Any?, descriptor: TypeDescriptor.TimeDescriptor): Boolean {
+
+        if (value !is String) {
+            return false
+        }
+
+        return try {
+            when (descriptor.type) {
+                INSTANT -> Instant.parse(value)
+                LOCAL_DATE -> LocalDate.parse(value)
+                LOCAL_DATE_TIME -> LocalDateTime.parse(value)
+                ZONED_DATE_TIME -> ZonedDateTime.parse(value)
+                OFFSET_DATE_TIME -> OffsetDateTime.parse(value)
+                OFFSET_TIME -> OffsetTime.parse(value)
+                DURATION -> Duration.parse(value)
+                PERIOD -> Period.parse(value)
+                else -> return false
+            }
+            true
+        } catch (e: DateTimeParseException) {
+            false
+        }
+    }
+
+    fun validateBool(value: Any?): Boolean {
+        return when (value) {
+            is Boolean -> true
+            is String -> value.equals("true", ignoreCase = true) || value.equals("false", ignoreCase = true)
             else -> false
         }
     }

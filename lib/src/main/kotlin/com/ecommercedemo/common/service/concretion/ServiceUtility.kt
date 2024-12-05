@@ -184,10 +184,8 @@ class ServiceUtility(
         pseudoPropertiesFromRequest: Map<String, Any?>
     ) {
         val validPseudoProperties = getValidPseudoProperties(updatedEntity)
-        println("VALID PSEUDO PROPERTIES: $validPseudoProperties")
 
         val existingPseudoProperties = deserializePseudoProperty(updatedEntity.pseudoProperties)
-        println("EXISTING PSEUDO PROPERTIES: $existingPseudoProperties")
 
         val requiredPseudoProperties = validPseudoProperties.filter {
             when (val typeDescriptor = objectMapper.readValue(it.typeDescriptor, TypeDescriptor::class.java)) {
@@ -218,7 +216,6 @@ class ServiceUtility(
                 registeredPseudoProperty.let {
                     val typeDescriptor = objectMapper.readValue(it.typeDescriptor, TypeDescriptor::class.java)
                     val failureDetails = mutableListOf<String>()
-                    println("TYPE DESCRIPTOR: $typeDescriptor")
                     val isValid = try {
                         ValueType.validateValueAgainstDescriptor(
                             typeDescriptor,
