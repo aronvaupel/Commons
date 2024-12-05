@@ -65,19 +65,39 @@ abstract class BaseEntity{
                             ?.apply { isAccessible = true }
                             ?.getter
                             ?.call(this)
+                            ?: run {
+                                println("WARNING: No public getter for private property '${property.name}'")
+                                null
+                            }
                     } else {
                         property.getter.call(this)
                     }
-                    if (property is KMutableProperty<*>) {
-                        property.setter.call(instance, value)
+                    if (value != null) {
+                        val setterName = if (property.name.startsWith("_")) {
+                            // Match the public setter for private fields
+                            property.name.removePrefix("_")
+                        } else {
+                            property.name
+                        }
+                        val matchingSetter = this::class.memberProperties
+                            .firstOrNull { it.name == setterName && it is KMutableProperty<*> }
+                                as? KMutableProperty<*>
+
+                        if (matchingSetter != null) {
+                            matchingSetter.setter.call(instance, value)
+                        } else if (property is KMutableProperty<*>) {
+                            // If no matching setter is found, fallback to using the property setter
+                            property.setter.call(instance, value)
+                        } else {
+                            println("WARNING: No matching setter for '${property.name}'. Skipping.")
+                        }
                     }
                 } catch (e: Exception) {
-                    println("WARNING: Failed to copy property '${property.name}' due to: ${e.message}")
+                    println("ERROR: Failed to copy property '${property.name}': ${e.message}")
                 }
             }
 
         return instance
     }
-
 
 }
