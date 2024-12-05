@@ -186,6 +186,9 @@ class ServiceUtility(
         val validPseudoProperties = getValidPseudoProperties(updatedEntity)
         println("VALID PSEUDO PROPERTIES: $validPseudoProperties")
 
+        val existingPseudoProperties = deserializePseudoProperty(updatedEntity.pseudoProperties)
+        println("EXISTING PSEUDO PROPERTIES: $existingPseudoProperties")
+
         val requiredPseudoProperties = validPseudoProperties.filter {
             when (val typeDescriptor = objectMapper.readValue(it.typeDescriptor, TypeDescriptor::class.java)) {
                 is TypeDescriptor.CollectionDescriptor, is TypeDescriptor.MapDescriptor ->
@@ -197,7 +200,10 @@ class ServiceUtility(
 
         val missingPseudoProperties = requiredPseudoProperties.filterNot {
             pseudoPropertiesFromRequest.containsKey(it.key)
+        }.filterNot { requiredProperty ->
+            existingPseudoProperties.containsKey(requiredProperty.key) || pseudoPropertiesFromRequest.containsKey(requiredProperty.key)
         }
+
         if (missingPseudoProperties.isNotEmpty()) {
             throw IllegalArgumentException("Missing required pseudo-properties: ${missingPseudoProperties.joinToString(", ") { it.key }}")
         }
