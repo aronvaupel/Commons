@@ -10,6 +10,7 @@ import java.util.*
 import kotlin.reflect.KMutableProperty
 import kotlin.reflect.full.memberProperties
 import kotlin.reflect.full.primaryConstructor
+import kotlin.reflect.jvm.isAccessible
 
 
 @MappedSuperclass
@@ -57,7 +58,16 @@ abstract class BaseEntity{
             }
             .forEach { property ->
                 try {
-                    val value = property.getter.call(this)
+                    val value = if (property.name.startsWith("_")) {
+                        val publicGetterName = property.name.removePrefix("_")
+                        this::class.memberProperties
+                            .firstOrNull { it.name == publicGetterName }
+                            ?.apply { isAccessible = true }
+                            ?.getter
+                            ?.call(this)
+                    } else {
+                        property.getter.call(this)
+                    }
                     if (property is KMutableProperty<*>) {
                         property.setter.call(instance, value)
                     }
