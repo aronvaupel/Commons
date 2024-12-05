@@ -284,13 +284,71 @@ enum class ValueType(
     }
 
     companion object {
-        fun validateValueAgainstDescriptor(descriptor: TypeDescriptor, value: Any?): Boolean {
+        fun validateValueAgainstDescriptor(
+            descriptor: TypeDescriptor,
+            value: Any?,
+            failureDetails: MutableList<String> = mutableListOf()
+        ): Boolean {
             return when (descriptor) {
-                is TypeDescriptor.PrimitiveDescriptor -> descriptor.type.validate(value, descriptor)
-                is TypeDescriptor.TimeDescriptor -> descriptor.type.validate(value, descriptor)
-                is TypeDescriptor.CollectionDescriptor -> descriptor.type.validate(value, descriptor)
-                is TypeDescriptor.MapDescriptor -> descriptor.type.validate(value, descriptor)
-                is TypeDescriptor.ComplexObjectDescriptor -> descriptor.type.validate(value, descriptor)
+                is TypeDescriptor.PrimitiveDescriptor -> {
+                    val isValid = descriptor.type.validate(value, descriptor)
+                    if (!isValid) {
+                        failureDetails.add("Primitive validation failed for value '$value' with descriptor '$descriptor'")
+                    }
+                    isValid
+                }
+                is TypeDescriptor.TimeDescriptor -> {
+                    val isValid = descriptor.type.validate(value, descriptor)
+                    if (!isValid) {
+                        failureDetails.add("Time validation failed for value '$value' with descriptor '$descriptor'")
+                    }
+                    isValid
+                }
+                is TypeDescriptor.CollectionDescriptor -> {
+                    if (value !is Collection<*>) {
+                        failureDetails.add("Expected Collection but got ${value?.javaClass?.name} for descriptor '$descriptor'")
+                        return false
+                    }
+                    val itemFailures = value.mapIndexedNotNull { index, item ->
+                        if (!validateValueAgainstDescriptor(descriptor.itemDescriptor, item, failureDetails)) {
+                            "Item at index $index failed validation."
+                        } else null
+                    }
+                    failureDetails.addAll(itemFailures)
+                    itemFailures.isEmpty()
+                }
+                is TypeDescriptor.MapDescriptor -> {
+                    if (value !is Map<*, *>) {
+                        failureDetails.add("Expected Map but got ${value?.javaClass?.name} for descriptor '$descriptor'")
+                        return false
+                    }
+                    val keyFailures = value.keys.mapNotNull { key ->
+                        if (!validateValueAgainstDescriptor(descriptor.keyDescriptor, key, failureDetails)) {
+                            "Key '$key' failed validation."
+                        } else null
+                    }
+                    val valueFailures = value.values.mapNotNull { mapValue ->
+                        if (!validateValueAgainstDescriptor(descriptor.valueDescriptor, mapValue, failureDetails)) {
+                            "Value '$mapValue' failed validation."
+                        } else null
+                    }
+                    failureDetails.addAll(keyFailures + valueFailures)
+                    keyFailures.isEmpty() && valueFailures.isEmpty()
+                }
+                is TypeDescriptor.ComplexObjectDescriptor -> {
+                    if (value !is Map<*, *>) {
+                        failureDetails.add("Expected ComplexObject but got ${value?.javaClass?.name} for descriptor '$descriptor'")
+                        return false
+                    }
+                    val fieldFailures = descriptor.fields.mapNotNull { (fieldName, fieldDescriptor) ->
+                        val fieldValue = value[fieldName]
+                        if (!validateValueAgainstDescriptor(fieldDescriptor, fieldValue, failureDetails)) {
+                            "Field '$fieldName' failed validation."
+                        } else null
+                    }
+                    failureDetails.addAll(fieldFailures)
+                    fieldFailures.isEmpty()
+                }
             }
         }
     }

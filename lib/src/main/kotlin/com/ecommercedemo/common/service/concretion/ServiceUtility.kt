@@ -215,18 +215,28 @@ class ServiceUtility(
             } else
                 registeredPseudoProperty.let {
                     val typeDescriptor = objectMapper.readValue(it.typeDescriptor, TypeDescriptor::class.java)
+                    val failureDetails = mutableListOf<String>()
                     println("TYPE DESCRIPTOR: $typeDescriptor")
-                    if (!ValueType.validateValueAgainstDescriptor(
-                            typeDescriptor, objectMapper.readValue(
+                    val isValid = try {
+                        ValueType.validateValueAgainstDescriptor(
+                            typeDescriptor,
+                            objectMapper.readValue(
                                 objectMapper.writeValueAsString(value),
                                 typeDescriptor.type.typeInfo
-                            )
+                            ),
+                            failureDetails
                         )
-                    ) {
-                        "Pseudo-property '$key' does not match the expected type or constraints. Descriptor: $typeDescriptor, Value: $value"
+                    } catch (e: Exception) {
+                        failureDetails.add("Validation error for pseudo-property '$key': ${e.message}")
+                        false
+                    }
+                    if (!isValid) {
+                        println("Validation failed for pseudo-property '$key': $failureDetails")
+                        "Pseudo-property '$key' does not match the expected type or constraints. Descriptor: $typeDescriptor, Value: $value. Details: ${failureDetails.joinToString("; ")}"
                     } else null
                 }
         }
+
 
         if (validationErrors.isNotEmpty()) {
             throw IllegalArgumentException(
