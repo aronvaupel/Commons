@@ -201,7 +201,9 @@ class ServiceUtility(
         val missingPseudoProperties = requiredPseudoProperties.filterNot {
             pseudoPropertiesFromRequest.containsKey(it.key)
         }.filterNot { requiredProperty ->
-            existingPseudoProperties.containsKey(requiredProperty.key) || pseudoPropertiesFromRequest.containsKey(requiredProperty.key)
+            existingPseudoProperties.containsKey(requiredProperty.key) || pseudoPropertiesFromRequest.containsKey(
+                requiredProperty.key
+            )
         }
 
         if (missingPseudoProperties.isNotEmpty()) {
@@ -232,7 +234,8 @@ class ServiceUtility(
                     }
                     if (!isValid) {
                         println("Validation failed for pseudo-property '$key': $failureDetails")
-                        "Pseudo-property '$key' does not match the expected type or constraints. Descriptor: $typeDescriptor, Value: $value. Details: ${failureDetails.joinToString("; ")}"
+                        "Pseudo-property '$key' does not match the expected type or constraints. Descriptor: $typeDescriptor,\n\n Value: $value.\n" +
+                                "\n Details: ${failureDetails.joinToString("; ")}"
                     } else null
                 }
         }
