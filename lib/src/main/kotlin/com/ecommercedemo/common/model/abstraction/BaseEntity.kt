@@ -17,7 +17,6 @@ import kotlin.reflect.jvm.isAccessible
 @Suppress("unused", "JpaQlInspection")
 abstract class BaseEntity{
     @Id
-    @GeneratedValue(generator = "UUID")
     open var id: UUID = UUID.randomUUID()
 
     @Column(nullable = false, updatable = false)

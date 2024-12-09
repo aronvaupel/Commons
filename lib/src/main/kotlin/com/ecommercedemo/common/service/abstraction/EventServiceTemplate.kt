@@ -19,8 +19,7 @@ abstract class EventServiceTemplate<T : BaseEntity, R : BaseEntity>(
         val newInstance = serviceUtility.createNewInstance(downstreamEntityClass) { name ->
             event.properties[name]
         }.apply { id = event.properties[BaseEntity::id.name] as UUID}
-        println(newInstance.id)
-        println(adapter.save(newInstance))
+        adapter.save(newInstance)
     }
 
     @Transactional
