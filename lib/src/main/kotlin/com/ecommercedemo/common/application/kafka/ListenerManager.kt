@@ -1,7 +1,8 @@
-package com.ecommercedemo.common.application.event
+package com.ecommercedemo.common.application.kafka
 
 import com.ecommercedemo.common.application.EntityScanner
 import com.ecommercedemo.common.application.cache.RedisService
+import com.ecommercedemo.common.application.kafka.handling.EventHandler
 import com.ecommercedemo.common.model.abstraction.BaseEntity
 import jakarta.annotation.PostConstruct
 import org.apache.kafka.common.errors.WakeupException

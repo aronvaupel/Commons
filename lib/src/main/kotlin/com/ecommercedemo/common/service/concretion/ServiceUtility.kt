@@ -5,12 +5,10 @@ import com.ecommercedemo.common.controller.abstraction.util.TypeDescriptor
 import com.ecommercedemo.common.model.abstraction.BaseEntity
 import com.ecommercedemo.common.model.abstraction.BasePseudoProperty
 import com.ecommercedemo.common.model.abstraction.ExpandableBaseEntity
-import com.ecommercedemo.common.persistence.abstraction.EntityRepository
-import com.ecommercedemo.common.persistence.abstraction.IPseudoPropertyRepository
+import com.ecommercedemo.common.persistence.concretion._pseudoProperty._PseudoPropertyRepository
 import com.fasterxml.jackson.core.type.TypeReference
 import com.fasterxml.jackson.databind.ObjectMapper
 import org.springframework.stereotype.Service
-import java.util.*
 import kotlin.reflect.KClass
 import kotlin.reflect.KMutableProperty
 import kotlin.reflect.full.createType
@@ -21,7 +19,7 @@ import kotlin.reflect.jvm.isAccessible
 @Suppress("UNCHECKED_CAST")
 class ServiceUtility(
     private val objectMapper: ObjectMapper,
-    private val _pseudoPropertyRepository: EntityRepository<out BasePseudoProperty, UUID>,
+    private val _pseudoPropertyRepository: _PseudoPropertyRepository,
 ) {
 
     fun <E : BaseEntity> createNewInstance(
@@ -269,10 +267,6 @@ class ServiceUtility(
     }
 
     private fun getValidPseudoProperties(entity: ExpandableBaseEntity): List<BasePseudoProperty> {
-        if (_pseudoPropertyRepository is IPseudoPropertyRepository<*>) {
-            val result = _pseudoPropertyRepository.findAllByEntitySimpleName(entity::class.simpleName!!)
-            return result
-        }
-        throw IllegalStateException("Repository must implement IPseudoPropertyRepository")
+        return _pseudoPropertyRepository.findAllByEntitySimpleName(entity::class.simpleName!!)
     }
 }

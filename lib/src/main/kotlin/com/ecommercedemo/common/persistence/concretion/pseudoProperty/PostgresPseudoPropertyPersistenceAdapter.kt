@@ -1,6 +1,6 @@
-package com.ecommercedemo.common.persistence.concretion
+package com.ecommercedemo.common.persistence.concretion.pseudoProperty
 
-import com.ecommercedemo.common.model.concretion.PseudoProperty
+import com.ecommercedemo.common.model.concretion.pseudoProperty.PseudoProperty
 import com.ecommercedemo.common.persistence.abstraction.EntityRepository
 import com.ecommercedemo.common.persistence.abstraction.PostgresEntityPersistenceAdapter
 import org.springframework.stereotype.Service

@@ -1,10 +1,11 @@
-package com.ecommercedemo.common.service.concretion
+package com.ecommercedemo.common.service.concretion.pseudoProperty
 
-import com.ecommercedemo.common.application.event.EntityEventProducer
+import com.ecommercedemo.common.application.kafka.EntityEventProducer
 import com.ecommercedemo.common.controller.abstraction.util.Retriever
-import com.ecommercedemo.common.model.concretion.PseudoProperty
+import com.ecommercedemo.common.model.concretion.pseudoProperty.PseudoProperty
 import com.ecommercedemo.common.persistence.abstraction.IEntityPersistenceAdapter
 import com.ecommercedemo.common.service.abstraction.RestServiceTemplate
+import com.ecommercedemo.common.service.concretion.ServiceUtility
 import jakarta.persistence.EntityManager
 import jakarta.transaction.Transactional
 import org.springframework.stereotype.Service

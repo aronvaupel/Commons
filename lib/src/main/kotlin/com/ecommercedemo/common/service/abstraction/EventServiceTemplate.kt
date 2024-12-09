@@ -1,6 +1,6 @@
 package com.ecommercedemo.common.service.abstraction
 
-import com.ecommercedemo.common.application.event.EntityEvent
+import com.ecommercedemo.common.application.kafka.EntityEvent
 import com.ecommercedemo.common.model.abstraction.BaseEntity
 import com.ecommercedemo.common.persistence.abstraction.IEntityPersistenceAdapter
 import com.ecommercedemo.common.service.concretion.ServiceUtility

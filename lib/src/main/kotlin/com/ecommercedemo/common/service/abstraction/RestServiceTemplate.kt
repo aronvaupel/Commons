@@ -1,8 +1,8 @@
 package com.ecommercedemo.common.service.abstraction
 
 import com.ecommercedemo.common.application.EntityChangeTracker
-import com.ecommercedemo.common.application.event.EntityEventProducer
-import com.ecommercedemo.common.application.event.EntityEventType
+import com.ecommercedemo.common.application.kafka.EntityEventProducer
+import com.ecommercedemo.common.application.kafka.EntityEventType
 import com.ecommercedemo.common.controller.abstraction.request.CreateRequest
 import com.ecommercedemo.common.controller.abstraction.request.SearchRequest
 import com.ecommercedemo.common.controller.abstraction.request.UpdateRequest

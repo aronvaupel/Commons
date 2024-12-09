@@ -1,4 +1,4 @@
-package com.ecommercedemo.common.application.event
+package com.ecommercedemo.common.application.kafka
 
 import com.fasterxml.jackson.annotation.JsonTypeInfo
 import java.util.*

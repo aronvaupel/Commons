@@ -1,11 +1,10 @@
-package com.ecommercedemo.common.model.concretion
+package com.ecommercedemo.common.model.concretion._pseudoProperty
 
 import com.ecommercedemo.common.application.validation.type.TypeCategory
 import com.ecommercedemo.common.application.validation.type.ValueType
 import com.ecommercedemo.common.controller.abstraction.util.TypeDescriptor
 import com.ecommercedemo.common.model.abstraction.BasePseudoProperty
 import com.fasterxml.jackson.annotation.JsonCreator
-import com.fasterxml.jackson.annotation.JsonTypeInfo
 import com.fasterxml.jackson.databind.ObjectMapper
 import io.hypersistence.utils.hibernate.type.json.JsonBinaryType
 import jakarta.persistence.Column
@@ -16,11 +15,10 @@ import jakarta.validation.constraints.NotNull
 import org.hibernate.annotations.Type
 import java.util.*
 
-//Todo: Expiration
-@Suppress("unused")
+@Suppress("unused", "ClassName")
 @Entity
-@Table(name = PseudoProperty.STORAGE_NAME)
-open class PseudoProperty(
+@Table(name = _PseudoProperty.STORAGE_NAME)
+open class _PseudoProperty(
     override var id: UUID = UUID.randomUUID(),
     @NotNull
     @NotBlank
@@ -31,9 +29,9 @@ open class PseudoProperty(
     override var key: String = "",
     @Type(JsonBinaryType::class)
     @Column(columnDefinition = "jsonb", updatable = false)
-    @JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, include = JsonTypeInfo.As.PROPERTY, property = "@class")
     override var typeDescriptor: String = ""
 ) : BasePseudoProperty() {
+
     @JsonCreator
     constructor() : this(
         UUID.randomUUID(),
@@ -42,14 +40,14 @@ open class PseudoProperty(
         ObjectMapper().writeValueAsString(
             TypeDescriptor.PrimitiveDescriptor(
                 category = TypeCategory.PRIMITIVE.name,
-                type = ValueType.INTEGER,
+                type = ValueType.STRING,
                 isNullable = true
             )
         )
     )
 
     companion object {
-        const val STORAGE_NAME = "pseudo_properties"
+        const val STORAGE_NAME = "_pseudo_properties"
     }
 
 }

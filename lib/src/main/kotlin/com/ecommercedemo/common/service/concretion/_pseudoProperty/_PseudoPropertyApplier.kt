@@ -1,7 +1,7 @@
-package com.ecommercedemo.common.service.concretion
+package com.ecommercedemo.common.service.concretion._pseudoProperty
 
-import com.ecommercedemo.common.application.event.EntityEventProducer
-import com.ecommercedemo.common.application.event.EntityEventType
+import com.ecommercedemo.common.application.kafka.EntityEventProducer
+import com.ecommercedemo.common.application.kafka.EntityEventType
 import com.ecommercedemo.common.model.abstraction.ExpandableBaseEntity
 import com.fasterxml.jackson.core.type.TypeReference
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
@@ -16,7 +16,7 @@ import java.util.*
 
 @Service
 @Suppress("UNCHECKED_CAST", "unused")
-open class PseudoPropertyApplier(
+open class _PseudoPropertyApplier(
     private val beanFactory: BeanFactory,
     private val eventProducer: EntityEventProducer,
     private val entityManagerFactory: EntityManagerFactory,

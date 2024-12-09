@@ -1,4 +1,4 @@
-package com.ecommercedemo.common.application.event
+package com.ecommercedemo.common.application.kafka
 
 import com.ecommercedemo.common.application.cache.RedisService
 import org.springframework.kafka.core.KafkaTemplate

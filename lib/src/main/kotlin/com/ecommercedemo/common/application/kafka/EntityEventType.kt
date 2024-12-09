@@ -1,4 +1,4 @@
-package com.ecommercedemo.common.application.event
+package com.ecommercedemo.common.application.kafka
 
 enum class EntityEventType {
     CREATE,
