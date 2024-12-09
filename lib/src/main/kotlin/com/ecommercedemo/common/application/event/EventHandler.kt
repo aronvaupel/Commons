@@ -44,7 +44,7 @@ class EventHandler<E: BaseEntity>(
         val beans = applicationContext.getBeansOfType(processorType).values
         return beans.find { processor ->
             (processor::class.java.genericInterfaces.firstOrNull() as? ParameterizedType)
-                ?.actualTypeArguments?.firstOrNull() == entityClassName::class.java
+                ?.actualTypeArguments?.firstOrNull() == "_$entityClassName"::class.java
         } ?: throw IllegalArgumentException(
             "No processor of type ${processorType.simpleName} found for entity class: $entityClassName"
         )
