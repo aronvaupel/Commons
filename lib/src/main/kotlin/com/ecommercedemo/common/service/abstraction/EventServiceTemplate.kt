@@ -8,14 +8,14 @@ import jakarta.transaction.Transactional
 import java.util.*
 import kotlin.reflect.KClass
 
-@Suppress("UNCHECKED_CAST", "unused")
-abstract class EventServiceTemplate<T : BaseEntity, R : BaseEntity>(
-    private val adapter: IEntityPersistenceAdapter<R>,
+@Suppress("unused", "UNCHECKED_CAST")
+abstract class EventServiceTemplate<T : BaseEntity>(
+    private val adapter: IEntityPersistenceAdapter<T>,
     private val serviceUtility: ServiceUtility,
-    private val downstreamEntityClass: KClass<R>
-) : IEventService<T, R> {
+    private val downstreamEntityClass: KClass<T>
+) : IEventService<T> {
     @Transactional
-    override fun createByEvent(event: EntityEvent<T>) {
+    override fun createByEvent(event: EntityEvent) {
         val newInstance = serviceUtility.createNewInstance(downstreamEntityClass) { name ->
             event.properties[name]
         }.apply { id = event.properties[BaseEntity::id.name] as UUID}
@@ -23,16 +23,16 @@ abstract class EventServiceTemplate<T : BaseEntity, R : BaseEntity>(
     }
 
     @Transactional
-    override fun updateByEvent(event: EntityEvent<T>) {
+    override fun updateByEvent(event: EntityEvent) {
         val original = adapter.getById(event.id)
 
-        val updated = serviceUtility.updateExistingInstance(original.copy() as R, event.properties)
+        val updated = serviceUtility.updateExistingInstance(original.copy(), event.properties)
 
-        adapter.save(updated)
+        adapter.save(updated as T)
     }
 
     @Transactional
-    override fun deleteByEvent(event: EntityEvent<T>) {
+    override fun deleteByEvent(event: EntityEvent) {
         try {
             val entity = adapter.getById(event.id)
             adapter.delete(entity.id)

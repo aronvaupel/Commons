@@ -57,7 +57,7 @@ abstract class RestServiceTemplate<T : BaseEntity>(
             val entity = getSingle(id)
             adapter.delete(entity.id)
             eventProducer.emit(
-                entity::class.java,
+                entity::class.java.name,
                 id,
                 EntityEventType.DELETE,
                 mutableMapOf()
@@ -81,7 +81,7 @@ abstract class RestServiceTemplate<T : BaseEntity>(
         val tracker = EntityChangeTracker<T>(serviceUtility)
         val changes = original?.let { tracker.getChangedProperties(it, savedEntity) }
             ?: tracker.getChangedProperties(null, savedEntity)
-        eventProducer.emit(entityClass.java, savedEntity.id, eventType, changes)
+        eventProducer.emit(entityClass.java.simpleName, savedEntity.id, eventType, changes)
 
         return savedEntity
     }

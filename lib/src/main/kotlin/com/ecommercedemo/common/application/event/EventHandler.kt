@@ -1,6 +1,5 @@
 package com.ecommercedemo.common.application.event
 
-import com.ecommercedemo.common.model.abstraction.BaseEntity
 import org.springframework.context.ApplicationContext
 import org.springframework.stereotype.Service
 import java.lang.reflect.ParameterizedType
@@ -11,18 +10,18 @@ class EventHandler(
     private val applicationContext: ApplicationContext
 ) {
 
-    fun <T : BaseEntity> handle(event: EntityEvent<T>) {
+    fun handle(event: EntityEvent) {
         try {
            determineUseCaseForEvent(event).applyChanges(event)
         } catch (e: Exception) {
             println(
-                "Error processing event for ${event.entityClass.simpleName} with ID: ${event.id}. Error: ${e.message}"
+                "Error processing event for ${event.entityClassName} with ID: ${event.id}. Error: ${e.message}"
             )
             e.printStackTrace()
         }
     }
 
-    private fun <T : BaseEntity> determineUseCaseForEvent(event: EntityEvent<T>): IEventTypeUseCase<T> {
+    private fun determineUseCaseForEvent(event: EntityEvent): IEventTypeUseCase {
         println("Determining use case for event: $event")
         val useCaseClass = when (event.type) {
             EntityEventType.CREATE -> {
@@ -32,21 +31,21 @@ class EventHandler(
 
             EntityEventType.UPDATE -> IUpdateTypeUseCase::class.java
             EntityEventType.DELETE -> IDeleteTypeUseCase::class.java
-        } as Class<IEventTypeUseCase<T>>
+        } as Class<IEventTypeUseCase>
 
-        return getEntitySpecificUseCaseByEventType(useCaseClass, event.entityClass)
+        return getEntitySpecificUseCaseByEventType(useCaseClass, event.entityClassName)
     }
 
-    private fun <T : BaseEntity, P : IEventTypeUseCase<T>> getEntitySpecificUseCaseByEventType(
-        processorType: Class<P>,
-        entityClass: Class<T>
-    ): P {
+    private fun <T : IEventTypeUseCase> getEntitySpecificUseCaseByEventType(
+        processorType: Class<T>,
+        entityClassName: String
+    ): T {
         val beans = applicationContext.getBeansOfType(processorType).values
         return beans.find { processor ->
             (processor::class.java.genericInterfaces.firstOrNull() as? ParameterizedType)
-                ?.actualTypeArguments?.firstOrNull() == entityClass
+                ?.actualTypeArguments?.firstOrNull() == entityClassName::class.java
         } ?: throw IllegalArgumentException(
-            "No processor of type ${processorType.simpleName} found for entity class: ${entityClass.simpleName}"
+            "No processor of type ${processorType.simpleName} found for entity class: $entityClassName"
         )
     }
 }

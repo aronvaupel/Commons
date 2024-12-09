@@ -50,7 +50,7 @@ open class PseudoPropertyApplier(
             entity.pseudoProperties = objectMapper.writeValueAsString(deserializedPseudoProperties)
             repository.save(entity)
             eventProducer.emit(
-                entity.javaClass,
+                entity.javaClass.simpleName,
                 entity.id,
                 EntityEventType.DELETE,
                 getChanges(entity)
@@ -85,7 +85,7 @@ open class PseudoPropertyApplier(
             repository.save(entity)
 
             eventProducer.emit(
-                entity.javaClass,
+                entity.javaClass.simpleName,
                 entity.id,
                 EntityEventType.CREATE,
                 getChanges(entity)
@@ -117,7 +117,7 @@ open class PseudoPropertyApplier(
             entity.pseudoProperties = objectMapper.writeValueAsString(deserializedPseudoProperties)
             repository.save(entity)
             eventProducer.emit(
-                entity.javaClass,
+                entity.javaClass.simpleName,
                 entity.id,
                 EntityEventType.UPDATE,
                 getChanges(entity)

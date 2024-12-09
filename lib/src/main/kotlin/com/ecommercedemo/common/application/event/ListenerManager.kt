@@ -85,7 +85,7 @@ class ListenerManager @Autowired constructor(
             this.messageListener = MessageListener<String, Any> { record ->
                 log.info("Received message from topic $topic: ${record.value()}")
                 try {
-                    val event = record.value() as? EntityEvent<*>
+                    val event = record.value() as? EntityEvent
                         ?: throw IllegalArgumentException("Invalid event type received from topic $topic")
                     eventHandler.handle(event)
                 } catch (e: Exception) {

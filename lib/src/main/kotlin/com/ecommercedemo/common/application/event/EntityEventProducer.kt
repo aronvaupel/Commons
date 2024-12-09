@@ -1,7 +1,6 @@
 package com.ecommercedemo.common.application.event
 
 import com.ecommercedemo.common.application.cache.RedisService
-import com.ecommercedemo.common.model.abstraction.BaseEntity
 import org.springframework.kafka.core.KafkaTemplate
 import org.springframework.stereotype.Service
 import java.util.*
@@ -12,26 +11,25 @@ class EntityEventProducer(
     private val redisService: RedisService,
 ) {
 
-    fun <T : BaseEntity> emit(
-        entityClass: Class<T>,
+    fun emit(
+        entityClassName: String,
         id: UUID,
         entityEventType: EntityEventType,
         properties: MutableMap<String, Any?>
     ) {
-        val topic = entityClass.simpleName
         val kafkaRegistry = redisService.getKafkaRegistry()
 
-        if (kafkaRegistry.topics.containsKey(topic)) {
+        if (kafkaRegistry.topics.containsKey(entityClassName)) {
             val event = EntityEvent(
-                entityClass = entityClass,
+                entityClassName = entityClassName,
                 id = id,
                 type = entityEventType,
                 properties = properties
             )
 
-            kafkaTemplate.send(topic, event)
+            kafkaTemplate.send(entityClassName, event)
         } else {
-            throw IllegalArgumentException("Topic $topic is not registered in Redis.")
+            throw IllegalArgumentException("Topic $entityClassName is not registered in Redis.")
         }
     }
 

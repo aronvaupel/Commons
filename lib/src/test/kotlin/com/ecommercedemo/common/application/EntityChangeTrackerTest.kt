@@ -5,7 +5,7 @@ import java.time.LocalDateTime
 import java.util.*
 
 data class MockEntity(
-    override val id: UUID = UUID.randomUUID(),
+    override var id: UUID = UUID.randomUUID(),
     var name: String,
     var email: String?,
     var age: Int?,
