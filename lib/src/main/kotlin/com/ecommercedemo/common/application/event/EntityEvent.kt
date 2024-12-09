@@ -9,6 +9,5 @@ data class EntityEvent(
     val id: UUID,
     val type: EntityEventType,
     @JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, include = JsonTypeInfo.As.PROPERTY, property = "@class")
-    //@JsonDeserialize(using = PropertiesDeserializer::class)
     val properties: MutableMap<String, Any?>,
 )
