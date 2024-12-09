@@ -16,7 +16,7 @@ import jakarta.validation.constraints.NotNull
 import org.hibernate.annotations.Type
 import java.util.*
 
-
+//Todo: Expiration
 @Suppress("unused")
 @Entity
 @Table(name = PseudoProperty.STORAGE_NAME)

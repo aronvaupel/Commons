@@ -11,6 +11,7 @@ import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 import java.util.*
 
+//Todo: Sorting and Pagination
 abstract class RestControllerTemplate<T : BaseEntity>(
     private val service: RestServiceTemplate<T>
 ) {

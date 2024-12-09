@@ -5,6 +5,6 @@ import com.ecommercedemo.common.model.abstraction.BaseEntity
 
 interface IEventService<T: BaseEntity, R: BaseEntity> {
     fun createByEvent(event: EntityEvent<T>)
-    fun updateByEvent(event: EntityEvent<T>) : R
+    fun updateByEvent(event: EntityEvent<T>)
     fun deleteByEvent(event: EntityEvent<T>)
 }

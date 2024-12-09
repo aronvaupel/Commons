@@ -3,6 +3,7 @@ package com.ecommercedemo.common.service.concretion
 import com.ecommercedemo.common.application.event.EntityEventProducer
 import com.ecommercedemo.common.application.event.EntityEventType
 import com.ecommercedemo.common.model.abstraction.ExpandableBaseEntity
+import com.fasterxml.jackson.core.type.TypeReference
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import jakarta.persistence.EntityManagerFactory
@@ -12,8 +13,9 @@ import org.springframework.beans.factory.NoSuchBeanDefinitionException
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.stereotype.Service
 import java.util.*
+
 @Service
-@Suppress("UNCHECKED_CAST")
+@Suppress("UNCHECKED_CAST", "unused")
 open class PseudoPropertyApplier(
     private val beanFactory: BeanFactory,
     private val eventProducer: EntityEventProducer,
@@ -21,7 +23,8 @@ open class PseudoPropertyApplier(
 ) {
     private val objectMapper = jacksonObjectMapper()
     private fun getEntityRepository(entityClass: Class<*>): JpaRepository<ExpandableBaseEntity, UUID> {
-        val repositoryName = "${entityClass.simpleName.replaceFirstChar { it.lowercase(Locale.getDefault()) }}Repository"
+        val repositoryName =
+            "${entityClass.simpleName.replaceFirstChar { it.lowercase(Locale.getDefault()) }}Repository"
         val repository = try {
             beanFactory.getBean(repositoryName)
         } catch (e: NoSuchBeanDefinitionException) {
@@ -33,22 +36,26 @@ open class PseudoPropertyApplier(
 
     @Transactional
     open fun deletePseudoPropertyForAllEntitiesOfType(entityClass: Class<out ExpandableBaseEntity>, key: String) {
-//        val repository = getEntityRepository(entityClass)
-//        repository.findAll().forEach { entity ->
-//            if (!entity.pseudoProperties.containsKey(key)) {
-//                throw IllegalArgumentException(
-//                    "Entity ${entity.id} of type '${entityClass.simpleName}' does not contain the key '$key'. Cannot delete."
-//                )
-//            }
-//            entity.pseudoProperties.remove(key)
-//            repository.save(entity)
-//            eventProducer.emit(
-//                entity.javaClass,
-//                entity.id,
-//                EntityEventType.DELETE,
-//                getChanges(entity)
-//            )
-//        }
+        val repository = getEntityRepository(entityClass)
+        repository.findAll().forEach { entity ->
+            val deserializedPseudoProperties = objectMapper.readValue(
+                objectMapper.writeValueAsString(entity.pseudoProperties),
+                object : TypeReference<Map<String, Any?>>() {}).toMutableMap()
+            if (!deserializedPseudoProperties.containsKey(key)) {
+                throw IllegalArgumentException(
+                    "Entity ${entity.id} of type '${entityClass.simpleName}' does not contain the key '$key'. Cannot delete."
+                )
+            }
+            deserializedPseudoProperties.remove(key)
+            entity.pseudoProperties = objectMapper.writeValueAsString(deserializedPseudoProperties)
+            repository.save(entity)
+            eventProducer.emit(
+                entity.javaClass,
+                entity.id,
+                EntityEventType.DELETE,
+                getChanges(entity)
+            )
+        }
     }
 
     @Transactional
@@ -92,19 +99,22 @@ open class PseudoPropertyApplier(
         oldKey: String,
         newKey: String
     ) {
-       /* val repository = getEntityRepository(entityClass)
+        val repository = getEntityRepository(entityClass)
         repository.findAll().forEach { entity ->
-            if (!entity.pseudoProperties.containsKey(oldKey)) {
+            val deserializedPseudoProperties = objectMapper.readValue(
+                objectMapper.writeValueAsString(entity.pseudoProperties),
+                object : TypeReference<Map<String, Any?>>() {}).toMutableMap()
+            if (!deserializedPseudoProperties.containsKey(oldKey))
                 throw IllegalArgumentException(
                     "Entity ${entity.id} of type '${entityClass.simpleName}' does not contain the key '$oldKey'. Cannot rename."
                 )
-            }
-            if (entity.pseudoProperties.containsKey(newKey)) {
+            if (deserializedPseudoProperties.containsKey(newKey))
                 throw IllegalArgumentException(
                     "Entity ${entity.id} of type '${entityClass.simpleName}' already contains the key '$newKey'. Cannot rename."
                 )
-            }
-            entity.pseudoProperties[newKey] = entity.pseudoProperties.remove(oldKey)!!
+
+            deserializedPseudoProperties[newKey] = deserializedPseudoProperties.remove(oldKey)
+            entity.pseudoProperties = objectMapper.writeValueAsString(deserializedPseudoProperties)
             repository.save(entity)
             eventProducer.emit(
                 entity.javaClass,
@@ -112,14 +122,7 @@ open class PseudoPropertyApplier(
                 EntityEventType.UPDATE,
                 getChanges(entity)
             )
-        }*/
-    }
-
-    private fun getClass(simpleName: String): Class<out ExpandableBaseEntity> {
-        val entityType = entityManagerFactory.createEntityManager().metamodel.entities.find {
-            it.name == simpleName
-        } ?: throw IllegalArgumentException("Class with simple name '$simpleName' not found.")
-        return entityType.javaType as Class<out ExpandableBaseEntity>
+        }
     }
 
     private fun getChanges(entity: ExpandableBaseEntity): MutableMap<String, Any?> =
