@@ -40,8 +40,7 @@ class EventHandler<T: BaseEntity>(
         return beans.find { processor ->
             val firstTypeArgument = (processor::class.java.genericInterfaces.firstOrNull() as? ParameterizedType)
                 ?.actualTypeArguments?.firstOrNull()
-            println("Processor: ${processor::class.java.name}, FirstTypeArgument: $firstTypeArgument")
-            firstTypeArgument == "_$entityClassName"::class.java
+            firstTypeArgument?.typeName?.substringAfterLast(".") == "_$entityClassName"
         } ?: throw IllegalArgumentException(
             "No processor of type ${processorType.simpleName} found for entity class: $entityClassName"
         )
