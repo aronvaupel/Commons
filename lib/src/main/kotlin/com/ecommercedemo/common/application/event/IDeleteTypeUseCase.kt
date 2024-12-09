@@ -1,3 +1,5 @@
 package com.ecommercedemo.common.application.event
 
-interface IDeleteTypeUseCase : IEventTypeUseCase
+import com.ecommercedemo.common.model.abstraction.BaseEntity
+
+interface IDeleteTypeUseCase<T: BaseEntity> : IEventTypeUseCase<T>

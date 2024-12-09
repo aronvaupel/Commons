@@ -1,12 +1,13 @@
 package com.ecommercedemo.common.application.event
 
+import com.ecommercedemo.common.model.abstraction.BaseEntity
 import org.springframework.context.ApplicationContext
 import org.springframework.stereotype.Service
 import java.lang.reflect.ParameterizedType
 
 @Suppress("UNCHECKED_CAST", "unused")
 @Service
-class EventHandler(
+class EventHandler<E: BaseEntity>(
     private val applicationContext: ApplicationContext
 ) {
 
@@ -21,7 +22,7 @@ class EventHandler(
         }
     }
 
-    private fun determineUseCaseForEvent(event: EntityEvent): IEventTypeUseCase {
+    private fun determineUseCaseForEvent(event: EntityEvent): IEventTypeUseCase<E> {
         println("Determining use case for event: $event")
         val useCaseClass = when (event.type) {
             EntityEventType.CREATE -> {
@@ -31,12 +32,12 @@ class EventHandler(
 
             EntityEventType.UPDATE -> IUpdateTypeUseCase::class.java
             EntityEventType.DELETE -> IDeleteTypeUseCase::class.java
-        } as Class<IEventTypeUseCase>
+        } as Class<IEventTypeUseCase<E>>
 
         return getEntitySpecificUseCaseByEventType(useCaseClass, event.entityClassName)
     }
 
-    private fun <T : IEventTypeUseCase> getEntitySpecificUseCaseByEventType(
+    private fun <T : IEventTypeUseCase<E>> getEntitySpecificUseCaseByEventType(
         processorType: Class<T>,
         entityClassName: String
     ): T {

@@ -1,3 +1,5 @@
 package com.ecommercedemo.common.application.event
 
-interface IUpdateTypeUseCase : IEventTypeUseCase
+import com.ecommercedemo.common.model.abstraction.BaseEntity
+
+interface IUpdateTypeUseCase<T: BaseEntity> : IEventTypeUseCase<T>

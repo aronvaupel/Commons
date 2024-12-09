@@ -1,6 +1,8 @@
 package com.ecommercedemo.common.application.event
 
-interface IEventTypeUseCase {
+import com.ecommercedemo.common.model.abstraction.BaseEntity
+
+interface IEventTypeUseCase<T: BaseEntity> {
     fun applyChanges(event: EntityEvent) {
     }
 }

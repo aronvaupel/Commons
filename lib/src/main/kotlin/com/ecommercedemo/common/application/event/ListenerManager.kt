@@ -2,6 +2,7 @@ package com.ecommercedemo.common.application.event
 
 import com.ecommercedemo.common.application.EntityScanner
 import com.ecommercedemo.common.application.cache.RedisService
+import com.ecommercedemo.common.model.abstraction.BaseEntity
 import jakarta.annotation.PostConstruct
 import org.apache.kafka.common.errors.WakeupException
 import org.slf4j.LoggerFactory
@@ -20,11 +21,11 @@ import org.springframework.stereotype.Service
 @ConditionalOnClass(name = ["org.springframework.data.jpa.repository.JpaRepository"])
 @DependsOn("entityScanner")
 @Service
-class ListenerManager @Autowired constructor(
+class ListenerManager<T: BaseEntity> @Autowired constructor(
     private val redisService: RedisService,
     private val entityScanner: EntityScanner,
     private val kafkaListenerContainerFactory: ConcurrentKafkaListenerContainerFactory<String, Any>,
-    private val eventHandler: EventHandler,
+    private val eventHandler: EventHandler<T>,
     @Value("\${spring.application.name}") private val serviceName: String // Mandatory service name
 ) {
     private val log = LoggerFactory.getLogger(ListenerManager::class.java)
