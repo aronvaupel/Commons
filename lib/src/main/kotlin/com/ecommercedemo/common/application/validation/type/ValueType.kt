@@ -311,7 +311,11 @@ enum class ValueType(
         return when (this.category) {
             TypeCategory.PRIMITIVE -> typeInfo.isInstance(value)
             TypeCategory.TIME -> {
-               if (descriptor !is TypeDescriptor.TimeDescriptor) return false
+               if (descriptor !is TypeDescriptor.TimeDescriptor){
+                   println("Not a Time Descriptor")
+                   return false
+               }
+
                 validateTime(value, descriptor)
             }
             TypeCategory.COLLECTION -> {
@@ -484,7 +488,11 @@ enum class ValueType(
         return try {
             when (descriptor.type) {
                 INSTANT -> Instant.parse(value)
-                LOCAL_DATE -> LocalDate.parse(value)
+                LOCAL_DATE ->{
+                    LocalDate.parse(value)
+                    println(LocalDate.parse(value))
+                }
+
                 LOCAL_DATE_TIME -> LocalDateTime.parse(value)
                 ZONED_DATE_TIME -> ZonedDateTime.parse(value)
                 OFFSET_DATE_TIME -> OffsetDateTime.parse(value)
