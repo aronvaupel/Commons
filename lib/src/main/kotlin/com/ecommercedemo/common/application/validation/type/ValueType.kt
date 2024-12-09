@@ -309,7 +309,11 @@ enum class ValueType(
         isNullable(value, descriptor)
 
         return when (this.category) {
-            TypeCategory.PRIMITIVE, TypeCategory.TIME -> typeInfo.isInstance(value)
+            TypeCategory.PRIMITIVE -> typeInfo.isInstance(value)
+            TypeCategory.TIME -> {
+               if (descriptor !is TypeDescriptor.TimeDescriptor) return false
+                validateTime(value, descriptor)
+            }
             TypeCategory.COLLECTION -> {
                 if (descriptor !is TypeDescriptor.CollectionDescriptor) return false
                 validateCollection(descriptor, value)
@@ -453,27 +457,6 @@ enum class ValueType(
         }
     }
 
-    private fun supportsNullable(descriptor: TypeDescriptor): Boolean {
-        return when (descriptor) {
-            is TypeDescriptor.PrimitiveDescriptor,
-            is TypeDescriptor.TimeDescriptor,
-            is TypeDescriptor.ComplexObjectDescriptor -> true
-
-            else -> false
-        }
-    }
-
-    private fun isNullable(value: Any?, descriptor: TypeDescriptor): Boolean {
-        return if (value == null) {
-            when (descriptor) {
-                is TypeDescriptor.PrimitiveDescriptor -> descriptor.isNullable
-                is TypeDescriptor.TimeDescriptor -> descriptor.isNullable
-                is TypeDescriptor.ComplexObjectDescriptor -> descriptor.isNullable
-                else -> false
-            }
-        } else false
-    }
-
     fun validateNumber(
         value: Any?,
         parseFunction: (String) -> Any,
@@ -522,6 +505,27 @@ enum class ValueType(
             is String -> value.equals("true", ignoreCase = true) || value.equals("false", ignoreCase = true)
             else -> false
         }
+    }
+
+    private fun supportsNullable(descriptor: TypeDescriptor): Boolean {
+        return when (descriptor) {
+            is TypeDescriptor.PrimitiveDescriptor,
+            is TypeDescriptor.TimeDescriptor,
+            is TypeDescriptor.ComplexObjectDescriptor -> true
+
+            else -> false
+        }
+    }
+
+    private fun isNullable(value: Any?, descriptor: TypeDescriptor): Boolean {
+        return if (value == null) {
+            when (descriptor) {
+                is TypeDescriptor.PrimitiveDescriptor -> descriptor.isNullable
+                is TypeDescriptor.TimeDescriptor -> descriptor.isNullable
+                is TypeDescriptor.ComplexObjectDescriptor -> descriptor.isNullable
+                else -> false
+            }
+        } else false
     }
 }
 
