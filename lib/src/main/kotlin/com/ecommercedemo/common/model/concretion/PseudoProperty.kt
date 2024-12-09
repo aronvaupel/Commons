@@ -21,7 +21,7 @@ import java.util.*
 @Entity
 @Table(name = PseudoProperty.STORAGE_NAME)
 open class PseudoProperty(
-    override val id: UUID = UUID.randomUUID(),
+    override var id: UUID = UUID.randomUUID(),
     @NotNull
     @NotBlank
     @Column(updatable = false)
