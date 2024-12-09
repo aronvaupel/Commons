@@ -18,7 +18,7 @@ import kotlin.reflect.jvm.isAccessible
 abstract class BaseEntity{
     @Id
     @GeneratedValue(generator = "UUID")
-    open val id: UUID = UUID.randomUUID()
+    open var id: UUID = UUID.randomUUID()
 
     @Column(nullable = false, updatable = false)
 

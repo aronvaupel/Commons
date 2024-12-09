@@ -12,7 +12,6 @@ class EventHandler(
 ) {
 
     fun <T : BaseEntity> handle(event: EntityEvent<T>) {
-        println("Received event for ${event.entityClass.simpleName} with ID: ${event.id}")
         try {
            determineUseCaseForEvent(event).applyChanges(event)
         } catch (e: Exception) {
@@ -42,9 +41,7 @@ class EventHandler(
         processorType: Class<P>,
         entityClass: Class<T>
     ): P {
-        println("Attempt to find matching use case")
         val beans = applicationContext.getBeansOfType(processorType).values
-        println("Found following beans: $beans")
         return beans.find { processor ->
             (processor::class.java.genericInterfaces.firstOrNull() as? ParameterizedType)
                 ?.actualTypeArguments?.firstOrNull() == entityClass
