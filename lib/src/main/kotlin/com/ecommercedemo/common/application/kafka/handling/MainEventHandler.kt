@@ -2,10 +2,10 @@ package com.ecommercedemo.common.application.kafka.handling
 
 import com.ecommercedemo.common.application.kafka.EntityEvent
 import com.ecommercedemo.common.application.kafka.EntityEventType
-import com.ecommercedemo.common.application.kafka.handling.abstraction.IHandleCreate
-import com.ecommercedemo.common.application.kafka.handling.abstraction.IHandleEventType
-import com.ecommercedemo.common.application.kafka.handling.abstraction.IHandleHandleDelete
-import com.ecommercedemo.common.application.kafka.handling.abstraction.IHandleHandleUpdate
+import com.ecommercedemo.common.application.kafka.handling.abstraction.ICreateHandlerHandler
+import com.ecommercedemo.common.application.kafka.handling.abstraction.IDeleteHandlerHandler
+import com.ecommercedemo.common.application.kafka.handling.abstraction.IEventTypeHandler
+import com.ecommercedemo.common.application.kafka.handling.abstraction.IUpdateHandler
 import com.ecommercedemo.common.model.abstraction.BaseEntity
 import org.springframework.context.ApplicationContext
 import org.springframework.stereotype.Service
@@ -13,7 +13,7 @@ import java.lang.reflect.ParameterizedType
 
 @Suppress("UNCHECKED_CAST", "unused")
 @Service
-class EventHandler<T: BaseEntity>(
+class MainEventHandler<T: BaseEntity>(
     private val applicationContext: ApplicationContext
 ) {
 
@@ -28,19 +28,19 @@ class EventHandler<T: BaseEntity>(
         }
     }
 
-    private fun determineUseCaseForEvent(event: EntityEvent): IHandleEventType<T> {
+    private fun determineUseCaseForEvent(event: EntityEvent): IEventTypeHandler<T> {
         val useCaseClass = when (event.type) {
-            EntityEventType.CREATE -> IHandleCreate::class.java
-            EntityEventType.UPDATE -> IHandleHandleUpdate::class.java
-            EntityEventType.DELETE -> IHandleHandleDelete::class.java
-        } as Class<IHandleEventType<T>>
+            EntityEventType.CREATE -> ICreateHandlerHandler::class.java
+            EntityEventType.UPDATE -> IUpdateHandler::class.java
+            EntityEventType.DELETE -> IDeleteHandlerHandler::class.java
+        } as Class<IEventTypeHandler<T>>
         println("Event type: ${event.type}")
         val result = getEntitySpecificUseCaseByEventType(useCaseClass, event.entityClassName)
         println("Use case: $result")
         return result
     }
 
-    private fun <P : IHandleEventType<T>> getEntitySpecificUseCaseByEventType(
+    private fun <P : IEventTypeHandler<T>> getEntitySpecificUseCaseByEventType(
         processorType: Class<P>,
         entityClassName: String
     ): P {

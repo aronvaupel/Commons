@@ -2,7 +2,7 @@ package com.ecommercedemo.common.application.kafka
 
 import com.ecommercedemo.common.application.EntityScanner
 import com.ecommercedemo.common.application.cache.RedisService
-import com.ecommercedemo.common.application.kafka.handling.EventHandler
+import com.ecommercedemo.common.application.kafka.handling.MainEventHandler
 import com.ecommercedemo.common.model.abstraction.BaseEntity
 import jakarta.annotation.PostConstruct
 import org.apache.kafka.common.errors.WakeupException
@@ -26,7 +26,7 @@ class ListenerManager<T: BaseEntity> @Autowired constructor(
     private val redisService: RedisService,
     private val entityScanner: EntityScanner,
     private val kafkaListenerContainerFactory: ConcurrentKafkaListenerContainerFactory<String, Any>,
-    private val eventHandler: EventHandler<T>,
+    private val mainEventHandler: MainEventHandler<T>,
     @Value("\${spring.application.name}") private val serviceName: String // Mandatory service name
 ) {
     private val log = LoggerFactory.getLogger(ListenerManager::class.java)
@@ -89,7 +89,7 @@ class ListenerManager<T: BaseEntity> @Autowired constructor(
                 try {
                     val event = record.value() as? EntityEvent
                         ?: throw IllegalArgumentException("Invalid event type received from topic $topic")
-                    eventHandler.handle(event)
+                    mainEventHandler.handle(event)
                 } catch (e: Exception) {
                     log.error("Error while processing message from topic $topic", e)
                 }

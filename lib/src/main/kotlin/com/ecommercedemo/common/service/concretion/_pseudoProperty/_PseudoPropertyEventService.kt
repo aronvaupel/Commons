@@ -8,7 +8,7 @@ import org.springframework.stereotype.Service
 
 @Suppress("ClassName")
 @Service
-class _PseudoPropertyEventService(
+open class _PseudoPropertyEventService(
     adapter: IEntityPersistenceAdapter<_PseudoProperty>,
     serviceUtility: ServiceUtility
 ): EventServiceTemplate<_PseudoProperty>(
