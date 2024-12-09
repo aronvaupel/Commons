@@ -7,7 +7,7 @@ import java.lang.reflect.ParameterizedType
 
 @Suppress("UNCHECKED_CAST", "unused")
 @Service
-class EventHandler<E: BaseEntity>(
+class EventHandler<T: BaseEntity>(
     private val applicationContext: ApplicationContext
 ) {
 
@@ -22,29 +22,26 @@ class EventHandler<E: BaseEntity>(
         }
     }
 
-    private fun determineUseCaseForEvent(event: EntityEvent): IEventTypeUseCase<E> {
-        println("Determining use case for event: $event")
+    private fun determineUseCaseForEvent(event: EntityEvent): IEventTypeUseCase<T> {
         val useCaseClass = when (event.type) {
-            EntityEventType.CREATE -> {
-                println("Event type is CREATE")
-                ICreateTypeUseCase::class.java
-            }
-
+            EntityEventType.CREATE -> ICreateTypeUseCase::class.java
             EntityEventType.UPDATE -> IUpdateTypeUseCase::class.java
             EntityEventType.DELETE -> IDeleteTypeUseCase::class.java
-        } as Class<IEventTypeUseCase<E>>
+        } as Class<IEventTypeUseCase<T>>
 
         return getEntitySpecificUseCaseByEventType(useCaseClass, event.entityClassName)
     }
 
-    private fun <T : IEventTypeUseCase<E>> getEntitySpecificUseCaseByEventType(
-        processorType: Class<T>,
+    private fun <P : IEventTypeUseCase<T>> getEntitySpecificUseCaseByEventType(
+        processorType: Class<P>,
         entityClassName: String
-    ): T {
+    ): P {
         val beans = applicationContext.getBeansOfType(processorType).values
         return beans.find { processor ->
-            (processor::class.java.genericInterfaces.firstOrNull() as? ParameterizedType)
-                ?.actualTypeArguments?.firstOrNull() == "_$entityClassName"::class.java
+            val firstTypeArgument = (processor::class.java.genericInterfaces.firstOrNull() as? ParameterizedType)
+                ?.actualTypeArguments?.firstOrNull()
+            println("Processor: ${processor::class.java.name}, FirstTypeArgument: $firstTypeArgument")
+            firstTypeArgument == "_$entityClassName"::class.java
         } ?: throw IllegalArgumentException(
             "No processor of type ${processorType.simpleName} found for entity class: $entityClassName"
         )
