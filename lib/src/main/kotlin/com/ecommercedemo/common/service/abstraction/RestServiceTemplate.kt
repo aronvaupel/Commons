@@ -47,7 +47,6 @@ abstract class RestServiceTemplate<T : BaseEntity>(
             )
         }
         val updated = serviceUtility.updateExistingInstance(original.copy() as T, request.properties)
-        println("Updated entity: $updated")
 
         return saveAndEmitEvent( original, updated, EntityEventType.UPDATE,)
     }

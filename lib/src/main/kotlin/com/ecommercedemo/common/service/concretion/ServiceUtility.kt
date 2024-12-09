@@ -205,7 +205,9 @@ class ServiceUtility(
         }
 
         if (missingPseudoProperties.isNotEmpty()) {
-            throw IllegalArgumentException("Missing required pseudo-properties: ${missingPseudoProperties.joinToString(", ") { it.key }}")
+            throw IllegalArgumentException(
+                "Missing required pseudo-properties: ${missingPseudoProperties.joinToString(", ") { it.key }}"
+            )
         }
 
         val validationErrors = pseudoPropertiesFromRequest.mapNotNull { (key, value) ->
@@ -219,10 +221,7 @@ class ServiceUtility(
                     val isValid = try {
                         ValueType.validateValueAgainstDescriptor(
                             typeDescriptor,
-                            objectMapper.readValue(
-                                objectMapper.writeValueAsString(value),
-                                typeDescriptor.type.typeInfo
-                            ),
+                            value,
                             failureDetails
                         )
                     } catch (e: Exception) {
@@ -230,7 +229,6 @@ class ServiceUtility(
                         false
                     }
                     if (!isValid) {
-                        println("Validation failed for pseudo-property '$key': $failureDetails")
                         "Pseudo-property '$key' does not match the expected type or constraints. Descriptor: $typeDescriptor,\n\n Value: $value.\n" +
                                 "\n Details: ${failureDetails.joinToString("; ")}"
                     } else null
