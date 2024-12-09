@@ -135,7 +135,7 @@ enum class ValueType(
             if (descriptor !is TypeDescriptor.CollectionDescriptor || descriptor.type != LIST) {
                 throw IllegalArgumentException("Descriptor must be a CollectionDescriptor for LIST type")
             }
-            return validateCollection(descriptor, value)
+            return validateCollection(value, descriptor)
         }
     },
     ARRAY_LIST(TypeCategory.COLLECTION, ArrayList::class.java) {
@@ -147,7 +147,7 @@ enum class ValueType(
                 throw IllegalArgumentException("Value must be an ArrayList.")
             }
 
-            return validateCollection(descriptor, value)
+            return validateCollection(value, descriptor)
         }
     },
     LINKED_LIST(TypeCategory.COLLECTION, LinkedList::class.java) {
@@ -159,7 +159,7 @@ enum class ValueType(
                 throw IllegalArgumentException("Value must be an ArrayList.")
             }
 
-            return validateCollection(descriptor, value)
+            return validateCollection(value, descriptor)
         }
     },
     VECTOR(TypeCategory.COLLECTION, Vector::class.java) {
@@ -171,7 +171,7 @@ enum class ValueType(
                 throw IllegalArgumentException("Value must be an ArrayList.")
             }
 
-            return validateCollection(descriptor, value)
+            return validateCollection(value, descriptor)
         }
     },
     SET(TypeCategory.COLLECTION, Set::class.java) {
@@ -179,7 +179,7 @@ enum class ValueType(
             if (descriptor !is TypeDescriptor.CollectionDescriptor || descriptor.type != SET) {
                 throw IllegalArgumentException("Descriptor must be a CollectionDescriptor for SET type")
             }
-            return validateCollection(descriptor, value)
+            return validateCollection(value, descriptor)
         }
     },
     COLLECTION(TypeCategory.COLLECTION, Collection::class.java) {
@@ -187,7 +187,7 @@ enum class ValueType(
             if (descriptor !is TypeDescriptor.CollectionDescriptor || descriptor.type != COLLECTION) {
                 throw IllegalArgumentException("Descriptor must be a CollectionDescriptor for COLLECTION type")
             }
-            return validateCollection(descriptor, value)
+            return validateCollection(value, descriptor)
         }
     },
     ITERABLE(TypeCategory.COLLECTION, Iterable::class.java) {
@@ -195,7 +195,7 @@ enum class ValueType(
             if (descriptor !is TypeDescriptor.CollectionDescriptor || descriptor.type != ITERABLE) {
                 throw IllegalArgumentException("Descriptor must be a CollectionDescriptor for ITERABLE type")
             }
-            return validateCollection(descriptor, value)
+            return validateCollection(value, descriptor)
         }
     },
     ARRAY(TypeCategory.COLLECTION, Array<Any>::class.java) {
@@ -203,7 +203,7 @@ enum class ValueType(
             if (descriptor !is TypeDescriptor.CollectionDescriptor || descriptor.type != ARRAY) {
                 throw IllegalArgumentException("Descriptor must be a CollectionDescriptor for ARRAY type")
             }
-            return validateCollection(descriptor, value)
+            return validateCollection(value, descriptor)
         }
     },
     QUEUE(TypeCategory.COLLECTION, java.util.Queue::class.java) {
@@ -215,7 +215,7 @@ enum class ValueType(
                 throw IllegalArgumentException("Value must be an ArrayList.")
             }
 
-            return validateCollection(descriptor, value)
+            return validateCollection(value, descriptor)
         }
     },
     DEQUE(TypeCategory.COLLECTION, java.util.Deque::class.java) {
@@ -227,7 +227,7 @@ enum class ValueType(
                 throw IllegalArgumentException("Value must be an ArrayList.")
             }
 
-            return validateCollection(descriptor, value)
+            return validateCollection(value, descriptor)
         }
     },
     STACK(TypeCategory.COLLECTION, java.util.Stack::class.java) {
@@ -239,7 +239,7 @@ enum class ValueType(
                 throw IllegalArgumentException("Value must be an ArrayList.")
             }
 
-            return validateCollection(descriptor, value)
+            return validateCollection(value, descriptor)
         }
     },
 
@@ -310,28 +310,11 @@ enum class ValueType(
 
         return when (this.category) {
             TypeCategory.PRIMITIVE -> typeInfo.isInstance(value)
-            TypeCategory.TIME -> {
-               if (descriptor !is TypeDescriptor.TimeDescriptor){
-                   println("Not a Time Descriptor")
-                   return false
-               }
+            TypeCategory.TIME -> validateTime(value, descriptor as TypeDescriptor.TimeDescriptor)
+            TypeCategory.COLLECTION -> validateCollection(value, descriptor as TypeDescriptor.CollectionDescriptor)
+            TypeCategory.MAP -> validateMap(value, descriptor as TypeDescriptor.MapDescriptor, typeInfo)
+            TypeCategory.COMPLEX -> validateComplexObject(value, descriptor as TypeDescriptor.ComplexObjectDescriptor)
 
-                validateTime(value, descriptor)
-            }
-            TypeCategory.COLLECTION -> {
-                if (descriptor !is TypeDescriptor.CollectionDescriptor) return false
-                validateCollection(descriptor, value)
-            }
-
-            TypeCategory.MAP -> {
-                if (descriptor !is TypeDescriptor.MapDescriptor) return false
-                validateMap(value, descriptor, typeInfo)
-            }
-
-            TypeCategory.COMPLEX -> {
-                if (descriptor !is TypeDescriptor.ComplexObjectDescriptor) return false
-                validateComplexObject(value, descriptor)
-            }
 
             else -> false
         }
@@ -430,7 +413,7 @@ enum class ValueType(
         }
     }
 
-    fun validateCollection(descriptor: TypeDescriptor.CollectionDescriptor, value: Any?): Boolean {
+    fun validateCollection(value: Any?, descriptor: TypeDescriptor.CollectionDescriptor): Boolean {
         if (value !is Collection<*>) return false
 
         if (value.size < descriptor.minElements) {
@@ -488,11 +471,7 @@ enum class ValueType(
         return try {
             when (descriptor.type) {
                 INSTANT -> Instant.parse(value)
-                LOCAL_DATE ->{
-                    LocalDate.parse(value)
-                    println(LocalDate.parse(value))
-                }
-
+                LOCAL_DATE -> LocalDate.parse(value)
                 LOCAL_DATE_TIME -> LocalDateTime.parse(value)
                 ZONED_DATE_TIME -> ZonedDateTime.parse(value)
                 OFFSET_DATE_TIME -> OffsetDateTime.parse(value)
@@ -503,6 +482,7 @@ enum class ValueType(
             }
             true
         } catch (e: DateTimeParseException) {
+            println(e.message)
             false
         }
     }
@@ -511,16 +491,6 @@ enum class ValueType(
         return when (value) {
             is Boolean -> true
             is String -> value.equals("true", ignoreCase = true) || value.equals("false", ignoreCase = true)
-            else -> false
-        }
-    }
-
-    private fun supportsNullable(descriptor: TypeDescriptor): Boolean {
-        return when (descriptor) {
-            is TypeDescriptor.PrimitiveDescriptor,
-            is TypeDescriptor.TimeDescriptor,
-            is TypeDescriptor.ComplexObjectDescriptor -> true
-
             else -> false
         }
     }
