@@ -15,7 +15,7 @@ import org.springframework.stereotype.Service
 import java.util.*
 
 @Service
-@Suppress("UNCHECKED_CAST", "unused")
+@Suppress("UNCHECKED_CAST", "unused", "ClassName")
 open class _PseudoPropertyApplier(
     private val beanFactory: BeanFactory,
     private val eventProducer: EntityEventProducer,
@@ -95,6 +95,7 @@ open class _PseudoPropertyApplier(
 
     @Transactional
     open fun renamePseudoPropertyForAllEntitiesOfType(
+        //Todo: Rename to AugmentableBaseEntity, or use interface instead of inheritance
         entityClass: Class<out ExpandableBaseEntity>,
         oldKey: String,
         newKey: String
@@ -102,7 +103,7 @@ open class _PseudoPropertyApplier(
         val repository = getEntityRepository(entityClass)
         repository.findAll().forEach { entity ->
             val deserializedPseudoProperties = objectMapper.readValue(
-                objectMapper.writeValueAsString(entity.pseudoProperties),
+                entity.pseudoProperties,
                 object : TypeReference<Map<String, Any?>>() {}).toMutableMap()
             if (!deserializedPseudoProperties.containsKey(oldKey))
                 throw IllegalArgumentException(
