@@ -36,8 +36,7 @@ class ServiceUtility(
             objectMapper.readValue(objectMapper.writeValueAsString(mappedProperties), instanceClass.java)
         }::class.memberProperties
             .associateBy { it.name }
-            .mapValues { (name, property) ->
-            properties[name.removePrefix("_")] ?: property.getter.call()
+            .mapValues { (name, property) -> property.getter.call(name)
         }
         println("resolvedProperties: $resolvedProperties")
 
