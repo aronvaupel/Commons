@@ -28,15 +28,14 @@ class ServiceUtility(
         val entityConstructor = instanceClass.constructors.firstOrNull()
             ?: throw IllegalArgumentException("No suitable constructor found for ${instanceClass.simpleName}")
 
+        val targetPropertyMap = instanceClass::class.memberProperties.associateBy { it.name }
+
         val resolvedProperties = properties.mapKeys { (key, _) ->
-            instanceClass.memberProperties
+            targetPropertyMap.values
                 .firstOrNull { it.name == key || it.name.removePrefix("_") == key }?.name
                 ?: throw IllegalArgumentException("Field $key does not exist in the entity.")
-        }.let { mappedProperties ->
-            objectMapper.readValue(objectMapper.writeValueAsString(mappedProperties), instanceClass.java)
-        }::class.memberProperties.associateBy { it.name }.mapValues { (name, property) ->
-            properties[name.removePrefix("_")] ?: property.getter.call()
         }
+        println("resolvedProperties: $resolvedProperties")
 
         val entityConstructorParams = entityConstructor.parameters.associateWith { param ->
             resolvedProperties[param.name] ?: resolvedProperties[param.name?.removePrefix("_")]
@@ -46,8 +45,6 @@ class ServiceUtility(
         }
 
         val newInstance = entityConstructor.callBy(entityConstructorParams)
-
-        val targetPropertyMap = newInstance::class.memberProperties.associateBy { it.name }
 
         targetPropertyMap.values
             .filterIsInstance<KMutableProperty<*>>()
@@ -256,8 +253,8 @@ class ServiceUtility(
         else -> false
     }
 
-    private fun mergePseudoProperties(existing: Map<String, Any?>, updates: Map<String, Any?>) =
-        serialize(existing + updates)
+    private fun mergePseudoProperties(existing: Map<String, Any?>, updates: Map<String, Any?>)
+    = serialize(existing + updates)
 
 
     private fun getValidPseudoProperties(entity: AugmentableBaseEntity): List<BasePseudoProperty> {
