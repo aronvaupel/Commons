@@ -35,8 +35,8 @@ class ServiceUtility(
         }.let { mappedProperties ->
             val updatedProperties = mappedProperties.mapValues { (key, value) ->
                 when (key) {
-                    "pseudoProperties" -> "{}"
-                    "typeDescriptor" -> objectMapper.writeValueAsString(value)
+                    AugmentableBaseEntity::pseudoProperties.name -> "{}"
+                    BasePseudoProperty::typeDescriptor.name -> objectMapper.writeValueAsString(value)
                     else -> value
                 }
             }
@@ -103,9 +103,8 @@ class ServiceUtility(
 
                     targetProperty.name == BasePseudoProperty::typeDescriptor.name -> {
                         if (newInstance is BasePseudoProperty) {
-                            validateTypeDescriptor(resolvedValueFromRequest)
-                            val serialized = serialize(resolvedValueFromRequest as TypeDescriptor)
-                            targetProperty.setter.call(newInstance, serialized)
+                            validateTypeDescriptor(objectMapper.readValue(resolvedValueFromRequest as String, TypeDescriptor::class.java))
+                            targetProperty.setter.call(newInstance, resolvedValueFromRequest)
                         } else throw IllegalArgumentException("Entity does not support typeDescriptor")
                     }
 
@@ -187,7 +186,7 @@ class ServiceUtility(
         return entity
     }
 
-    private fun validateTypeDescriptor(value: Any?) {
+    private fun validateTypeDescriptor(value: Any?)  {
         if (value == null)
             throw IllegalArgumentException("TypeDescriptor must be provided")
 
