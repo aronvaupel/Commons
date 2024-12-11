@@ -33,8 +33,15 @@ class ServiceUtility(
                 .firstOrNull { it.name == key || it.name.removePrefix("_") == key }?.name
                 ?: throw IllegalArgumentException("Field $key does not exist in the entity.")
         }.let { mappedProperties ->
+            val updatedProperties = mappedProperties.mapValues { (key, value) ->
+                when (key) {
+                    "pseudoProperties" -> "{}" // Default to an empty JSON object
+                    "typeDescriptor" -> ""    // Default to an empty string
+                    else -> value
+                }
+            }
             objectMapper.readValue(
-                objectMapper.writeValueAsString(mappedProperties.mapKeys { it.key.removePrefix("_") }),
+                objectMapper.writeValueAsString(updatedProperties.mapKeys { it.key.removePrefix("_") }),
                 instanceClass.java
             )
         }
