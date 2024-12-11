@@ -57,7 +57,7 @@ abstract class RestServiceTemplate<T : BaseEntity>(
             val entity = getSingle(id)
             adapter.delete(entity.id)
             eventProducer.emit(
-                entity::class.java.name,
+                entity.javaClass.simpleName,
                 id,
                 EntityEventType.DELETE,
                 mutableMapOf()
