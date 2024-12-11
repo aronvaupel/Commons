@@ -33,8 +33,9 @@ class ServiceUtility(
                 .firstOrNull { it.name == key || it.name.removePrefix("_") == key }?.name
                 ?: throw IllegalArgumentException("Field $key does not exist in the entity.")
         }.let { mappedProperties ->
-            println("Mapped Properties: $mappedProperties")
-            objectMapper.readValue(objectMapper.writeValueAsString(mappedProperties), instanceClass.java)
+            objectMapper.readValue(objectMapper.writeValueAsString(
+                mappedProperties.mapKeys { (key, _) -> key.removePrefix("_") }
+            ), instanceClass.java)
         }::class.memberProperties
             .associateBy { it.name }
             .mapValues { (name, property) ->
