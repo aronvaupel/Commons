@@ -33,24 +33,12 @@ class ServiceUtility(
                 .firstOrNull { it.name == key || it.name.removePrefix("_") == key }?.name
                 ?: throw IllegalArgumentException("Field $key does not exist in the entity.")
         }.let { mappedProperties ->
-            println("MAPPED PROPERTIES: $mappedProperties")
-            val deserializedObject = objectMapper.readValue(
-                objectMapper.writeValueAsString(mappedProperties.mapKeys { it.key.removePrefix("_") }),
-                instanceClass.java
+            objectMapper.readValue(
+                objectMapper.writeValueAsString(mappedProperties),
+                instanceClass::class.java
             )
-            println("DESERIALIZED OBJECT: $deserializedObject")
-            println("MEMBER PROPERTIES: ${deserializedObject::class.memberProperties}")
-            deserializedObject
-        }::class.memberProperties
-            .filter { property ->
-                properties.containsKey(property.name) || properties.containsKey(property.name.removePrefix("_"))
-            }
-            .associateBy { it.name }
-            .mapValues { (name, property) ->
-                println("NAME: $name, PROPERTY: $property")
-            properties[name] ?: properties[name.removePrefix("_")]
         }
-        println("RESOLVED PROPERTIES: $resolvedProperties")
+
         val entityConstructorParams = entityConstructor.parameters.associateWith { param ->
             properties[param.name] ?: properties[param.name?.removePrefix("_")]
             ?: if (!param.type.isMarkedNullable && !param.isOptional) {
@@ -69,9 +57,9 @@ class ServiceUtility(
             .onEach { it.isAccessible = true }
             .forEach { targetProperty ->
 
-                val resolvedValueFromRequest =
-                    resolvedProperties[targetProperty.name]
-                        ?: resolvedProperties[targetProperty.name.removePrefix("_")]
+                val resolvedValueFromRequest = resolvedProperties::class.java.getDeclaredField(targetProperty.name)
+                    .also { it.isAccessible = true }
+                    .get(resolvedProperties)
 
                 when {
                     resolvedValueFromRequest == null && (!targetProperty.returnType.isMarkedNullable) -> {
