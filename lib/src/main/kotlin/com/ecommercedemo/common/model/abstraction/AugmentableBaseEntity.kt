@@ -53,7 +53,7 @@ abstract class AugmentableBaseEntity: BaseEntity() {
         pseudoProperties = "{}"
     }
 
-    fun getPseudoProperties(): Map<String, Any?> {
+    fun getPseudoPropertiesDeserialized(): Map<String, Any?> {
         return ObjectMapper().readValue(pseudoProperties, object : TypeReference<Map<String, Any?>>() {})
     }
 
