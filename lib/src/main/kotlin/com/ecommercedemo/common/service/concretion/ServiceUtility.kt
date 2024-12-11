@@ -85,7 +85,7 @@ class ServiceUtility(
                         if (properties[AugmentableBaseEntity::pseudoProperties.name] == null)
                             return@forEach
                         if (newInstance is AugmentableBaseEntity) {
-                            validatePseudoPropertiesFromRequest(newInstance, resolvedValueFromRequest)
+                            validatePseudoPropertiesFromRequest(newInstance, properties[AugmentableBaseEntity::pseudoProperties.name])
                             val serialized = serialize(resolvedValueFromRequest!!)
                             targetProperty.setter.call(newInstance, serialized)
                         } else throw IllegalArgumentException("Entity does not support pseudoProperties")
@@ -93,7 +93,7 @@ class ServiceUtility(
 
                     targetProperty.name == BasePseudoProperty::typeDescriptor.name -> {
                         if (newInstance is BasePseudoProperty) {
-                            validateTypeDescriptor(resolvedValueFromRequest)
+                            validateTypeDescriptor(properties[BasePseudoProperty::typeDescriptor.name])
                             val serialized = serialize(resolvedValueFromRequest as TypeDescriptor)
                             targetProperty.setter.call(newInstance, serialized)
                         } else throw IllegalArgumentException("Entity does not support typeDescriptor")
