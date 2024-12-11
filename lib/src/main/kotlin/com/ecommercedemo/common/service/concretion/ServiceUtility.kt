@@ -28,23 +28,23 @@ class ServiceUtility(
         val entityConstructor = instanceClass.constructors.firstOrNull()
             ?: throw IllegalArgumentException("No suitable constructor found for ${instanceClass.simpleName}")
 
-        val resolvedProperties = objectMapper.readValue(
-            objectMapper.writeValueAsString(properties),
-            instanceClass.java
-        )::class.memberProperties
-            .associateBy { it.name.removePrefix("_") }
-            .mapValues { (_, property) ->
-                property.getter.call(instanceClass)
-            }
-
         val entityConstructorParams = entityConstructor.parameters.associateWith { param ->
-            resolvedProperties[param.name] ?: resolvedProperties[param.name?.removePrefix("_")]
+            properties[param.name] ?: properties[param.name?.removePrefix("_")]
             ?: if (!param.type.isMarkedNullable && !param.isOptional) {
                 throw IllegalArgumentException("Field ${param.name} must be provided and cannot be null.")
             } else null
         }
 
         val newInstance = entityConstructor.callBy(entityConstructorParams)
+
+        val resolvedProperties = objectMapper.readValue(
+            objectMapper.writeValueAsString(properties),
+            newInstance::class.java
+        )::class.memberProperties
+            .associateBy { it.name.removePrefix("_") }
+            .mapValues { (_, property) ->
+                property.getter.call(newInstance)
+            }
 
         val targetPropertyMap = newInstance::class.memberProperties.associateBy { it.name }
 
