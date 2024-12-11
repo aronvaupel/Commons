@@ -28,9 +28,12 @@ class ServiceUtility(
         val entityConstructor = instanceClass.constructors.firstOrNull()
             ?: throw IllegalArgumentException("No suitable constructor found for ${instanceClass.simpleName}")
 
-        val resolvedProperties = objectMapper.readValue(objectMapper.writeValueAsString(properties), instanceClass.java)::class.memberProperties.associateBy {
-            it.name
-        }.mapKeys { it.key.removePrefix("_") }
+        val resolvedProperties = objectMapper.readValue(
+            objectMapper.writeValueAsString(properties),
+            instanceClass.java
+        )::class.memberProperties
+            .associateBy { it.name.removePrefix("_") }
+            .mapValues { it.value }
 
         val entityConstructorParams = entityConstructor.parameters.associateWith { param ->
             resolvedProperties[param.name] ?: resolvedProperties[param.name?.removePrefix("_")]
@@ -250,8 +253,8 @@ class ServiceUtility(
         else -> false
     }
 
-    private fun mergePseudoProperties(existing: Map<String, Any?>, updates: Map<String, Any?>)
-    = serialize(existing + updates)
+    private fun mergePseudoProperties(existing: Map<String, Any?>, updates: Map<String, Any?>) =
+        serialize(existing + updates)
 
 
     private fun getValidPseudoProperties(entity: AugmentableBaseEntity): List<BasePseudoProperty> {
