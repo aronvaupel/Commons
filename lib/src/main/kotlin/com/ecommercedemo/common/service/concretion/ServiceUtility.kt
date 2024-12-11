@@ -35,9 +35,9 @@ class ServiceUtility(
         }.let { mappedProperties ->
             objectMapper.readValue(
                 objectMapper.writeValueAsString(mappedProperties),
-                instanceClass::class.java
+                instanceClass.java
             )
-        }
+        } as E
 
         val entityConstructorParams = entityConstructor.parameters.associateWith { param ->
             properties[param.name] ?: properties[param.name?.removePrefix("_")]
