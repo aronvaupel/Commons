@@ -39,7 +39,7 @@ open class _PseudoPropertyApplier(
         val repository = getEntityRepository(entityClass)
         repository.findAll().forEach { entity ->
             val deserializedPseudoProperties = objectMapper.readValue(
-                objectMapper.writeValueAsString(entity.pseudoProperties),
+                entity.pseudoProperties,
                 object : TypeReference<Map<String, Any?>>() {}).toMutableMap()
             if (!deserializedPseudoProperties.containsKey(key)) {
                 throw IllegalArgumentException(
