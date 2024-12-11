@@ -33,6 +33,7 @@ class ServiceUtility(
                 .firstOrNull { it.name == key || it.name.removePrefix("_") == key }?.name
                 ?: throw IllegalArgumentException("Field $key does not exist in the entity.")
         }.let { mappedProperties ->
+            println("MAPPED PROPERTIES: $mappedProperties")
             objectMapper.readValue(
                 objectMapper.writeValueAsString(mappedProperties.mapKeys { it.key.removePrefix("_") }),
                 instanceClass.java
@@ -47,6 +48,7 @@ class ServiceUtility(
                 throw IllegalArgumentException("Field ${param.name} must be provided and cannot be null.")
             } else null
         }
+        println("RESOLVED PROPERTIES: $resolvedProperties")
 
         val newInstance = entityConstructor.callBy(entityConstructorParams)
 
