@@ -29,10 +29,17 @@ class ServiceUtility(
             ?: throw IllegalArgumentException("No suitable constructor found for ${instanceClass.simpleName}")
 
         val resolvedProperties = objectMapper.readValue(
-            objectMapper.writeValueAsString(properties), instanceClass.java
+            objectMapper.writeValueAsString(
+                properties.mapKeys { (key, _) ->
+                    instanceClass.memberProperties
+                        .firstOrNull { it.name.removePrefix("_") == key }?.name ?: key
+                }
+            ),
+            instanceClass.java
         )::class.memberProperties
-            .associateBy { it.name }
-            .mapValues { it.value.getter.call(properties) }
+            .onEach { it.isAccessible = true }
+            .associateBy { it.name.removePrefix("_") }
+            .mapValues { it.value.getter.call(it.value) }
 
         val entityConstructorParams = entityConstructor.parameters.associateWith { param ->
             resolvedProperties[param.name] ?: resolvedProperties[param.name?.removePrefix("_")]
@@ -47,8 +54,8 @@ class ServiceUtility(
 
         targetPropertyMap.values
             .filterIsInstance<KMutableProperty<*>>()
+            .onEach { it.isAccessible = true }
             .forEach { targetProperty ->
-                targetProperty.isAccessible = true
 
                 val resolvedValueFromRequest =
                     resolvedProperties[targetProperty.name]

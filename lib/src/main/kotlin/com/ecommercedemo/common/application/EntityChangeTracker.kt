@@ -14,14 +14,15 @@ class EntityChangeTracker<T : BaseEntity> {
         val propertiesBefore =
             entityBefore?.let { entityBefore::class.memberProperties.filterIsInstance<KProperty1<T, *>>() }
         val propertiesAfter = entityAfter::class.memberProperties.filterIsInstance<KProperty1<T, *>>()
-        propertiesAfter.forEach { property ->
-            val oldValue = entityBefore?.let {
+        propertiesAfter
+            .forEach { property ->
+            val oldValue = entityBefore?.let { before ->
                 val matchingProperty = propertiesBefore?.firstOrNull { it.name == property.name }
                     ?: throw IllegalArgumentException("Property ${property.name} not found in entity before.")
                 matchingProperty.isAccessible = true
-                if (it is AugmentableBaseEntity && property.name == AugmentableBaseEntity::pseudoProperties.name)
-                    it.getPseudoPropertiesDeserialized()
-                else matchingProperty.get(it)
+                if (before is AugmentableBaseEntity && property.name == AugmentableBaseEntity::pseudoProperties.name)
+                    before.getPseudoPropertiesDeserialized()
+                else matchingProperty.get(before)
             }
 
             val newValue = if (
