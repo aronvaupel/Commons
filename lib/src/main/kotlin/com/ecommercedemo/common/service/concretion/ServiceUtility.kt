@@ -33,7 +33,9 @@ class ServiceUtility(
             instanceClass.java
         )::class.memberProperties
             .associateBy { it.name.removePrefix("_") }
-            .mapValues { it.value }
+            .mapValues { (_, property) ->
+                property.getter.call(instanceClass)
+            }
 
         val entityConstructorParams = entityConstructor.parameters.associateWith { param ->
             resolvedProperties[param.name] ?: resolvedProperties[param.name?.removePrefix("_")]
