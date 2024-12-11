@@ -2,8 +2,8 @@ package com.ecommercedemo.common.application.kafka.handling
 
 import com.ecommercedemo.common.application.kafka.EntityEvent
 import com.ecommercedemo.common.application.kafka.EntityEventType
-import com.ecommercedemo.common.application.kafka.handling.abstraction.ICreateHandlerHandler
-import com.ecommercedemo.common.application.kafka.handling.abstraction.IDeleteHandlerHandler
+import com.ecommercedemo.common.application.kafka.handling.abstraction.ICreateHandler
+import com.ecommercedemo.common.application.kafka.handling.abstraction.IDeleteHandler
 import com.ecommercedemo.common.application.kafka.handling.abstraction.IEventTypeHandler
 import com.ecommercedemo.common.application.kafka.handling.abstraction.IUpdateHandler
 import com.ecommercedemo.common.model.abstraction.BaseEntity
@@ -30,9 +30,9 @@ class MainEventHandler<T: BaseEntity>(
 
     private fun determineUseCaseForEvent(event: EntityEvent): IEventTypeHandler<T> {
         val useCaseClass = when (event.type) {
-            EntityEventType.CREATE -> ICreateHandlerHandler::class.java
+            EntityEventType.CREATE -> ICreateHandler::class.java
             EntityEventType.UPDATE -> IUpdateHandler::class.java
-            EntityEventType.DELETE -> IDeleteHandlerHandler::class.java
+            EntityEventType.DELETE -> IDeleteHandler::class.java
         } as Class<IEventTypeHandler<T>>
         println("Event type: ${event.type}")
         val result = getEntitySpecificUseCaseByEventType(useCaseClass, event.entityClassName)

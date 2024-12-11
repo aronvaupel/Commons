@@ -27,7 +27,7 @@ class ListenerManager<T: BaseEntity> @Autowired constructor(
     private val entityScanner: EntityScanner,
     private val kafkaListenerContainerFactory: ConcurrentKafkaListenerContainerFactory<String, Any>,
     private val mainEventHandler: MainEventHandler<T>,
-    @Value("\${spring.application.name}") private val serviceName: String // Mandatory service name
+    @Value("\${spring.application.name}") private val serviceName: String
 ) {
     private val log = LoggerFactory.getLogger(ListenerManager::class.java)
 
