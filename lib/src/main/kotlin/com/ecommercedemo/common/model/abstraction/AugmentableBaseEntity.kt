@@ -16,9 +16,6 @@ abstract class AugmentableBaseEntity: BaseEntity() {
 
     fun getPseudoProperty(key: String): Any? {
         val map: Map<String, Any?> = ObjectMapper().readValue(pseudoProperties, object : TypeReference<Map<String, Any?>>() {})
-        if (!map.containsKey(key)) {
-            throw IllegalArgumentException("Pseudo property with key '$key' not found.")
-        }
         return map[key]
     }
 
