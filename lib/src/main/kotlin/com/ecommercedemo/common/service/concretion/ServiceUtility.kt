@@ -82,11 +82,11 @@ class ServiceUtility(
                     }
 
                     targetProperty.name == AugmentableBaseEntity::pseudoProperties.name -> {
+                        if (properties[AugmentableBaseEntity::pseudoProperties.name] == null)
+                            return@forEach
                         if (newInstance is AugmentableBaseEntity) {
-                            if (resolvedValueFromRequest == null)
-                                return@forEach
                             validatePseudoPropertiesFromRequest(newInstance, resolvedValueFromRequest)
-                            val serialized = serialize(resolvedValueFromRequest)
+                            val serialized = serialize(resolvedValueFromRequest!!)
                             targetProperty.setter.call(newInstance, serialized)
                         } else throw IllegalArgumentException("Entity does not support pseudoProperties")
                     }
