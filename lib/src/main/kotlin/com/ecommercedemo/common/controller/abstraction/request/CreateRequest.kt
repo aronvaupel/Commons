@@ -1,9 +1,10 @@
 package com.ecommercedemo.common.controller.abstraction.request
 
-import com.fasterxml.jackson.annotation.JsonTypeInfo
+import com.ecommercedemo.common.application.PropertiesDeserializer
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize
 
 data class CreateRequest(
     val entityClassName: String,
-    @JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, include = JsonTypeInfo.As.PROPERTY, property = "@class")
+    @JsonDeserialize(using = PropertiesDeserializer::class)
     val properties: Map<String, Any?> = emptyMap()
 )
