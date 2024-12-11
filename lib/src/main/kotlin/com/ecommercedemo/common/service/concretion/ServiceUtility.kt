@@ -57,9 +57,12 @@ class ServiceUtility(
             .onEach { it.isAccessible = true }
             .forEach { targetProperty ->
 
-                val resolvedValueFromRequest = resolvedProperties::class.java.getDeclaredField(targetProperty.name)
-                    .also { it.isAccessible = true }
-                    .get(resolvedProperties)
+                val resolvedValueFromRequest = resolvedProperties::class
+                    .memberProperties
+                    .firstOrNull { it.name == targetProperty.name }
+                    ?.also { it.isAccessible = true }
+                    ?.getter
+                    ?.call(resolvedProperties)
 
                 when {
                     resolvedValueFromRequest == null && (!targetProperty.returnType.isMarkedNullable) -> {
