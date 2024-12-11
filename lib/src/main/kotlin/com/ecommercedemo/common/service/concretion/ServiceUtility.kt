@@ -23,20 +23,13 @@ class ServiceUtility(
 
     fun <E : BaseEntity> createNewInstance(
         instanceClass: KClass<E>,
-        properties: Any,
+        properties: Map<String, Any?>,
     ): E {
-        if (properties !is Map<*, *>) {
-            throw IllegalArgumentException("Properties must be a Map")
-        }
-        val asTypesafeMap = properties.entries.associate { (key, value) ->
-            if (key !is String) throw IllegalArgumentException("PseudoProperty-keys must be Strings")
-            key to value
-        }
         val entityConstructor = instanceClass.constructors.firstOrNull()
             ?: throw IllegalArgumentException("No suitable constructor found for ${instanceClass.simpleName}")
 
         val entityConstructorParams = entityConstructor.parameters.associateWith { param ->
-            val value = asTypesafeMap[param.name] ?: asTypesafeMap[param.name?.removePrefix("_")]
+            val value = properties[param.name] ?: properties[param.name?.removePrefix("_")]
             if (value == null && !param.type.isMarkedNullable && !param.isOptional) {
                 throw IllegalArgumentException("Field ${param.name} must be provided and cannot be null.")
             }

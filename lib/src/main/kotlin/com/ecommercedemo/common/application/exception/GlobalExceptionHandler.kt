@@ -49,7 +49,14 @@ class GlobalExceptionHandler {
 
     @ExceptionHandler(IllegalArgumentException::class)
     fun handleIllegalArgumentException(ex: IllegalArgumentException): ResponseEntity<Map<String, String>> {
-        val errorResponse = mapOf("error" to (ex.message ?: "Invalid request"))
+        ex.printStackTrace() // Log full stack trace
+        println("Exception caught in GlobalExceptionHandler: ${ex.message}")
+
+        val errorResponse = mapOf(
+            "error" to (ex.message ?: "Invalid request"),
+            "details" to "An illegal argument was provided. Please check the request payload or parameters."
+        )
+
         return ResponseEntity(errorResponse, HttpStatus.BAD_REQUEST)
     }
 
