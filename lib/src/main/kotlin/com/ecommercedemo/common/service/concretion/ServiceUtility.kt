@@ -41,9 +41,14 @@ class ServiceUtility(
             println("DESERIALIZED OBJECT: $deserializedObject")
             println("MEMBER PROPERTIES: ${deserializedObject::class.memberProperties}")
             deserializedObject
-        }::class.memberProperties.associateBy { it.name }
+        }::class.memberProperties
+            .filter { property ->
+                properties.containsKey(property.name) || properties.containsKey(property.name.removePrefix("_"))
+            }
+            .associateBy { it.name }
             .mapValues { (name, property) ->
-            properties[name.removePrefix("_")] ?: property.getter.call()
+                println("NAME: $name, PROPERTY: $property")
+            properties[name] ?: properties[name.removePrefix("_")]
         }
         println("RESOLVED PROPERTIES: $resolvedProperties")
         val entityConstructorParams = entityConstructor.parameters.associateWith { param ->
