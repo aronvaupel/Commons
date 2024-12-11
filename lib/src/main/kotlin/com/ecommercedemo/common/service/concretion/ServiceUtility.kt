@@ -24,13 +24,13 @@ class ServiceUtility(
 
     fun <E : BaseEntity> createNewInstance(
         instanceClass: KClass<E>,
-        valueProvider: (String) -> Any?
+        properties: Map<String, Any?>,
     ): E {
         val entityConstructor = instanceClass.constructors.firstOrNull()
             ?: throw IllegalArgumentException("No suitable constructor found for ${instanceClass.simpleName}")
 
         val entityConstructorParams = entityConstructor.parameters.associateWith { param ->
-            val value = valueProvider(param.name!!)
+            val value = properties[param.name] ?: properties[param.name?.removePrefix("_")]
             if (value == null && !param.type.isMarkedNullable) {
                 throw IllegalArgumentException("Field ${param.name} must be provided and cannot be null.")
             }
@@ -46,7 +46,7 @@ class ServiceUtility(
             .forEach { property ->
                 property.isAccessible = true
 
-                val resolvedValue = valueProvider(property.name.removePrefix("_"))
+                val resolvedValue = properties[property.name] ?: properties[property.name.removePrefix("_")]
 
                 when {
                     resolvedValue == null && !property.returnType.isMarkedNullable -> {
@@ -55,7 +55,7 @@ class ServiceUtility(
 
                     property.name == AugmentableBaseEntity::pseudoProperties.name -> {
                         if (newInstance is AugmentableBaseEntity) {
-                            val pseudoPropertiesValue = valueProvider(AugmentableBaseEntity::pseudoProperties.name)
+                            val pseudoPropertiesValue = properties[AugmentableBaseEntity::pseudoProperties.name]
                             val pseudoPropertiesFromRequest = when (pseudoPropertiesValue) {
                                 is String -> {
                                     objectMapper.readValue(

@@ -16,9 +16,7 @@ abstract class EventServiceTemplate<T : BaseEntity>(
 ) : IEventService<T> {
     @Transactional
     override fun createByEvent(event: EntityEvent) {
-        val newInstance = serviceUtility.createNewInstance(downstreamEntityClass) { name ->
-            event.properties[name]
-        }.apply { id = event.properties[BaseEntity::id.name] as UUID}
+        val newInstance = serviceUtility.createNewInstance(downstreamEntityClass, event.properties).apply { id = event.properties[BaseEntity::id.name] as UUID}
         adapter.save(newInstance)
     }
 

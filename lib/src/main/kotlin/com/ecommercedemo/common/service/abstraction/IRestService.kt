@@ -12,6 +12,6 @@ interface IRestService<T: BaseEntity> {
     fun getSingle(id: UUID): T
     fun getMultiple(ids: List<UUID>): List<T>
     fun search(request: SearchRequest): List<T>
-    fun create(request: CreateRequest<T>): T
+    fun create(request: CreateRequest): T
     fun delete(id: UUID) : HttpStatus
 }

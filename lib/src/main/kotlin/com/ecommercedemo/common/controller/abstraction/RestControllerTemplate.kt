@@ -16,9 +16,8 @@ abstract class RestControllerTemplate<T : BaseEntity>(
 ) {
     @PostMapping
     open fun create(
-        @RequestBody request: CreateRequest<T>
+        @RequestBody request: CreateRequest
     ): ResponseEntity<T> {
-        println(request)
         return ResponseEntity.ok(service.create(request))
     }
 

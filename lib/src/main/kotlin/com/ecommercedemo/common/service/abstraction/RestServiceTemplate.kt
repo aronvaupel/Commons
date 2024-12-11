@@ -15,7 +15,6 @@ import jakarta.transaction.Transactional
 import org.springframework.http.HttpStatus
 import java.util.*
 import kotlin.reflect.KClass
-import kotlin.reflect.full.memberProperties
 
 @Suppress("UNCHECKED_CAST")
 abstract class RestServiceTemplate<T : BaseEntity>(
@@ -28,11 +27,8 @@ abstract class RestServiceTemplate<T : BaseEntity>(
 ) : IRestService<T> {
 
     @Transactional
-    override fun create(request: CreateRequest<T>): T {
-        val newInstance = serviceUtility.createNewInstance(request.data::class) { name ->
-            request.data::class.memberProperties.firstOrNull { it.name == name }?.getter?.call(request.data)
-        }
-
+    override fun create(request: CreateRequest): T {
+        val newInstance = serviceUtility.createNewInstance(entityClass, request.properties)
         return saveAndEmitEvent(null, newInstance, EntityEventType.CREATE)
     }
 
