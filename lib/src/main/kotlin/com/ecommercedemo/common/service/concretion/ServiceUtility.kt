@@ -34,21 +34,25 @@ class ServiceUtility(
                 ?: throw IllegalArgumentException("Field $key does not exist in the entity.")
         }.let { mappedProperties ->
             println("MAPPED PROPERTIES: $mappedProperties")
-            objectMapper.readValue(
+            val deserializedObject = objectMapper.readValue(
                 objectMapper.writeValueAsString(mappedProperties.mapKeys { it.key.removePrefix("_") }),
                 instanceClass.java
             )
-        }::class.memberProperties.associateBy { it.name }.mapValues { (name, property) ->
+            println("DESERIALIZED OBJECT: $deserializedObject")
+            println("MEMBER PROPERTIES: ${deserializedObject::class.memberProperties}")
+            deserializedObject
+        }::class.memberProperties.associateBy { it.name }
+            .mapValues { (name, property) ->
             properties[name.removePrefix("_")] ?: property.getter.call()
         }
-
+        println("RESOLVED PROPERTIES: $resolvedProperties")
         val entityConstructorParams = entityConstructor.parameters.associateWith { param ->
             properties[param.name] ?: properties[param.name?.removePrefix("_")]
             ?: if (!param.type.isMarkedNullable && !param.isOptional) {
                 throw IllegalArgumentException("Field ${param.name} must be provided and cannot be null.")
             } else null
         }
-        println("RESOLVED PROPERTIES: $resolvedProperties")
+
 
         val newInstance = entityConstructor.callBy(entityConstructorParams)
 
