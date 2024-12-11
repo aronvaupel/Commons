@@ -1,6 +1,6 @@
 package com.ecommercedemo.common.application
 
-import com.ecommercedemo.common.model.abstraction.ExpandableBaseEntity
+import com.ecommercedemo.common.model.abstraction.AugmentableBaseEntity
 import java.time.LocalDateTime
 import java.util.*
 
@@ -12,7 +12,7 @@ data class MockEntity(
     override var createdAt: LocalDateTime = LocalDateTime.now(),
     override var updatedAt: LocalDateTime = LocalDateTime.now(),
     override var pseudoProperties: String = ""
-) : ExpandableBaseEntity()
+) : AugmentableBaseEntity()
 
 class EntityChangeTrackerTest {
 

@@ -1,7 +1,7 @@
 package com.ecommercedemo.common.application
 
+import com.ecommercedemo.common.model.abstraction.AugmentableBaseEntity
 import com.ecommercedemo.common.model.abstraction.BaseEntity
-import com.ecommercedemo.common.model.abstraction.ExpandableBaseEntity
 import com.ecommercedemo.common.service.concretion.ServiceUtility
 import com.fasterxml.jackson.databind.ObjectMapper
 import kotlin.reflect.KProperty1
@@ -22,17 +22,17 @@ class EntityChangeTracker<T : BaseEntity>(
                 val matchingProperty = propertiesBefore?.firstOrNull { it.name == property.name }
                     ?: throw IllegalArgumentException("Property ${property.name} not found in entity before.")
                 matchingProperty.isAccessible = true
-                if (property.name == ExpandableBaseEntity::pseudoProperties.name)
+                if (property.name == AugmentableBaseEntity::pseudoProperties.name)
                     serviceUtility.deserializePseudoProperty(matchingProperty.get(beforeEntity) as String)
                 else matchingProperty.get(beforeEntity)
             }
 
-            val newValue = if (property.name == ExpandableBaseEntity::pseudoProperties.name)
+            val newValue = if (property.name == AugmentableBaseEntity::pseudoProperties.name)
                 serviceUtility.deserializePseudoProperty(property.get(entityAfter) as String)
             else property.get(entityAfter)
 
             if (oldValue != newValue) {
-                changedProperties[property.name] = if (property.name == ExpandableBaseEntity::pseudoProperties.name)
+                changedProperties[property.name] = if (property.name == AugmentableBaseEntity::pseudoProperties.name)
                     ObjectMapper().writeValueAsString(newValue)
                 else
                     newValue

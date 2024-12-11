@@ -2,9 +2,9 @@ package com.ecommercedemo.common.service.concretion
 
 import com.ecommercedemo.common.application.validation.type.ValueType
 import com.ecommercedemo.common.controller.abstraction.util.TypeDescriptor
+import com.ecommercedemo.common.model.abstraction.AugmentableBaseEntity
 import com.ecommercedemo.common.model.abstraction.BaseEntity
 import com.ecommercedemo.common.model.abstraction.BasePseudoProperty
-import com.ecommercedemo.common.model.abstraction.ExpandableBaseEntity
 import com.ecommercedemo.common.persistence.concretion._pseudoProperty._PseudoPropertyRepository
 import com.fasterxml.jackson.core.type.TypeReference
 import com.fasterxml.jackson.databind.ObjectMapper
@@ -53,9 +53,9 @@ class ServiceUtility(
                         throw IllegalArgumentException("Field '${property.name}' is non-nullable and cannot be set to null.")
                     }
 
-                    property.name == ExpandableBaseEntity::pseudoProperties.name -> {
-                        if (newInstance is ExpandableBaseEntity) {
-                            val pseudoPropertiesValue = valueProvider(ExpandableBaseEntity::pseudoProperties.name)
+                    property.name == AugmentableBaseEntity::pseudoProperties.name -> {
+                        if (newInstance is AugmentableBaseEntity) {
+                            val pseudoPropertiesValue = valueProvider(AugmentableBaseEntity::pseudoProperties.name)
                             val pseudoPropertiesFromRequest = when (pseudoPropertiesValue) {
                                 is String -> {
                                     objectMapper.readValue(
@@ -81,7 +81,6 @@ class ServiceUtility(
                             property.setter.call(newInstance, mergedPseudoProperties)
                         }
                     }
-                    //Todo: rethink this. Sending TypeDescriptor as a string is not ideal. Deserializing and serializing again is also not cool. Maybe change CreateRequest?
                     property.name == BasePseudoProperty::typeDescriptor.name -> {
                         val typeDescriptorObject = try {
                             objectMapper.readValue(resolvedValue.toString(), TypeDescriptor::class.java)
@@ -128,8 +127,8 @@ class ServiceUtility(
                     throw IllegalArgumentException("Field $key cannot be set to null.")
                 }
 
-                key == ExpandableBaseEntity::pseudoProperties.name -> {
-                    if (entity is ExpandableBaseEntity) {
+                key == AugmentableBaseEntity::pseudoProperties.name -> {
+                    if (entity is AugmentableBaseEntity) {
                         val pseudoPropertiesFromSource = value as? Map<String, Any?>
                             ?: throw IllegalArgumentException("pseudoProperties must be a Map<String, Any?>")
                         validatePseudoPropertiesFromRequest(entity, pseudoPropertiesFromSource)
@@ -155,7 +154,7 @@ class ServiceUtility(
 
                 value != null
                         && key != BasePseudoProperty::typeDescriptor.name
-                        && key != ExpandableBaseEntity::pseudoProperties.name
+                        && key != AugmentableBaseEntity::pseudoProperties.name
                         && value::class.createType() != correspondingEntityProperty.returnType -> {
                     throw IllegalArgumentException("Field $key must be of type ${correspondingEntityProperty.returnType}.")
                 }
@@ -178,7 +177,7 @@ class ServiceUtility(
     }
 
     private fun validatePseudoPropertiesFromRequest(
-        updatedEntity: ExpandableBaseEntity,
+        updatedEntity: AugmentableBaseEntity,
         pseudoPropertiesFromRequest: Map<String, Any?>
     ) {
         val validPseudoProperties = getValidPseudoProperties(updatedEntity)
@@ -266,7 +265,7 @@ class ServiceUtility(
         return result
     }
 
-    private fun getValidPseudoProperties(entity: ExpandableBaseEntity): List<BasePseudoProperty> {
+    private fun getValidPseudoProperties(entity: AugmentableBaseEntity): List<BasePseudoProperty> {
         return _pseudoPropertyRepository.findAllByEntitySimpleName(entity::class.simpleName!!)
     }
 }
