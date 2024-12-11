@@ -37,7 +37,7 @@ class ServiceUtility(
                 objectMapper.writeValueAsString(mappedProperties.mapKeys { it.key.removePrefix("_") }),
                 instanceClass.java
             )
-        } as E
+        }
         println("resolvedProperties: $resolvedProperties")
 
         val entityConstructorParams = entityConstructor.parameters.associateWith { param ->
@@ -46,12 +46,15 @@ class ServiceUtility(
                 throw IllegalArgumentException("Field ${param.name} must be provided and cannot be null.")
             } else null
         }
+        println("entityConstructorParams: $entityConstructorParams")
 
 
         val newInstance = entityConstructor.callBy(entityConstructorParams)
+        println("newInstance: $newInstance")
 
 
         val targetPropertyMap = newInstance::class.memberProperties.associateBy { it.name }
+        println("targetPropertyMap: $targetPropertyMap")
 
         targetPropertyMap.values
             .filterIsInstance<KMutableProperty<*>>()
@@ -64,6 +67,7 @@ class ServiceUtility(
                     ?.also { it.isAccessible = true }
                     ?.getter
                     ?.call(resolvedProperties)
+                println("resolvedValueFromRequest: $resolvedValueFromRequest")
 
                 when {
                     resolvedValueFromRequest == null && (!targetProperty.returnType.isMarkedNullable) -> {
