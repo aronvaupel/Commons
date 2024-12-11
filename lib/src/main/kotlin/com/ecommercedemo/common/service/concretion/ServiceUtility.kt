@@ -41,8 +41,13 @@ class ServiceUtility(
         println("resolvedProperties: $resolvedProperties")
 
         val entityConstructorParams = entityConstructor.parameters.associateWith { param ->
-            properties[param.name] ?: properties[param.name?.removePrefix("_")]
-            ?: if (!param.type.isMarkedNullable && !param.isOptional) {
+            val resolvedValue = resolvedProperties::class
+                .memberProperties
+                .firstOrNull { it.name == param.name || it.name.removePrefix("_") == param.name }
+                ?.getter
+                ?.call(resolvedProperties)
+
+            resolvedValue ?: if (!param.type.isMarkedNullable && !param.isOptional) {
                 throw IllegalArgumentException("Field ${param.name} must be provided and cannot be null.")
             } else null
         }
