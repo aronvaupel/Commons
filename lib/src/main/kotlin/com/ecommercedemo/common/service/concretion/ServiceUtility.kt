@@ -28,12 +28,17 @@ class ServiceUtility(
         val entityConstructor = instanceClass.constructors.firstOrNull()
             ?: throw IllegalArgumentException("No suitable constructor found for ${instanceClass.simpleName}")
 
+        val resolvedProperties = objectMapper.readValue(
+            objectMapper.writeValueAsString(properties), instanceClass.java
+        )::class.memberProperties
+            .associateBy { it.name }
+            .mapValues { it.value.getter.call(properties) }
+
         val entityConstructorParams = entityConstructor.parameters.associateWith { param ->
-            val value = properties[param.name] ?: properties[param.name?.removePrefix("_")]
-            if (value == null && !param.type.isMarkedNullable && !param.isOptional) {
+            resolvedProperties[param.name] ?: resolvedProperties[param.name?.removePrefix("_")]
+            ?: if (!param.type.isMarkedNullable && !param.isOptional) {
                 throw IllegalArgumentException("Field ${param.name} must be provided and cannot be null.")
-            }
-            value
+            } else null
         }
 
         val newInstance = entityConstructor.callBy(entityConstructorParams)
@@ -46,7 +51,8 @@ class ServiceUtility(
                 targetProperty.isAccessible = true
 
                 val resolvedValueFromRequest =
-                    properties[targetProperty.name] ?: properties[targetProperty.name.removePrefix("_")]
+                    resolvedProperties[targetProperty.name]
+                        ?: resolvedProperties[targetProperty.name.removePrefix("_")]
 
                 when {
                     resolvedValueFromRequest == null && (!targetProperty.returnType.isMarkedNullable) -> {
