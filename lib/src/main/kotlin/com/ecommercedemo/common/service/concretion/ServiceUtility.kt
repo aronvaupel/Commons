@@ -28,21 +28,9 @@ class ServiceUtility(
         val entityConstructor = instanceClass.constructors.firstOrNull()
             ?: throw IllegalArgumentException("No suitable constructor found for ${instanceClass.simpleName}")
 
-        val resolvedProperties = properties.mapKeys { (key, _) ->
-            instanceClass.memberProperties
-                .firstOrNull { it.name == key || it.name.removePrefix("_") == key }?.name
-                ?: throw IllegalArgumentException("Field $key does not exist in the entity.")
-        }.let { mappedProperties ->
-            println("mappedProperties: $mappedProperties")
-            objectMapper.readValue(objectMapper.writeValueAsString(
-                mappedProperties.mapKeys { (key, _) -> key.removePrefix("_") }
-            ), instanceClass.java)
-        }::class.memberProperties
-            .associateBy { it.name }
-            .mapValues { (name, property) ->
-                properties[name.removePrefix("_")] ?: property.getter.call(this)
-        }
-        println("resolvedProperties: $resolvedProperties")
+        val resolvedProperties = objectMapper.readValue(objectMapper.writeValueAsString(properties), instanceClass.java)::class.memberProperties.associateBy {
+            it.name
+        }.mapKeys { it.key.removePrefix("_") }
 
         val entityConstructorParams = entityConstructor.parameters.associateWith { param ->
             resolvedProperties[param.name] ?: resolvedProperties[param.name?.removePrefix("_")]
