@@ -10,7 +10,7 @@ import org.hibernate.annotations.Type
 abstract class AugmentableBaseEntity: BaseEntity() {
     @get:Type(JsonBinaryType::class)
     @get:Column(name = "pseudo_properties", columnDefinition = "jsonb")
-    abstract var pseudoProperties: Map<String, Any?>
+    var pseudoProperties: Map<String, Any?> = mutableMapOf()
 
     fun getPseudoProperty(key: String): Any? {
         return pseudoProperties[key]
