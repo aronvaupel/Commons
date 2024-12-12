@@ -1,16 +1,16 @@
 package com.ecommercedemo.common.model.abstraction
 
+import io.hypersistence.utils.hibernate.type.json.JsonType
 import jakarta.persistence.Column
 import jakarta.persistence.MappedSuperclass
-import org.hibernate.annotations.JdbcTypeCode
-import org.hibernate.type.SqlTypes
+import org.hibernate.annotations.Type
 
 
 @MappedSuperclass
 @Suppress("unused")
 abstract class AugmentableBaseEntity: BaseEntity() {
-    @get:JdbcTypeCode(SqlTypes.JSON)
-    @get:Column(name = "pseudo_properties")
+    @get:Type(JsonType::class)
+    @get:Column(name = "pseudo_properties", columnDefinition = "jsonb")
     open var pseudoProperties: Map<String, Any?> = mapOf()
 
     fun getPseudoProperty(key: String): Any? {
