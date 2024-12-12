@@ -6,7 +6,7 @@ plugins {
 }
 
 group = "com.github.aronvaupel"
-version = "4.1.5"
+version = "4.1.6"
 
 repositories {
     mavenCentral()
@@ -20,7 +20,6 @@ dependencies {
     implementation ("io.github.cdimascio:dotenv-kotlin:6.2.2")
     implementation("io.hypersistence:hypersistence-utils-hibernate-63:3.8.3")
     implementation("org.hibernate:hibernate-core:6.6.1.Final")
-    implementation("com.vladmihalcea:hibernate-types-52:2.21.1")
     implementation("io.jsonwebtoken:jjwt:0.9.1")
     implementation("jakarta.servlet:jakarta.servlet-api:5.0.0")
     implementation ("jakarta.validation:jakarta.validation-api:3.0.2")
