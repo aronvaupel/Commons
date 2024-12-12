@@ -13,8 +13,8 @@ abstract class BasePseudoProperty : BaseEntity() {
     open val entitySimpleName: String = ""
     open var key: String = ""
 
-    @get:Type(JsonType::class)
-    @get:Column(name = "type_descriptor", columnDefinition = "jsonb")
+    @Type(JsonType::class)
+    @Column(name = "type_descriptor", columnDefinition = "jsonb")
     open var typeDescriptor: TypeDescriptor = TypeDescriptor.PrimitiveDescriptor(
         category = "PRIMITIVE",
         type = ValueType.STRING,
