@@ -4,7 +4,6 @@ import jakarta.persistence.Column
 import jakarta.persistence.MappedSuperclass
 import org.hibernate.annotations.JdbcTypeCode
 import org.hibernate.type.SqlTypes
-import kotlin.reflect.jvm.internal.impl.load.kotlin.JvmType
 
 
 @MappedSuperclass
@@ -12,13 +11,13 @@ import kotlin.reflect.jvm.internal.impl.load.kotlin.JvmType
 abstract class AugmentableBaseEntity: BaseEntity() {
     @get:JdbcTypeCode(SqlTypes.JSON)
     @get:Column(name = "pseudo_properties")
-    open var pseudoProperties: MutableMap<String, JvmType.Object?> = mutableMapOf()
+    open var pseudoProperties: MutableMap<String, String?> = mutableMapOf()
 
     fun getPseudoProperty(key: String): Any? {
         return pseudoProperties[key]
     }
 
-    fun addPseudoProperty(key: String, value: JvmType.Object?) {
+    fun addPseudoProperty(key: String, value: String) {
         pseudoProperties = pseudoProperties.toMutableMap().apply {
             this[key] = value
         }
