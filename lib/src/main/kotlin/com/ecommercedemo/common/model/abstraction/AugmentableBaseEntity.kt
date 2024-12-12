@@ -11,13 +11,13 @@ import org.hibernate.type.SqlTypes
 abstract class AugmentableBaseEntity: BaseEntity() {
     @get:JdbcTypeCode(SqlTypes.JSON)
     @get:Column(name = "pseudo_properties")
-    open var pseudoProperties: MutableMap<String, String?> = mutableMapOf()
+    open var pseudoProperties: Map<String, Any?> = mapOf()
 
     fun getPseudoProperty(key: String): Any? {
         return pseudoProperties[key]
     }
 
-    fun addPseudoProperty(key: String, value: String) {
+    fun addPseudoProperty(key: String, value: Any?) {
         pseudoProperties = pseudoProperties.toMutableMap().apply {
             this[key] = value
         }

@@ -32,7 +32,7 @@ open class _PseudoPropertyApplier(
                 throw IllegalArgumentException(
                     "Entity ${entity.id} of type '${entityClass.simpleName}' already contains the key '$key'. Cannot override."
                 )
-            } ?: entity.addPseudoProperty(key, "")
+            } ?: entity.addPseudoProperty(key, null)
             repository.save(entity)
             eventProducer.emit(
                 entity.javaClass.simpleName,
