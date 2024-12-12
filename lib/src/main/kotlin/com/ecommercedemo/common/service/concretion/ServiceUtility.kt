@@ -28,51 +28,40 @@ class ServiceUtility(
         val entityConstructor = instanceClass.constructors.firstOrNull()
             ?: throw IllegalArgumentException("No suitable constructor found for ${instanceClass.simpleName}")
 
-        val resolvedProperties = properties.mapKeys { (key, _) ->
-            instanceClass.memberProperties
-                .firstOrNull { it.name == key || it.name.removePrefix("_") == key }?.name
-                ?: throw IllegalArgumentException("Field $key does not exist in the entity.")
-        }.let { mappedProperties ->
-            objectMapper.readValue(
-                objectMapper.writeValueAsString(mappedProperties.mapKeys { it.key.removePrefix("_") }),
-                instanceClass.java
-            )
-        }
-        println("resolvedProperties: $resolvedProperties")
-
         val entityConstructorParams = entityConstructor.parameters.associateWith { param ->
-            val resolvedValue = resolvedProperties::class
+            val resolvedValue = properties::class
                 .memberProperties
                 .firstOrNull { it.name == param.name || it.name.removePrefix("_") == param.name }
                 ?.getter
-                ?.call(resolvedProperties)
+                ?.call(properties)
+            println("RESOLVED VALUE: $resolvedValue")
 
             resolvedValue ?: if (!param.type.isMarkedNullable && !param.isOptional) {
                 throw IllegalArgumentException("Field ${param.name} must be provided and cannot be null.")
             } else null
         }
-        println("entityConstructorParams: $entityConstructorParams")
+        println("ENTITY CONSTRUCTOR PARAMS: $entityConstructorParams")
 
 
         val newInstance = entityConstructor.callBy(entityConstructorParams)
-        println("newInstance: $newInstance")
+        println("NEW INSTANCE: $newInstance")
 
 
         val targetPropertyMap = newInstance::class.memberProperties.associateBy { it.name }
-        println("targetPropertyMap: $targetPropertyMap")
+        println("TARGET PROPERTY MAP: $targetPropertyMap")
 
         targetPropertyMap.values
             .filterIsInstance<KMutableProperty<*>>()
             .onEach { it.isAccessible = true }
             .forEach { targetProperty ->
 
-                val resolvedValueFromRequest = resolvedProperties::class
+                val resolvedValueFromRequest = properties::class
                     .memberProperties
                     .firstOrNull { it.name == targetProperty.name }
                     ?.also { it.isAccessible = true }
                     ?.getter
-                    ?.call(resolvedProperties)
-                println("resolvedValueFromRequest: $resolvedValueFromRequest")
+                    ?.call(properties)
+                println("RESOLVED VALUE FROM REQUEST: $resolvedValueFromRequest")
 
                 when {
                     resolvedValueFromRequest == null && (!targetProperty.returnType.isMarkedNullable) -> {

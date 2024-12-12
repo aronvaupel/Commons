@@ -13,18 +13,6 @@ abstract class AugmentableBaseEntity: BaseEntity() {
     @Column(name = "pseudo_properties", columnDefinition = "jsonb")
     open var pseudoProperties: Map<String, Any?> = mapOf()
 
-//    @Transient
-//    var pseudoProperties: Map<String, Any?> = emptyMap()
-//        get() = objectMapper.readValue(pseudoPropertiesJson, object : TypeReference<Map<String, Any?>>() {})
-//        set(value) {
-//            field = value
-//            pseudoPropertiesJson = objectMapper.writeValueAsString(value)
-//        }
-//
-//    companion object {
-//        private val objectMapper = ObjectMapper()
-//    }
-
     fun getPseudoProperty(key: String): Any? {
         return pseudoProperties[key]
     }
