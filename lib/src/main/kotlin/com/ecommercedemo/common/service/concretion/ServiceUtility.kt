@@ -30,7 +30,7 @@ class ServiceUtility(
 
         val entityConstructorParams = entityConstructor.parameters.associateWith { param ->
             val value = properties[param.name?.removePrefix("_")]
-            if (value == null && !param.type.isMarkedNullable) {
+            if (value == null && !param.type.isMarkedNullable || value == null && !param.isOptional) {
                 throw IllegalArgumentException("Field ${param.name} must be provided and cannot be null.")
             }
             value
