@@ -87,7 +87,7 @@ class ServiceUtility(
 
                     targetProperty.name == BasePseudoProperty::typeDescriptor.name -> {
                         if (newInstance is BasePseudoProperty) {
-                            validateTypeDescriptor(properties[BasePseudoProperty::typeDescriptor.name])
+                            validateTypeDescriptor(typedProperties[BasePseudoProperty::typeDescriptor.name])
                             targetProperty.setter.call(newInstance, resolvedValueFromRequest)
                         } else throw IllegalArgumentException("Entity does not support typeDescriptor")
                     }
