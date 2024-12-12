@@ -12,6 +12,7 @@ enum class ValueType(
     private val category: TypeCategory,
     val typeInfo: Class<*>
 ) {
+    //Todo: Enum is missing
 
     // === PRIMITIVE TYPES ===
     BYTE(TypeCategory.PRIMITIVE, Byte::class.java) {
@@ -297,6 +298,19 @@ enum class ValueType(
         }
     },
 
+    // === ENUM TYPES ===
+    ENUM(TypeCategory.ENUM, Enum::class.java) {
+        override fun validate(value: Any?, descriptor: TypeDescriptor): Boolean {
+            if (descriptor !is TypeDescriptor.EnumDescriptor) {
+                throw IllegalArgumentException("Descriptor must be an EnumDescriptor for ENUM type")
+            }
+            if (value !is String) {
+                throw IllegalArgumentException("Enum-value must be a String.")
+            }
+            return descriptor.enumValues.contains(value)
+        }
+    },
+
     // === GENERIC TYPES ===
     ANY(TypeCategory.GENERIC, Any::class.java),
     VOID(TypeCategory.GENERIC, Void::class.java);
@@ -389,6 +403,14 @@ enum class ValueType(
                     }
                     failureDetails.addAll(fieldFailures)
                     fieldFailures.isEmpty()
+                }
+
+                is TypeDescriptor.EnumDescriptor -> {
+                    val isValid = descriptor.type.validate(value, descriptor)
+                    if (!isValid) {
+                        failureDetails.add("Enum validation failed for value '$value' with descriptor '$descriptor'")
+                    }
+                    isValid
                 }
             }
         }

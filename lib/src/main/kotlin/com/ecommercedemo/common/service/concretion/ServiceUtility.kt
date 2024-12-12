@@ -28,8 +28,20 @@ class ServiceUtility(
         val entityConstructor = instanceClass.constructors.firstOrNull()
             ?: throw IllegalArgumentException("No suitable constructor found for ${instanceClass.simpleName}")
 
+        val propertiesAsTargetClass = objectMapper.readValue(
+            objectMapper.writeValueAsString(properties),
+            instanceClass.java
+        ) as E
+        println("PROPERTIES AS TARGET CLASS: $propertiesAsTargetClass")
+
+        val typedProperties = propertiesAsTargetClass::class.memberProperties.associate { property ->
+            property.isAccessible = true
+            property.name to  property.getter.call(propertiesAsTargetClass)
+        }
+        println("TYPED PROPERTIES: $typedProperties")
+
         val entityConstructorParams = entityConstructor.parameters.associateWith { param ->
-            val value = properties[param.name?.removePrefix("_")]
+            val value = typedProperties[param.name?.removePrefix("_")]
             if (value == null && !param.isOptional && !param.type.isMarkedNullable) {
                 throw IllegalArgumentException("Field ${param.name} must be provided and cannot be null.")
             }
@@ -50,12 +62,7 @@ class ServiceUtility(
             .onEach { it.isAccessible = true }
             .forEach { targetProperty ->
 
-                val resolvedValueFromRequest = properties::class
-                    .memberProperties
-                    .firstOrNull { it.name == targetProperty.name }
-                    ?.also { it.isAccessible = true }
-                    ?.getter
-                    ?.call(properties)
+                val resolvedValueFromRequest = typedProperties[targetProperty.name]
                 println("RESOLVED VALUE FROM REQUEST: $resolvedValueFromRequest")
 
                 when {
@@ -80,7 +87,7 @@ class ServiceUtility(
 
                     targetProperty.name == BasePseudoProperty::typeDescriptor.name -> {
                         if (newInstance is BasePseudoProperty) {
-                            validateTypeDescriptor(objectMapper.readValue(resolvedValueFromRequest as String, TypeDescriptor::class.java))
+                            validateTypeDescriptor(properties[BasePseudoProperty::typeDescriptor.name])
                             targetProperty.setter.call(newInstance, resolvedValueFromRequest)
                         } else throw IllegalArgumentException("Entity does not support typeDescriptor")
                     }

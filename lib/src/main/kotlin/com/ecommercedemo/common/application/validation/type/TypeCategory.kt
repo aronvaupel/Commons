@@ -6,5 +6,6 @@ enum class TypeCategory {
     COLLECTION,
     MAP,
     COMPLEX,
+    ENUM,
     GENERIC
 }

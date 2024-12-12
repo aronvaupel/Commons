@@ -17,7 +17,8 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo
     JsonSubTypes.Type(value = TypeDescriptor.TimeDescriptor::class, name = "TIME"),
     JsonSubTypes.Type(value = TypeDescriptor.CollectionDescriptor::class, name = "COLLECTION"),
     JsonSubTypes.Type(value = TypeDescriptor.MapDescriptor::class, name = "MAP"),
-    JsonSubTypes.Type(value = TypeDescriptor.ComplexObjectDescriptor::class, name = "COMPLEX")
+    JsonSubTypes.Type(value = TypeDescriptor.ComplexObjectDescriptor::class, name = "COMPLEX"),
+    JsonSubTypes.Type(value = TypeDescriptor.EnumDescriptor::class, name = "ENUM"),
 )
 sealed class TypeDescriptor {
     @get:JsonIgnore
@@ -58,6 +59,13 @@ sealed class TypeDescriptor {
         override val type: ValueType,
         val isNullable: Boolean,
         val fields: Map<String, TypeDescriptor>
+    ) : TypeDescriptor()
+
+    data class EnumDescriptor(
+        override val category: String = TypeCategory.ENUM.name,
+        override val type: ValueType,
+        val isNullable: Boolean,
+        val enumValues: List<String>
     ) : TypeDescriptor()
 }
 
