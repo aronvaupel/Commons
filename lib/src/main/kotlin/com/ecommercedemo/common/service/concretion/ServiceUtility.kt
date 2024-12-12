@@ -29,7 +29,7 @@ class ServiceUtility(
             ?: throw IllegalArgumentException("No suitable constructor found for ${instanceClass.simpleName}")
 
         val entityConstructorParams = entityConstructor.parameters.associateWith { param ->
-            val value = properties[param.name]
+            val value = properties[param.name?.removePrefix("_")]
             if (value == null && !param.type.isMarkedNullable) {
                 throw IllegalArgumentException("Field ${param.name} must be provided and cannot be null.")
             }
