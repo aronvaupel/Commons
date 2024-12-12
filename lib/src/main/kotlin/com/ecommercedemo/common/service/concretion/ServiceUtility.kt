@@ -33,15 +33,8 @@ class ServiceUtility(
                 .firstOrNull { it.name == key || it.name.removePrefix("_") == key }?.name
                 ?: throw IllegalArgumentException("Field $key does not exist in the entity.")
         }.let { mappedProperties ->
-            val updatedProperties = mappedProperties.mapValues { (key, value) ->
-                when (key) {
-                    AugmentableBaseEntity::pseudoProperties.name -> "{}"
-                    BasePseudoProperty::typeDescriptor.name -> objectMapper.writeValueAsString(value)
-                    else -> value
-                }
-            }
             objectMapper.readValue(
-                objectMapper.writeValueAsString(updatedProperties.mapKeys { it.key.removePrefix("_") }),
+                objectMapper.writeValueAsString(mappedProperties.mapKeys { it.key.removePrefix("_") }),
                 instanceClass.java
             )
         }
@@ -149,7 +142,7 @@ class ServiceUtility(
                 key == AugmentableBaseEntity::pseudoProperties.name -> {
                     if (entity is AugmentableBaseEntity) {
                         validatePseudoPropertiesFromRequest(entity, value)
-                        val existingPseudoProperties = entity.getPseudoPropertiesDeserialized()
+                        val existingPseudoProperties = entity.pseudoProperties
                         val mergedPseudoProperties =
                             mergePseudoProperties(existingPseudoProperties, value as Map<String, Any?>)
                         correspondingTargetProperty.setter.call(entity, mergedPseudoProperties)
@@ -208,10 +201,10 @@ class ServiceUtility(
 
         val validPseudoProperties = getValidPseudoProperties(updatedEntity)
 
-        val existingPseudoProperties = updatedEntity.getPseudoPropertiesDeserialized()
+        val existingPseudoProperties = updatedEntity.pseudoProperties
 
         val requiredPseudoProperties = validPseudoProperties.filter {
-            when (val typeDescriptor = it.getTypeDescriptorDeserialized()) {
+            when (val typeDescriptor = it.typeDescriptor) {
                 is TypeDescriptor.CollectionDescriptor, is TypeDescriptor.MapDescriptor ->
                     typeDescriptor.hasMinElementsOrEntries()
 
@@ -240,7 +233,7 @@ class ServiceUtility(
                 "Pseudo-property '$key' is not registered for this entity."
             } else
                 registeredPseudoProperty.let {
-                    val typeDescriptor = it.getTypeDescriptorDeserialized()
+                    val typeDescriptor = it.typeDescriptor
                     val failureDetails = mutableListOf<String>()
                     val isValid = try {
                         ValueType.validateValueAgainstDescriptor(typeDescriptor, value, failureDetails)

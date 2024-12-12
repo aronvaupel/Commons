@@ -21,7 +21,7 @@ class EntityChangeTracker<T : BaseEntity> {
                     ?: throw IllegalArgumentException("Property ${property.name} not found in entity before.")
                 matchingProperty.isAccessible = true
                 if (before is AugmentableBaseEntity && property.name == AugmentableBaseEntity::pseudoProperties.name)
-                    before.getPseudoPropertiesDeserialized()
+                    before.pseudoProperties
                 else matchingProperty.get(before)
             }
 
@@ -29,7 +29,7 @@ class EntityChangeTracker<T : BaseEntity> {
                 entityAfter is AugmentableBaseEntity
                 && property.name == AugmentableBaseEntity::pseudoProperties.name
                 )
-                entityAfter.getPseudoPropertiesDeserialized()
+                entityAfter.pseudoProperties
             else property.get(entityAfter)
 
             if (oldValue != newValue) {
