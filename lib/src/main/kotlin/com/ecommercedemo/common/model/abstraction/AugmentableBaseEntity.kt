@@ -1,6 +1,6 @@
 package com.ecommercedemo.common.model.abstraction
 
-import io.hypersistence.utils.hibernate.type.json.JsonBinaryType
+import com.ecommercedemo.common.model.abstraction.type.MapJsonUserType
 import jakarta.persistence.Column
 import jakarta.persistence.MappedSuperclass
 import org.hibernate.annotations.Type
@@ -9,7 +9,7 @@ import org.hibernate.annotations.Type
 @MappedSuperclass
 @Suppress("unused")
 abstract class AugmentableBaseEntity: BaseEntity() {
-    @get:Type(JsonBinaryType::class)
+    @get:Type(MapJsonUserType::class)
     @get:Column(name = "pseudo_properties", columnDefinition = "jsonb")
     open var pseudoProperties: MutableMap<String, Any?> = mutableMapOf()
 
