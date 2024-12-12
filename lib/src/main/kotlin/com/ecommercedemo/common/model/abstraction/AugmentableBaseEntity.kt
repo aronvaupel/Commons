@@ -11,7 +11,7 @@ import org.hibernate.annotations.Type
 abstract class AugmentableBaseEntity: BaseEntity() {
     @Type(JsonType::class)
     @Column(name = "pseudo_properties", columnDefinition = "jsonb")
-    open var pseudoPropertiesJson: Map<String, Any?> = mapOf()
+    open var pseudoProperties: Map<String, Any?> = mapOf()
 
 //    @Transient
 //    var pseudoProperties: Map<String, Any?> = emptyMap()
