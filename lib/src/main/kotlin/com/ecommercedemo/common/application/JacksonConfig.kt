@@ -7,7 +7,7 @@ import com.fasterxml.jackson.databind.SerializationFeature
 import com.fasterxml.jackson.databind.module.SimpleModule
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.fasterxml.jackson.module.kotlin.KotlinModule
-import jakarta.persistence.EntityManager
+import jakarta.persistence.EntityManagerFactory
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.DependsOn
@@ -34,7 +34,7 @@ open class JacksonConfig {
     }
 
     private fun createEntityEventDeserializer(objectMapper: ObjectMapper): EntityEventDeserializer {
-        val entityManager = SpringContextProvider.applicationContext.getBean(EntityManager::class.java)
-        return EntityEventDeserializer(objectMapper, entityManager)
+        val entityManagerFactory = SpringContextProvider.applicationContext.getBean(EntityManagerFactory::class.java)
+        return EntityEventDeserializer(objectMapper, entityManagerFactory)
     }
 }
