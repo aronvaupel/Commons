@@ -27,7 +27,7 @@ class ServiceUtility<T: BaseEntity>(
         data: Map<String, Any?>,
     ): T {
         println("DATA IN CREATE NEW INSTANCE: $data")
-        val entityConstructor = instanceClass.constructors.firstOrNull()
+        val entityConstructor = instanceClass.constructors.find { it.parameters.isNotEmpty() }
             ?: throw IllegalArgumentException("No suitable constructor found for ${instanceClass.simpleName}")
 
         val typedData = typeReAttacher.reAttachType(data, instanceClass)
