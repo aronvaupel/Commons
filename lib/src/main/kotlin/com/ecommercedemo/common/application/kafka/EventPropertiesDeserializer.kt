@@ -8,10 +8,10 @@ import com.fasterxml.jackson.databind.node.ObjectNode
 import jakarta.persistence.EntityManager
 
 
-class EventPropertiesDeserializer(
-    private val entityManager: EntityManager,
-    private val objectMapper: ObjectMapper
-) : JsonDeserializer<EntityEvent>() {
+class EventPropertiesDeserializer() : JsonDeserializer<EntityEvent>() {
+
+    private lateinit var entityManager: EntityManager
+    private lateinit var objectMapper: ObjectMapper
 
     override fun deserialize(parser: JsonParser, ctxt: DeserializationContext?): EntityEvent {
         val parentNode = parser.codec.readTree<ObjectNode>(parser)
