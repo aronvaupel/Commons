@@ -19,90 +19,81 @@ import kotlin.reflect.jvm.isAccessible
 class ServiceUtility(
     private val objectMapper: ObjectMapper,
     private val _pseudoPropertyRepository: _PseudoPropertyRepository,
+    private val typeReAttacher: TypeReAttacher,
 ) {
 
     fun <E : BaseEntity> createNewInstance(
         instanceClass: KClass<E>,
-        properties: Map<String, Any?>,
+        data: Map<String, Any?>,
     ): E {
         val entityConstructor = instanceClass.constructors.firstOrNull()
             ?: throw IllegalArgumentException("No suitable constructor found for ${instanceClass.simpleName}")
 
-        val propertiesAsTargetClass = objectMapper.readValue(
-            objectMapper.writeValueAsString(properties),
-            instanceClass.java
-        ) as E
-        println("PROPERTIES AS TARGET CLASS: $propertiesAsTargetClass")
+        val typedData = typeReAttacher.reAttachType(data, instanceClass)
 
-        val typedProperties = propertiesAsTargetClass::class.memberProperties.associate { property ->
-            property.isAccessible = true
-            property.name to  property.getter.call(propertiesAsTargetClass)
-        }
-        println("TYPED PROPERTIES: $typedProperties")
-
-        val entityConstructorParams = entityConstructor.parameters.associateWith { param ->
-            val value = typedProperties[param.name?.removePrefix("_")]
+        val instanceConstructorParams = entityConstructor.parameters.associateWith { param ->
+            val value = typedData[param.name?.removePrefix("_")]
             if (value == null && !param.isOptional && !param.type.isMarkedNullable) {
                 throw IllegalArgumentException("Field ${param.name} must be provided and cannot be null.")
             }
             value
         }
-        println("ENTITY CONSTRUCTOR PARAMS: $entityConstructorParams")
+        println("ENTITY CONSTRUCTOR PARAMS: $instanceConstructorParams")
 
 
-        val newInstance = entityConstructor.callBy(entityConstructorParams)
+        val newInstance = entityConstructor.callBy(instanceConstructorParams)
         println("NEW INSTANCE: $newInstance")
 
 
-        val targetPropertyMap = newInstance::class.memberProperties.associateBy { it.name }
-        println("TARGET PROPERTY MAP: $targetPropertyMap")
+        val instancePropertyMap = newInstance::class.memberProperties.associateBy { it.name }
+        println("TARGET PROPERTY MAP: $instancePropertyMap")
 
-        targetPropertyMap.values
+        instancePropertyMap.values
             .filterIsInstance<KMutableProperty<*>>()
             .onEach { it.isAccessible = true }
-            .forEach { targetProperty ->
+            .forEach { instanceProperty ->
 
-                val resolvedValueFromRequest = typedProperties[targetProperty.name]
-                println("RESOLVED VALUE FROM REQUEST: $resolvedValueFromRequest")
+                val dataValue = typedData[instanceProperty.name]
+                println("RESOLVED VALUE FROM REQUEST: $dataValue")
 
                 when {
-                    resolvedValueFromRequest == null && (!targetProperty.returnType.isMarkedNullable) -> {
+                    dataValue == null && (!instanceProperty.returnType.isMarkedNullable) -> {
                         throw IllegalArgumentException(
-                            "Field '${targetProperty.name}' is non-nullable and cannot be set to null."
+                            "Field '${instanceProperty.name}' is non-nullable and cannot be set to null."
                         )
                     }
 
-                    targetProperty.name == AugmentableBaseEntity::pseudoProperties.name -> {
-                        if (properties[AugmentableBaseEntity::pseudoProperties.name] == null)
+                    instanceProperty.name == AugmentableBaseEntity::pseudoProperties.name -> {
+                        if (data[AugmentableBaseEntity::pseudoProperties.name] == null)
                             return@forEach
                         if (newInstance is AugmentableBaseEntity) {
-                            validatePseudoPropertiesFromRequest(
+                            validateDataAsPseudoProperties(
                                 newInstance,
-                                properties[AugmentableBaseEntity::pseudoProperties.name]
+                                data[AugmentableBaseEntity::pseudoProperties.name]
                             )
-                            val serialized = serialize(resolvedValueFromRequest!!)
-                            targetProperty.setter.call(newInstance, serialized)
+                            val serialized = serialize(dataValue!!)
+                            instanceProperty.setter.call(newInstance, serialized)
                         } else throw IllegalArgumentException("Entity does not support pseudoProperties")
                     }
 
-                    targetProperty.name == BasePseudoProperty::typeDescriptor.name -> {
+                    instanceProperty.name == BasePseudoProperty::typeDescriptor.name -> {
                         if (newInstance is BasePseudoProperty) {
-                            validateTypeDescriptor(typedProperties[BasePseudoProperty::typeDescriptor.name])
-                            targetProperty.setter.call(newInstance, resolvedValueFromRequest)
+                            validateTypeDescriptor(typedData[BasePseudoProperty::typeDescriptor.name])
+                            instanceProperty.setter.call(newInstance, dataValue)
                         } else throw IllegalArgumentException("Entity does not support typeDescriptor")
                     }
 
-                    resolvedValueFromRequest != null
-                            && resolvedValueFromRequest::class.createType() != targetProperty.returnType -> {
+                    dataValue != null
+                            && dataValue::class.createType() != instanceProperty.returnType -> {
                         throw IllegalArgumentException(
-                            "Type mismatch for property '${targetProperty.name}': " +
-                                    "Expected ${targetProperty.returnType}, " +
-                                    "Found ${resolvedValueFromRequest::class.createType()}"
+                            "Type mismatch for property '${instanceProperty.name}': " +
+                                    "Expected ${instanceProperty.returnType}, " +
+                                    "Found ${dataValue::class.createType()}"
                         )
                     }
 
                     else -> {
-                        targetProperty.setter.call(newInstance, resolvedValueFromRequest)
+                        instanceProperty.setter.call(newInstance, dataValue)
                     }
                 }
             }
@@ -110,33 +101,33 @@ class ServiceUtility(
         return newInstance
     }
 
-    fun <E : BaseEntity> updateExistingInstance(entity: E, propertiesFromRequest: Map<String, Any?>): E {
-        val targetEntityProperties = entity::class.memberProperties
+    fun <E : BaseEntity> updateExistingInstance(entity: E, data: Map<String, Any?>): E {
+        val entityProperties = entity::class.memberProperties
             .filterIsInstance<KMutableProperty<*>>()
             .associateBy { it.name }
 
-        propertiesFromRequest.forEach { (key, value) ->
-            val correspondingTargetProperty = targetEntityProperties[key]
-                ?: targetEntityProperties[key.removePrefix("_")]
+        data.forEach { (key, value) ->
+            val correspondingEntityProperty = entityProperties[key]
+                ?: entityProperties[key.removePrefix("_")]
 
-            if (correspondingTargetProperty == null) {
+            if (correspondingEntityProperty == null) {
                 throw IllegalArgumentException("Field $key does not exist in the entity.")
             }
 
-            correspondingTargetProperty.isAccessible = true
+            correspondingEntityProperty.isAccessible = true
 
             when {
-                value == null && !correspondingTargetProperty.returnType.isMarkedNullable -> {
+                value == null && !correspondingEntityProperty.returnType.isMarkedNullable -> {
                     throw IllegalArgumentException("Field $key cannot be set to null.")
                 }
 
                 key == AugmentableBaseEntity::pseudoProperties.name -> {
                     if (entity is AugmentableBaseEntity) {
-                        validatePseudoPropertiesFromRequest(entity, value)
+                        validateDataAsPseudoProperties(entity, value)
                         val existingPseudoProperties = entity.pseudoProperties
                         val mergedPseudoProperties =
                             mergePseudoProperties(existingPseudoProperties, value as Map<String, Any?>)
-                        correspondingTargetProperty.setter.call(entity, mergedPseudoProperties)
+                        correspondingEntityProperty.setter.call(entity, mergedPseudoProperties)
                     } else {
                         throw IllegalArgumentException("Entity does not support pseudoProperties")
                     }
@@ -146,7 +137,7 @@ class ServiceUtility(
                     if (entity is BasePseudoProperty) {
                         validateTypeDescriptor(value)
                         val serialized = serialize(value as TypeDescriptor)
-                        correspondingTargetProperty.setter.call(entity, serialized)
+                        correspondingEntityProperty.setter.call(entity, serialized)
                     } else {
                         throw IllegalArgumentException("Entity does not support typeDescriptor")
                     }
@@ -155,14 +146,14 @@ class ServiceUtility(
                 value != null
                         && key != BasePseudoProperty::typeDescriptor.name
                         && key != AugmentableBaseEntity::pseudoProperties.name
-                        && value::class.createType() != correspondingTargetProperty.returnType -> {
+                        && value::class.createType() != correspondingEntityProperty.returnType -> {
                     throw IllegalArgumentException(
-                        "Field $key must be of type ${correspondingTargetProperty.returnType}."
+                        "Field $key must be of type ${correspondingEntityProperty.returnType}."
                     )
                 }
 
                 else -> {
-                    correspondingTargetProperty.setter.call(entity, value)
+                    correspondingEntityProperty.setter.call(entity, value)
                 }
             }
         }
@@ -178,7 +169,7 @@ class ServiceUtility(
             throw IllegalArgumentException("TypeDescriptor must be a TypeDescriptor")
     }
 
-    private fun validatePseudoPropertiesFromRequest(
+    private fun validateDataAsPseudoProperties(
         updatedEntity: AugmentableBaseEntity,
         pseudoPropertiesFromRequest: Any?
     ) {
