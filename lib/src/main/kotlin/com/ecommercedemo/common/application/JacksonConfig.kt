@@ -10,8 +10,10 @@ import com.fasterxml.jackson.module.kotlin.KotlinModule
 import jakarta.persistence.EntityManager
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
+import org.springframework.context.annotation.DependsOn
 
 @Configuration
+@DependsOn("springContextProvider")
 open class JacksonConfig {
 
     @Bean
