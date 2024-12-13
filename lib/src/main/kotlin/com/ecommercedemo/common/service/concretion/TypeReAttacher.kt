@@ -15,7 +15,13 @@ class TypeReAttacher<T : BaseEntity>(
     fun reAttachType(data: Map<String, Any?>, targetClass: KClass<T>): Map<String, Any?> {
         println("DATA: $data")
 
-        val validatedData = targetClass.constructors.firstOrNull()!!.parameters.associate { param ->
+        val constructor = targetClass.constructors.firstOrNull()
+            ?: throw IllegalArgumentException("No primary constructor for ${targetClass.simpleName}")
+
+        val constructorParameters = constructor.parameters
+        println("CONSTRUCTOR PARAMETERS IN TYPE-RE-ATTACHER: $constructorParameters")
+
+        val validatedData = constructor.parameters.associate { param ->
             println("PARAM: $param")
             val value = data[param.name?.removePrefix("_")]
             println("VALUE: $value")
