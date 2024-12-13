@@ -18,11 +18,14 @@ class TypeReAttacher <T: BaseEntity> (
             ?: throw IllegalArgumentException("Target class must have a constructor")
 
         val validatedData = targetClassConstructor.parameters.associate { param ->
+            println("PARAM: $param")
             val value = data[param.name] ?: data[param.name?.removePrefix("_")]
+            println("VALUE: $value")
             if (value == null && !param.isOptional && !param.type.isMarkedNullable) {
                 throw IllegalArgumentException("Field ${param.name} must be provided and cannot be null.")
             }
-            param.name!! to value
+            println("PARAM.NAME: ${param.name} to VALUE: $value")
+            param.name to value
         }.filter { (key, value) ->
             val isExplicitlyPresent = data.containsKey(key)
             value != null || isExplicitlyPresent
@@ -30,7 +33,8 @@ class TypeReAttacher <T: BaseEntity> (
         println("VALIDATED DATA: $validatedData")
 
         val normalizedData = validatedData.mapKeys { (key, _) ->
-            key.removePrefix("_")
+            println("KEY: $key")
+            key?.removePrefix("_")
         }
         println("NORMALIZED DATA: $normalizedData")
         val serializedData = objectMapper.writeValueAsString(normalizedData)
