@@ -6,12 +6,13 @@ import com.fasterxml.jackson.databind.JsonDeserializer
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.node.ObjectNode
 import jakarta.persistence.EntityManager
+import jakarta.persistence.Persistence
 import java.util.*
 
 class EntityEventDeserializer : JsonDeserializer<EntityEvent>() {
 
-    private lateinit var entityManager: EntityManager
-    private lateinit var objectMapper: ObjectMapper
+    private val entityManager: EntityManager = Persistence.createEntityManagerFactory("default").createEntityManager()
+    private val objectMapper: ObjectMapper = ObjectMapper()
 
     override fun deserialize(parser: JsonParser, ctxt: DeserializationContext): EntityEvent {
         val rootNode = parser.codec.readTree<ObjectNode>(parser)
