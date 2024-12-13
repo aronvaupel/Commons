@@ -14,7 +14,7 @@ abstract class EventServiceTemplate<T : BaseEntity>(
     private val adapter: IEntityPersistenceAdapter<T>,
     private val downstreamEntityClass: KClass<T>,
     private val serviceUtility: ServiceUtility<T>,
-    private val typeReAttacher: TypeReAttacher<T>,
+    private val typeReAttacher: TypeReAttacher,
 ) : IEventService<T> {
     @Transactional
     override fun createByEvent(event: EntityEvent) {

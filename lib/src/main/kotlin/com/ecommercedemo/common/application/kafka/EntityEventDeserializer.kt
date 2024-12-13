@@ -1,5 +1,6 @@
 package com.ecommercedemo.common.application.kafka
 
+import com.ecommercedemo.common.service.concretion.TypeReAttacher
 import com.fasterxml.jackson.core.JsonParser
 import com.fasterxml.jackson.databind.DeserializationContext
 import com.fasterxml.jackson.databind.JsonDeserializer
@@ -7,10 +8,13 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.node.ObjectNode
 import jakarta.persistence.EntityManagerFactory
 import java.util.*
+import kotlin.reflect.KClass
+
 
 class EntityEventDeserializer(
-    private var objectMapper: ObjectMapper,
-    private var entityManagerFactory: EntityManagerFactory
+    private val objectMapper: ObjectMapper,
+    private val entityManagerFactory: EntityManagerFactory,
+    private val typeReAttacher: TypeReAttacher
 ) : JsonDeserializer<EntityEvent>() {
 
     override fun deserialize(parser: JsonParser, ctxt: DeserializationContext): EntityEvent {
@@ -34,11 +38,13 @@ class EntityEventDeserializer(
 
         val entityClass = resolveEntityClass(entityClassName)
 
+
         val properties: Map<String, Any?> = try {
-            objectMapper.convertValue(
+            val rawData: Map<String, Any?> = objectMapper.convertValue(
                 propertiesNode,
-                objectMapper.typeFactory.constructMapType(MutableMap::class.java, String::class.java, entityClass)
+                objectMapper.typeFactory.constructMapType(Map::class.java, String::class.java, Any::class.java)
             )
+            typeReAttacher.reAttachType(rawData, entityClass)
         } catch (e: Exception) {
             throw IllegalArgumentException("Failed to deserialize 'properties' for entity class: _$entityClassName", e)
         }
@@ -51,7 +57,7 @@ class EntityEventDeserializer(
         )
     }
 
-    private fun resolveEntityClass(entityClassName: String): Class<*> {
+    private fun resolveEntityClass(entityClassName: String): KClass<*> {
         val prefixedClassName = "_$entityClassName"
         val entityManager = entityManagerFactory.createEntityManager()
         try {
@@ -59,9 +65,10 @@ class EntityEventDeserializer(
                 it.javaType.simpleName == prefixedClassName
             } ?: throw IllegalArgumentException("Entity class not found for name: $prefixedClassName")
 
-            return entityType.javaType
+            return entityType.javaType.kotlin
         } catch (e: ClassNotFoundException) {
             throw IllegalArgumentException("Entity class not found for name: $prefixedClassName", e)
         }
     }
+
 }

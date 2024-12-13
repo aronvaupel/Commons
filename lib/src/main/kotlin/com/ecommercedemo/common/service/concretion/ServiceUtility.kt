@@ -19,7 +19,7 @@ import kotlin.reflect.jvm.isAccessible
 class ServiceUtility<T: BaseEntity>(
     private val objectMapper: ObjectMapper,
     private val _pseudoPropertyRepository: _PseudoPropertyRepository,
-    private val typeReAttacher: TypeReAttacher<T>,
+    private val typeReAttacher: TypeReAttacher,
 ) {
 
     fun createNewInstance(

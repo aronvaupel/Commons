@@ -12,7 +12,7 @@ import org.springframework.stereotype.Service
 open class _PseudoPropertyEventService(
     adapter: IEntityPersistenceAdapter<_PseudoProperty>,
     serviceUtility: ServiceUtility<_PseudoProperty>,
-    typeReAttacher: TypeReAttacher<_PseudoProperty>
+    typeReAttacher: TypeReAttacher
 ): EventServiceTemplate<_PseudoProperty>(
     adapter,
     _PseudoProperty::class,
