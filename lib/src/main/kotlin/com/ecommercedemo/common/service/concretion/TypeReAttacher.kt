@@ -13,6 +13,7 @@ class TypeReAttacher <T: BaseEntity> (
     val objectMapper: ObjectMapper,
 ) {
     fun reAttachType(data: Map<String, Any?>, targetClass: KClass<T>): Map<String, Any?> {
+        println("DATA: $data")
         val targetClassConstructor = targetClass.constructors.firstOrNull()
             ?: throw IllegalArgumentException("Target class must have a constructor")
 
@@ -26,11 +27,12 @@ class TypeReAttacher <T: BaseEntity> (
             val isExplicitlyPresent = data.containsKey(key)
             value != null || isExplicitlyPresent
         }
+        println("VALIDATED DATA: $validatedData")
 
         val normalizedData = validatedData.mapKeys { (key, _) ->
             key.removePrefix("_")
         }
-
+        println("NORMALIZED DATA: $normalizedData")
         val serializedData = objectMapper.writeValueAsString(normalizedData)
 
         val dataAsTargetInstance = objectMapper.readValue(
@@ -43,6 +45,7 @@ class TypeReAttacher <T: BaseEntity> (
             .associate {
                 it.name to it.getter.call(dataAsTargetInstance)
             }
+        println("TYPED DATA: $typedData")
         return typedData
     }
 }

@@ -26,6 +26,7 @@ class ServiceUtility<T: BaseEntity>(
         instanceClass: KClass<T>,
         data: Map<String, Any?>,
     ): T {
+        println("DATA IN CREATE NEW INSTANCE: $data")
         val entityConstructor = instanceClass.constructors.firstOrNull()
             ?: throw IllegalArgumentException("No suitable constructor found for ${instanceClass.simpleName}")
 
