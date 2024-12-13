@@ -5,12 +5,12 @@ import com.fasterxml.jackson.databind.DeserializationContext
 import com.fasterxml.jackson.databind.JsonDeserializer
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.node.ObjectNode
-import jakarta.persistence.EntityManager
+import jakarta.persistence.EntityManagerFactory
 import java.util.*
 
 class EntityEventDeserializer(
     private var objectMapper: ObjectMapper,
-    private var entityManager: EntityManager
+    private var entityManagerFactory: EntityManagerFactory
 ) : JsonDeserializer<EntityEvent>() {
 
     override fun deserialize(parser: JsonParser, ctxt: DeserializationContext): EntityEvent {
@@ -53,6 +53,7 @@ class EntityEventDeserializer(
 
     private fun resolveEntityClass(entityClassName: String): Class<*> {
         val prefixedClassName = "_$entityClassName"
+        val entityManager = entityManagerFactory.createEntityManager()
         try {
             val entityType = entityManager.metamodel.entities.find {
                 it.javaType.simpleName == prefixedClassName
