@@ -9,17 +9,15 @@ import kotlin.reflect.jvm.isAccessible
 
 @Service
 @Suppress("UNCHECKED_CAST")
-class TypeReAttacher <T: BaseEntity> (
+class TypeReAttacher<T : BaseEntity>(
     val objectMapper: ObjectMapper,
 ) {
     fun reAttachType(data: Map<String, Any?>, targetClass: KClass<T>): Map<String, Any?> {
         println("DATA: $data")
-        val targetClassConstructor = targetClass.constructors.firstOrNull()
-            ?: throw IllegalArgumentException("Target class must have a constructor")
 
-        val validatedData = targetClassConstructor.parameters.associate { param ->
+        val validatedData = targetClass.constructors.firstOrNull()!!.parameters.associate { param ->
             println("PARAM: $param")
-            val value = data[param.name] ?: data[param.name?.removePrefix("_")]
+            val value = data[param.name?.removePrefix("_")]
             println("VALUE: $value")
             if (value == null && !param.isOptional && !param.type.isMarkedNullable) {
                 throw IllegalArgumentException("Field ${param.name} must be provided and cannot be null.")
@@ -44,7 +42,7 @@ class TypeReAttacher <T: BaseEntity> (
             targetClass.java
         ) as T
 
-        val typedData =  dataAsTargetInstance::class.memberProperties
+        val typedData = dataAsTargetInstance::class.memberProperties
             .onEach { it.isAccessible = true }
             .associate {
                 it.name to it.getter.call(dataAsTargetInstance)
