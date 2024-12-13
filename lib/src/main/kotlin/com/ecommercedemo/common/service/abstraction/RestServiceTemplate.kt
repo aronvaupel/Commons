@@ -42,7 +42,7 @@ abstract class RestServiceTemplate<T : BaseEntity>(
                 "Entity type mismatch. Expected ${entityClass.simpleName} but found ${original::class.simpleName}."
             )
         }
-        val updated = serviceUtility.updateExistingInstance(original.copy() as T, request.properties)
+        val updated = serviceUtility.updateExistingEntity(request.properties, original.copy() as T)
 
         return saveAndEmitEvent( original, updated, EntityEventType.UPDATE,)
     }

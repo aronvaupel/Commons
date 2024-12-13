@@ -12,13 +12,32 @@ class TypeReAttacher(
     val objectMapper: ObjectMapper,
 ) {
     fun <T: BaseEntity>reAttachType(data: Map<String, Any?>, targetClass: KClass<T>): Map<String, Any?> {
+
+        val targetClassConstructor = targetClass.constructors.firstOrNull()
+            ?: throw IllegalArgumentException("Target class must have a constructor")
+
+        val validatedData = targetClassConstructor.parameters.associate { param ->
+            val value = data[param.name]
+            if (value == null && !param.isOptional && !param.type.isMarkedNullable) {
+                throw IllegalArgumentException("Field ${param.name} must be provided and cannot be null.")
+            }
+            param.name!! to value
+        }.filter { (key, value) ->
+            val isExplicitlyPresent = data.containsKey(key)
+            value != null || isExplicitlyPresent
+        }
+
+        val serializedData = objectMapper.writeValueAsString(validatedData)
+
         val dataAsTargetInstance = objectMapper.readValue(
-            objectMapper.writeValueAsString(data),
+            serializedData,
             targetClass::class.java
         ) as T
-        return dataAsTargetInstance::class.memberProperties
+
+        val typedData =  dataAsTargetInstance::class.memberProperties
             .associate {
                 it.name to it.getter.call(dataAsTargetInstance)
             }
+        return typedData
     }
 }

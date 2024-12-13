@@ -48,9 +48,7 @@ class ServiceUtility(
         val instancePropertyMap = newInstance::class.memberProperties.associateBy { it.name }
         println("TARGET PROPERTY MAP: $instancePropertyMap")
 
-        instancePropertyMap.values
-            .filterIsInstance<KMutableProperty<*>>()
-            .onEach { it.isAccessible = true }
+        instancePropertyMap.values.filterIsInstance<KMutableProperty<*>>().onEach { it.isAccessible = true }
             .forEach { instanceProperty ->
 
                 val dataValue = typedData[instanceProperty.name]
@@ -64,12 +62,10 @@ class ServiceUtility(
                     }
 
                     instanceProperty.name == AugmentableBaseEntity::pseudoProperties.name -> {
-                        if (data[AugmentableBaseEntity::pseudoProperties.name] == null)
-                            return@forEach
+                        if (data[AugmentableBaseEntity::pseudoProperties.name] == null) return@forEach
                         if (newInstance is AugmentableBaseEntity) {
                             validateDataAsPseudoProperties(
-                                newInstance,
-                                data[AugmentableBaseEntity::pseudoProperties.name]
+                                newInstance, data[AugmentableBaseEntity::pseudoProperties.name]
                             )
                             val serialized = serialize(dataValue!!)
                             instanceProperty.setter.call(newInstance, serialized)
@@ -83,12 +79,9 @@ class ServiceUtility(
                         } else throw IllegalArgumentException("Entity does not support typeDescriptor")
                     }
 
-                    dataValue != null
-                            && dataValue::class.createType() != instanceProperty.returnType -> {
+                    dataValue != null && dataValue::class.createType() != instanceProperty.returnType -> {
                         throw IllegalArgumentException(
-                            "Type mismatch for property '${instanceProperty.name}': " +
-                                    "Expected ${instanceProperty.returnType}, " +
-                                    "Found ${dataValue::class.createType()}"
+                            "Type mismatch for property '${instanceProperty.name}': " + "Expected ${instanceProperty.returnType}, " + "Found ${dataValue::class.createType()}"
                         )
                     }
 
@@ -101,14 +94,14 @@ class ServiceUtility(
         return newInstance
     }
 
-    fun <E : BaseEntity> updateExistingInstance(entity: E, data: Map<String, Any?>): E {
-        val entityProperties = entity::class.memberProperties
-            .filterIsInstance<KMutableProperty<*>>()
-            .associateBy { it.name }
+    fun <E : BaseEntity> updateExistingEntity(data: Map<String, Any?>, entity: E): E {
+        val typedData = typeReAttacher.reAttachType(data, entity::class as KClass<E>)
 
-        data.forEach { (key, value) ->
-            val correspondingEntityProperty = entityProperties[key]
-                ?: entityProperties[key.removePrefix("_")]
+        val entityProperties =
+            entity::class.memberProperties.filterIsInstance<KMutableProperty<*>>().associateBy { it.name }
+
+        typedData.forEach { (key, value) ->
+            val correspondingEntityProperty = entityProperties[key] ?: entityProperties[key.removePrefix("_")]
 
             if (correspondingEntityProperty == null) {
                 throw IllegalArgumentException("Field $key does not exist in the entity.")
@@ -117,8 +110,12 @@ class ServiceUtility(
             correspondingEntityProperty.isAccessible = true
 
             when {
-                value == null && !correspondingEntityProperty.returnType.isMarkedNullable -> {
-                    throw IllegalArgumentException("Field $key cannot be set to null.")
+                value == null -> {
+                    if (!correspondingEntityProperty.returnType.isMarkedNullable) {
+                        throw IllegalArgumentException("Field $key cannot be set to null.")
+                    } else {
+                        correspondingEntityProperty.setter.call(entity, null)
+                    }
                 }
 
                 key == AugmentableBaseEntity::pseudoProperties.name -> {
@@ -143,10 +140,7 @@ class ServiceUtility(
                     }
                 }
 
-                value != null
-                        && key != BasePseudoProperty::typeDescriptor.name
-                        && key != AugmentableBaseEntity::pseudoProperties.name
-                        && value::class.createType() != correspondingEntityProperty.returnType -> {
+                value::class.createType() != correspondingEntityProperty.returnType -> {
                     throw IllegalArgumentException(
                         "Field $key must be of type ${correspondingEntityProperty.returnType}."
                     )
@@ -161,34 +155,27 @@ class ServiceUtility(
         return entity
     }
 
-    private fun validateTypeDescriptor(value: Any?)  {
-        if (value == null)
-            throw IllegalArgumentException("TypeDescriptor must be provided")
+    private fun validateTypeDescriptor(value: Any?) {
+        if (value == null) throw IllegalArgumentException("TypeDescriptor must be provided")
 
-        if (value !is TypeDescriptor)
-            throw IllegalArgumentException("TypeDescriptor must be a TypeDescriptor")
+        if (value !is TypeDescriptor) throw IllegalArgumentException("TypeDescriptor must be a TypeDescriptor")
     }
 
     private fun validateDataAsPseudoProperties(
-        updatedEntity: AugmentableBaseEntity,
-        pseudoPropertiesFromRequest: Any?
+        updatedEntity: AugmentableBaseEntity, data: Any?
     ) {
-        if (pseudoPropertiesFromRequest !is Map<*, *>)
-            throw IllegalArgumentException("pseudoProperties must be a Map")
+        if (data !is Map<*, *>) throw IllegalArgumentException("PseudoProperties must be a Map")
 
-        val asTypesafeMap = pseudoPropertiesFromRequest.entries.associate { (key, value) ->
+        val asTypesafeMap = data.entries.associate { (key, value) ->
             if (key !is String) throw IllegalArgumentException("PseudoProperty-keys must be Strings")
             key to value
         }
 
         val validPseudoProperties = getValidPseudoProperties(updatedEntity)
 
-        val existingPseudoProperties = updatedEntity.pseudoProperties
-
         val requiredPseudoProperties = validPseudoProperties.filter {
             when (val typeDescriptor = it.typeDescriptor) {
-                is TypeDescriptor.CollectionDescriptor, is TypeDescriptor.MapDescriptor ->
-                    typeDescriptor.hasMinElementsOrEntries()
+                is TypeDescriptor.CollectionDescriptor, is TypeDescriptor.MapDescriptor -> typeDescriptor.hasMinElementsOrEntries()
 
                 else -> !typeDescriptor.isNullable()
             }
@@ -197,7 +184,7 @@ class ServiceUtility(
         val missingPseudoProperties = requiredPseudoProperties.filterNot {
             asTypesafeMap.containsKey(it.key)
         }.filterNot { requiredProperty ->
-            existingPseudoProperties.containsKey(requiredProperty.key) || asTypesafeMap.containsKey(
+            updatedEntity.pseudoProperties.containsKey(requiredProperty.key) || asTypesafeMap.containsKey(
                 requiredProperty.key
             )
         }
@@ -213,23 +200,24 @@ class ServiceUtility(
 
             if (registeredPseudoProperty == null) {
                 "Pseudo-property '$key' is not registered for this entity."
-            } else
-                registeredPseudoProperty.let {
-                    val typeDescriptor = it.typeDescriptor
-                    val failureDetails = mutableListOf<String>()
-                    val isValid = try {
-                        ValueType.validateValueAgainstDescriptor(typeDescriptor, value, failureDetails)
-                    } catch (e: Exception) {
-                        failureDetails.add("Validation error for pseudo-property '$key': ${e.message}")
-                        false
-                    }
-
-                    if (!isValid) {
-                        "Pseudo-property '$key' does not match the expected type or constraints. Descriptor: " +
-                                "$typeDescriptor,\n\n Value: $value.\n" +
-                                "\n Details: ${failureDetails.joinToString("; ")}"
-                    } else null
+            } else registeredPseudoProperty.let {
+                val typeDescriptor = it.typeDescriptor
+                val failureDetails = mutableListOf<String>()
+                val isValid = try {
+                    ValueType.validateValueAgainstDescriptor(typeDescriptor, value, failureDetails)
+                } catch (e: Exception) {
+                    failureDetails.add("Validation error for pseudo-property '$key': ${e.message}")
+                    false
                 }
+
+                if (!isValid) {
+                    "Pseudo-property '$key' does not match the expected type or constraints. Descriptor: " + "$typeDescriptor,\n\n Value: $value.\n" + "\n Details: ${
+                        failureDetails.joinToString(
+                            "; "
+                        )
+                    }"
+                } else null
+            }
         }
 
         if (validationErrors.isNotEmpty()) {
