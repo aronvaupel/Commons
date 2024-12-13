@@ -3,7 +3,10 @@ package com.ecommercedemo.common.application
 import com.ecommercedemo.common.application.kafka.EntityEvent
 import com.ecommercedemo.common.application.kafka.EntityEventDeserializer
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.databind.SerializationFeature
 import com.fasterxml.jackson.databind.module.SimpleModule
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
+import com.fasterxml.jackson.module.kotlin.KotlinModule
 import jakarta.persistence.EntityManager
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
@@ -12,20 +15,24 @@ import org.springframework.context.annotation.Configuration
 open class JacksonConfig {
 
     @Bean
-    open fun customObjectMapper(): ObjectMapper {
+    open fun objectMapper(): ObjectMapper {
         val objectMapper = ObjectMapper()
-
-        val module = SimpleModule().apply {
-            addDeserializer(EntityEvent::class.java, createEntityEventDeserializer())
+        val eventDeserializationModule = SimpleModule().apply {
+            addDeserializer(EntityEvent::class.java, createEntityEventDeserializer(objectMapper))
         }
-        objectMapper.registerModule(module)
 
-        return objectMapper
+        return objectMapper.apply {
+            registerModule(KotlinModule.Builder().build())
+            registerModule(JavaTimeModule())
+            disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
+            registerModule(eventDeserializationModule)
+        }
+
+
     }
 
-    private fun createEntityEventDeserializer(): EntityEventDeserializer {
+    private fun createEntityEventDeserializer(objectMapper: ObjectMapper): EntityEventDeserializer {
         val entityManager = SpringContextProvider.applicationContext.getBean(EntityManager::class.java)
-        val objectMapper = SpringContextProvider.applicationContext.getBean(ObjectMapper::class.java)
         return EntityEventDeserializer(objectMapper, entityManager)
     }
 }
