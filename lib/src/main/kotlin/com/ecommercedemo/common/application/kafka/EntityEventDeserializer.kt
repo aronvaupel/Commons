@@ -29,7 +29,7 @@ class EntityEventDeserializer(
             ?: throw IllegalArgumentException("Missing 'properties'")
 
         if (!propertiesNode.isObject) {
-            throw IllegalArgumentException("'properties' must be a JSON object")
+            throw IllegalArgumentException("Properties' must be a JSON object")
         }
 
         val entityClass = resolveEntityClass(entityClassName)
@@ -40,7 +40,7 @@ class EntityEventDeserializer(
                 objectMapper.typeFactory.constructMapType(MutableMap::class.java, String::class.java, entityClass)
             )
         } catch (e: Exception) {
-            throw IllegalArgumentException("Failed to deserialize 'properties' for entity class: $entityClassName", e)
+            throw IllegalArgumentException("Failed to deserialize 'properties' for entity class: _$entityClassName", e)
         }
 
         return EntityEvent(

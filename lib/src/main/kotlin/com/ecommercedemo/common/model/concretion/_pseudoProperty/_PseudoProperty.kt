@@ -28,12 +28,14 @@ open class _PseudoProperty(
         name = "type_descriptor",
         columnDefinition = "jsonb",
         nullable = false
-    ) override var typeDescriptor: TypeDescriptor = TypeDescriptor.PrimitiveDescriptor(
+    )
+    override var typeDescriptor: TypeDescriptor = TypeDescriptor.PrimitiveDescriptor(
         category = "PRIMITIVE",
         type = ValueType.STRING,
         isNullable = true
     )
 ) : BaseEntity(), IPseudoProperty {
+
     companion object {
         const val STORAGE_NAME = "_pseudo_properties"
     }

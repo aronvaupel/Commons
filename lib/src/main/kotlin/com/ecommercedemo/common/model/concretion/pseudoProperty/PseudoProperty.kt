@@ -8,26 +8,28 @@ import io.hypersistence.utils.hibernate.type.json.JsonType
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.persistence.Table
-import jakarta.validation.constraints.NotNull
+import jakarta.validation.constraints.NotBlank
 import org.hibernate.annotations.Type
 
-//Todo: Expiration
 @Suppress("unused")
 @Entity
 @Table(name = PseudoProperty.STORAGE_NAME)
 open class PseudoProperty(
+    @NotBlank
     @Column(name = "entity_simple_name", nullable = false)
     override var entitySimpleName: String = "",
 
+    @NotBlank
     @Column(name = "key", nullable = false)
     override var key: String = "",
 
-    @NotNull
     @Type(JsonType::class)
     @Column(
         name = "type_descriptor",
-        columnDefinition = "jsonb"
-    ) override var typeDescriptor: TypeDescriptor = TypeDescriptor.PrimitiveDescriptor(
+        columnDefinition = "jsonb",
+        nullable = false
+    )
+    override var typeDescriptor: TypeDescriptor = TypeDescriptor.PrimitiveDescriptor(
         category = "PRIMITIVE",
         type = ValueType.STRING,
         isNullable = true
