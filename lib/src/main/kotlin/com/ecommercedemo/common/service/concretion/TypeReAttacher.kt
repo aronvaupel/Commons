@@ -17,6 +17,7 @@ class TypeReAttacher<T : BaseEntity>(
 
         val constructor = targetClass.constructors.firstOrNull()
             ?: throw IllegalArgumentException("No primary constructor for ${targetClass.simpleName}")
+        println("CONSTRUCTOR: $constructor with params ${constructor.parameters}")
 
         val constructorParameters = constructor.parameters
         println("CONSTRUCTOR PARAMETERS IN TYPE-RE-ATTACHER: $constructorParameters")

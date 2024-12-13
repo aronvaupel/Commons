@@ -20,7 +20,6 @@ abstract class BaseEntity{
     open var id: UUID = UUID.randomUUID()
 
     @Column(nullable = false, updatable = false)
-
     @JsonSerialize(using = LocalDateTimeSerializer::class)
     @JsonDeserialize(using = LocalDateTimeDeserializer::class)
     open var createdAt: LocalDateTime = LocalDateTime.now()

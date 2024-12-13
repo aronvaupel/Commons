@@ -5,19 +5,15 @@ import com.ecommercedemo.common.controller.abstraction.util.TypeDescriptor
 import io.hypersistence.utils.hibernate.type.json.JsonType
 import jakarta.persistence.Column
 import jakarta.persistence.MappedSuperclass
-import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.NotNull
 import org.hibernate.annotations.Type
 
 @MappedSuperclass
+@Suppress("unused")
 abstract class BasePseudoProperty : BaseEntity() {
-    @NotNull
-    @NotBlank
-    @Column(name = "entity_simple_name")
+    @Column(name = "entity_simple_name", nullable = false)
     open var entitySimpleName: String = ""
-    @NotBlank
-    @NotNull
-    @Column(name = "key")
+    @Column(name = "key", nullable = false)
     open var key: String = ""
     @NotNull
     @Type(JsonType::class)
