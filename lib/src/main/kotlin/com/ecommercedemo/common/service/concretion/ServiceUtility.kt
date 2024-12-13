@@ -94,7 +94,9 @@ class ServiceUtility<T: BaseEntity>(
     }
 
     fun updateExistingEntity(data: Map<String, Any?>, entity: T): T {
+        println("DATA IN UPDATE EXISTING ENTITY: $data")
         val typedData = typeReAttacher.reAttachType(data, entity::class as KClass<T>)
+        println("TYPED DATA: $typedData")
 
         val entityProperties =
             entity::class.memberProperties.filterIsInstance<KMutableProperty<*>>().associateBy { it.name }

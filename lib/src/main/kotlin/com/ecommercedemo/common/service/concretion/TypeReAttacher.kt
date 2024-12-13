@@ -11,6 +11,7 @@ import kotlin.reflect.jvm.isAccessible
 class TypeReAttacher(
     val objectMapper: ObjectMapper,
 ) {
+    // Fixme: malfunctions on updates: TYPED DATA: {_password=, lastActive=2024-12-14T05:49:17.135869183, password=, userInfo=null, userRole=GUEST, username=, createdAt=2024-12-14T05:49:17.135899975, id=836bf4ce-402d-4234-bac1-7c42b8b580bc, pseudoProperties={}, updatedAt=2024-12-14T05:49:17.135906152}
     fun reAttachType(data: Map<String, Any?>, targetClass: KClass<*>): Map<String, Any?> {
 
         val constructor = targetClass.constructors.find { it.parameters.isNotEmpty() }
@@ -43,6 +44,11 @@ class TypeReAttacher(
             .associate {
                 it.name to it.getter.call(dataAsTargetInstance)
             }
+        println("TYPED DATA: $typedData")
         return typedData
     }
+
+//    fun reAttachTypeOnUpdate(data: Any, targetClass: KClass<*>): Any {
+//        //same as above, but check if value is present unless in data. if present ignore, if in data override. Account for incoming nulls
+//    }
 }
