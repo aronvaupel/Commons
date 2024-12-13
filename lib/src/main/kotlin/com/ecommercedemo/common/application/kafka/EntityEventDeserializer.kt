@@ -8,14 +8,10 @@ import com.fasterxml.jackson.databind.node.ObjectNode
 import jakarta.persistence.EntityManager
 import java.util.*
 
-class EntityEventDeserializer : JsonDeserializer<EntityEvent>() {
-    private var objectMapper: ObjectMapper = ObjectMapper()
-    private lateinit var entityManager: EntityManager
-
-    fun initialize(entityManager: EntityManager) {
-        this.entityManager = entityManager
-    }
-
+class EntityEventDeserializer(
+    private var objectMapper: ObjectMapper,
+    private var entityManager: EntityManager
+) : JsonDeserializer<EntityEvent>() {
 
     override fun deserialize(parser: JsonParser, ctxt: DeserializationContext): EntityEvent {
         val rootNode = parser.codec.readTree<ObjectNode>(parser)
@@ -39,7 +35,7 @@ class EntityEventDeserializer : JsonDeserializer<EntityEvent>() {
         val entityClass = resolveEntityClass(entityClassName)
 
         val properties: Map<String, Any?> = try {
-           objectMapper.convertValue(
+            objectMapper.convertValue(
                 propertiesNode,
                 objectMapper.typeFactory.constructMapType(MutableMap::class.java, String::class.java, entityClass)
             )
