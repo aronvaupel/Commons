@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import org.springframework.stereotype.Service
 import kotlin.reflect.KClass
 import kotlin.reflect.full.memberProperties
+import kotlin.reflect.jvm.isAccessible
 
 @Service
 @Suppress("UNCHECKED_CAST")
@@ -35,6 +36,7 @@ class TypeReAttacher <T: BaseEntity> (
         ) as T
 
         val typedData =  dataAsTargetInstance::class.memberProperties
+            .onEach { it.isAccessible = true }
             .associate {
                 it.name to it.getter.call(dataAsTargetInstance)
             }
