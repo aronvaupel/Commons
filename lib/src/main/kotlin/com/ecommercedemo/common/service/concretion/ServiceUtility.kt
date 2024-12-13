@@ -4,7 +4,7 @@ import com.ecommercedemo.common.application.validation.type.ValueType
 import com.ecommercedemo.common.controller.abstraction.util.TypeDescriptor
 import com.ecommercedemo.common.model.abstraction.AugmentableBaseEntity
 import com.ecommercedemo.common.model.abstraction.BaseEntity
-import com.ecommercedemo.common.model.abstraction.BasePseudoProperty
+import com.ecommercedemo.common.model.abstraction.IPseudoProperty
 import com.ecommercedemo.common.persistence.concretion._pseudoProperty._PseudoPropertyRepository
 import com.fasterxml.jackson.databind.ObjectMapper
 import org.springframework.stereotype.Service
@@ -73,9 +73,9 @@ class ServiceUtility<T: BaseEntity>(
                         } else throw IllegalArgumentException("Entity does not support pseudoProperties")
                     }
 
-                    instanceProperty.name == BasePseudoProperty::typeDescriptor.name -> {
-                        if (newInstance is BasePseudoProperty) {
-                            validateTypeDescriptor(typedData[BasePseudoProperty::typeDescriptor.name])
+                    instanceProperty.name == IPseudoProperty::typeDescriptor.name -> {
+                        if (newInstance is IPseudoProperty) {
+                            validateTypeDescriptor(typedData[IPseudoProperty::typeDescriptor.name])
                             instanceProperty.setter.call(newInstance, dataValue)
                         } else throw IllegalArgumentException("Entity does not support typeDescriptor")
                     }
@@ -129,8 +129,8 @@ class ServiceUtility<T: BaseEntity>(
                     }
                 }
 
-                key == BasePseudoProperty::typeDescriptor.name -> {
-                    if (entity is BasePseudoProperty) {
+                key == IPseudoProperty::typeDescriptor.name -> {
+                    if (entity is IPseudoProperty) {
                         validateTypeDescriptor(value)
                         val serialized = serialize(value as TypeDescriptor)
                         correspondingEntityProperty.setter.call(entity, serialized)
@@ -247,7 +247,7 @@ class ServiceUtility<T: BaseEntity>(
         serialize(existing + updates)
 
 
-    private fun getValidPseudoProperties(entity: AugmentableBaseEntity): List<BasePseudoProperty> {
+    private fun getValidPseudoProperties(entity: AugmentableBaseEntity): List<IPseudoProperty> {
         return _pseudoPropertyRepository.findAllByEntitySimpleName(entity::class.simpleName!!)
     }
 
