@@ -13,8 +13,8 @@ import kotlin.reflect.KClass
 abstract class EventServiceTemplate<T : BaseEntity>(
     private val adapter: IEntityPersistenceAdapter<T>,
     private val downstreamEntityClass: KClass<T>,
-    private val serviceUtility: ServiceUtility,
-    private val typeReAttacher: TypeReAttacher,
+    private val serviceUtility: ServiceUtility<T>,
+    private val typeReAttacher: TypeReAttacher<T>,
 ) : IEventService<T> {
     @Transactional
     override fun createByEvent(event: EntityEvent) {
@@ -27,7 +27,7 @@ abstract class EventServiceTemplate<T : BaseEntity>(
     override fun updateByEvent(event: EntityEvent) {
         val original = adapter.getById(event.id)
 
-        val updated = serviceUtility.updateExistingEntity(event.properties, original.copy())
+        val updated = serviceUtility.updateExistingEntity(event.properties, original.copy() as T)
 
         adapter.save(updated as T)
     }

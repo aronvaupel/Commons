@@ -18,7 +18,7 @@ open class _PseudoPropertyRestService(
     entityManager: EntityManager,
     eventProducer: EntityEventProducer,
     retriever: Retriever,
-    serviceUtility: ServiceUtility
+    serviceUtility: ServiceUtility<_PseudoProperty>
 ) : RestServiceTemplate<_PseudoProperty>(
     adapter,
     _PseudoProperty::class,

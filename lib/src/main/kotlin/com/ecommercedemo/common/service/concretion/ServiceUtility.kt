@@ -16,16 +16,16 @@ import kotlin.reflect.jvm.isAccessible
 
 @Service
 @Suppress("UNCHECKED_CAST")
-class ServiceUtility(
+class ServiceUtility<T: BaseEntity>(
     private val objectMapper: ObjectMapper,
     private val _pseudoPropertyRepository: _PseudoPropertyRepository,
-    private val typeReAttacher: TypeReAttacher,
+    private val typeReAttacher: TypeReAttacher<T>,
 ) {
 
-    fun <E : BaseEntity> createNewInstance(
-        instanceClass: KClass<E>,
+    fun createNewInstance(
+        instanceClass: KClass<T>,
         data: Map<String, Any?>,
-    ): E {
+    ): T {
         val entityConstructor = instanceClass.constructors.firstOrNull()
             ?: throw IllegalArgumentException("No suitable constructor found for ${instanceClass.simpleName}")
 
@@ -94,8 +94,8 @@ class ServiceUtility(
         return newInstance
     }
 
-    fun <E : BaseEntity> updateExistingEntity(data: Map<String, Any?>, entity: E): E {
-        val typedData = typeReAttacher.reAttachType(data, entity::class as KClass<E>)
+    fun updateExistingEntity(data: Map<String, Any?>, entity: T): T {
+        val typedData = typeReAttacher.reAttachType(data, entity::class as KClass<T>)
 
         val entityProperties =
             entity::class.memberProperties.filterIsInstance<KMutableProperty<*>>().associateBy { it.name }

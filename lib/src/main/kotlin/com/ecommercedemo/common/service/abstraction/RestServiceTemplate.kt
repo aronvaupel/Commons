@@ -23,7 +23,7 @@ abstract class RestServiceTemplate<T : BaseEntity>(
     private val entityManager: EntityManager,
     private val eventProducer: EntityEventProducer,
     private val retriever: Retriever,
-    private val serviceUtility: ServiceUtility
+    private val serviceUtility: ServiceUtility<T>
 ) : IRestService<T> {
 
     @Transactional

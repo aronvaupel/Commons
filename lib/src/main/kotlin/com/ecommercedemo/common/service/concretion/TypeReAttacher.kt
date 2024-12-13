@@ -9,10 +9,10 @@ import kotlin.reflect.full.memberProperties
 
 @Service
 @Suppress("UNCHECKED_CAST")
-class TypeReAttacher(
+class TypeReAttacher <T: BaseEntity> (
     val objectMapper: ObjectMapper,
 ) {
-    fun <T: BaseEntity>reAttachType(data: Map<String, Any?>, targetClass: KClass<T>): Map<String, Any?> {
+    fun reAttachType(data: Map<String, Any?>, targetClass: KClass<T>): Map<String, Any?> {
 
         val targetClassConstructor = targetClass.constructors.firstOrNull()
             ?: throw IllegalArgumentException("Target class must have a constructor")
