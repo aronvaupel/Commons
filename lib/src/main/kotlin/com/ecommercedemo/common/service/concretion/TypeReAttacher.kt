@@ -13,12 +13,11 @@ class TypeReAttacher <T: BaseEntity> (
     val objectMapper: ObjectMapper,
 ) {
     fun reAttachType(data: Map<String, Any?>, targetClass: KClass<T>): Map<String, Any?> {
-
         val targetClassConstructor = targetClass.constructors.firstOrNull()
             ?: throw IllegalArgumentException("Target class must have a constructor")
 
         val validatedData = targetClassConstructor.parameters.associate { param ->
-            val value = data[param.name]
+            val value = data[param.name] ?: data[param.name?.removePrefix("_")]
             if (value == null && !param.isOptional && !param.type.isMarkedNullable) {
                 throw IllegalArgumentException("Field ${param.name} must be provided and cannot be null.")
             }
