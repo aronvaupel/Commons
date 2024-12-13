@@ -1,6 +1,7 @@
 package com.ecommercedemo.common.service.concretion
 
 import com.ecommercedemo.common.model.abstraction.BaseEntity
+import com.fasterxml.jackson.core.type.TypeReference
 import com.fasterxml.jackson.databind.ObjectMapper
 import org.springframework.stereotype.Service
 import kotlin.reflect.KClass
@@ -31,7 +32,7 @@ class TypeReAttacher(
 
         val dataAsTargetInstance = objectMapper.readValue(
             serializedData,
-            targetClass::class.java
+            object : TypeReference<T>() {}
         ) as T
 
         val typedData =  dataAsTargetInstance::class.memberProperties
