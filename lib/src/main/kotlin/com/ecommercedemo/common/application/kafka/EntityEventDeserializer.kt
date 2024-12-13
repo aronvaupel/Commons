@@ -14,7 +14,6 @@ import kotlin.reflect.KClass
 class EntityEventDeserializer(
     private val objectMapper: ObjectMapper,
     private val entityManagerFactory: EntityManagerFactory,
-    private val typeReAttacher: TypeReAttacher
 ) : JsonDeserializer<EntityEvent>() {
 
     override fun deserialize(parser: JsonParser, ctxt: DeserializationContext): EntityEvent {
@@ -44,7 +43,7 @@ class EntityEventDeserializer(
                 propertiesNode,
                 objectMapper.typeFactory.constructMapType(Map::class.java, String::class.java, Any::class.java)
             )
-            typeReAttacher.reAttachType(rawData, entityClass)
+            TypeReAttacher(objectMapper).reAttachType(rawData, entityClass)
         } catch (e: Exception) {
             throw IllegalArgumentException("Failed to deserialize 'properties' for entity class: _$entityClassName", e)
         }

@@ -2,7 +2,6 @@ package com.ecommercedemo.common.application
 
 import com.ecommercedemo.common.application.kafka.EntityEvent
 import com.ecommercedemo.common.application.kafka.EntityEventDeserializer
-import com.ecommercedemo.common.service.concretion.TypeReAttacher
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.SerializationFeature
 import com.fasterxml.jackson.databind.module.SimpleModule
@@ -36,7 +35,6 @@ open class JacksonConfig {
 
     private fun createEntityEventDeserializer(objectMapper: ObjectMapper): EntityEventDeserializer {
         val entityManagerFactory = SpringContextProvider.applicationContext.getBean(EntityManagerFactory::class.java)
-        val typeReAttacher = SpringContextProvider.applicationContext.getBean(TypeReAttacher::class.java)
-        return EntityEventDeserializer(objectMapper, entityManagerFactory, typeReAttacher)
+        return EntityEventDeserializer(objectMapper, entityManagerFactory)
     }
 }
