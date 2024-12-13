@@ -27,7 +27,11 @@ class TypeReAttacher <T: BaseEntity> (
             value != null || isExplicitlyPresent
         }
 
-        val serializedData = objectMapper.writeValueAsString(validatedData)
+        val normalizedData = validatedData.mapKeys { (key, _) ->
+            key.removePrefix("_")
+        }
+
+        val serializedData = objectMapper.writeValueAsString(normalizedData)
 
         val dataAsTargetInstance = objectMapper.readValue(
             serializedData,
