@@ -24,6 +24,7 @@ class ServiceUtility<T : BaseEntity>(
         instanceClass: KClass<T>,
         data: Map<String, Any?>,
     ): T {
+        println("INSTANCE CLASS: $instanceClass")
         if (instanceClass is AugmentableBaseEntity)
             validatePseudoProperties(instanceClass as AugmentableBaseEntity, data)
 
@@ -33,9 +34,7 @@ class ServiceUtility<T : BaseEntity>(
         val instanceConstructorParams = entityConstructor.parameters
             .filter { it.name in data.keys }
             .associateWith { param ->
-                println("PARAM: ${param.name}")
                 val value = data[param.name?.removePrefix("_")]
-                println("VALUE: $value")
 
                 when {
                     param.name == AugmentableBaseEntity::pseudoProperties.name
