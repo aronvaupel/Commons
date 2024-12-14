@@ -53,6 +53,7 @@ abstract class RestControllerTemplate<T : BaseEntity>(
     open fun search(
         @RequestBody request: SearchRequest
     ): ResponseEntity<List<T>> {
+        println("Searching with request: $request")
         return ResponseEntity.ok(service.search(request))
     }
 }
