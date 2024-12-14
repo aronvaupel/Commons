@@ -10,7 +10,6 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import org.springframework.stereotype.Service
 import kotlin.reflect.KClass
 import kotlin.reflect.KMutableProperty
-import kotlin.reflect.full.createInstance
 import kotlin.reflect.full.createType
 import kotlin.reflect.full.memberProperties
 import kotlin.reflect.jvm.isAccessible
@@ -28,71 +27,93 @@ class ServiceUtility<T : BaseEntity>(
         data: Map<String, Any?>,
     ): T {
         println("DATA IN CREATE NEW INSTANCE: $data")
-//        val entityConstructor = instanceClass.constructors.find { it.parameters.isNotEmpty() }
-//            ?: throw IllegalArgumentException("No suitable constructor found for ${instanceClass.simpleName}")
-//
-//        val instanceConstructorParams = entityConstructor.parameters.associateWith { param ->
-//            val value = data[param.name?.removePrefix("_")]
-//            when {
-//                value != null -> value
-//                param.type.isMarkedNullable -> null
-//                param.isOptional -> null
-//                else -> throw IllegalArgumentException("Field ${param.name} must be provided and cannot be null.")
-//            }
-//        }.filter { !(it.value == null && it.key.isOptional) }
-//        println("ENTITY CONSTRUCTOR PARAMS: $instanceConstructorParams")
+        val entityConstructor = instanceClass.constructors.find { it.parameters.isNotEmpty() }
+            ?: throw IllegalArgumentException("No suitable constructor found for ${instanceClass.simpleName}")
+
+        val instanceConstructorParams = entityConstructor.parameters.associateWith { param ->
+            println("PARAM: ${param.name}")
+            val value = data[param.name?.removePrefix("_")]
+            println("VALUE: $value")
+            when {
+                value == null && !param.type.isMarkedNullable -> {
+                    throw IllegalArgumentException("Field ${param.name} must be provided and cannot be null.")
+                }
+
+                param.name == AugmentableBaseEntity::pseudoProperties.name
+                        && data[AugmentableBaseEntity::pseudoProperties.name] != null -> {
+                    if (instanceClass is AugmentableBaseEntity) {
+                        validateDataAsPseudoProperties(
+                            instanceClass, data[AugmentableBaseEntity::pseudoProperties.name]
+                        )
+                        serialize(data[AugmentableBaseEntity::pseudoProperties.name]!!)
+                    } else throw IllegalArgumentException("Entity does not support pseudoProperties")
+                }
+
+                param.name == IPseudoProperty::typeDescriptor.name -> {
+                    if (instanceClass is IPseudoProperty) {
+                        validateTypeDescriptor(data[IPseudoProperty::typeDescriptor.name])
+                        serialize(data[IPseudoProperty::typeDescriptor.name]!!)
+                    } else throw IllegalArgumentException("Entity does not support typeDescriptor")
+                }
+
+                else -> value
+            }
+        }.filter { !(it.value == null && it.key.isOptional) }
+        println("ENTITY CONSTRUCTOR PARAMS: $instanceConstructorParams")
+
+        return entityConstructor.callBy(instanceConstructorParams)
 
 //        val newInstance = entityConstructor.callBy(instanceConstructorParams)
-        val newInstance = instanceClass.createInstance()
-        println("NEW INSTANCE: $newInstance")
+//        println("NEW INSTANCE: $newInstance")
 
 
-        val instancePropertyMap = newInstance::class.memberProperties.associateBy { it.name }
-        println("TARGET PROPERTY MAP: $instancePropertyMap")
+//        val instanceProperties = newInstance::class.memberProperties.associateBy { it.name }
+//        println("TARGET PROPERTY MAP: $instanceProperties")
 
-        instancePropertyMap.values.filterIsInstance<KMutableProperty<*>>()
-            .onEach { it.isAccessible = true }
-            .forEach { instanceProperty ->
-                println("PROPERTY: ${instanceProperty.name}")
-                val dataValue = data[instanceProperty.name.removePrefix("_")]
-                println("VALUE: $dataValue")
+//        instanceProperties.values
+//            .filterIsInstance<KMutableProperty<*>>()
+//            .onEach { it.isAccessible = true }
+//            .forEach { instanceProperty ->
+//                println("PROPERTY: ${instanceProperty.name}")
+//                val dataValue = data[instanceProperty.name.removePrefix("_")]
+//                println("VALUE: $dataValue")
 
-                when {
-                    dataValue == null && (!instanceProperty.returnType.isMarkedNullable) -> {
-                        throw IllegalArgumentException(
-                            "Field '${instanceProperty.name}' is non-nullable and cannot be set to null."
-                        )
-                    }
+//                when {
+//                    dataValue == null && (!instanceProperty.returnType.isMarkedNullable) -> {
+//                        throw IllegalArgumentException(
+//                            "Field '${instanceProperty.name}' is non-nullable and cannot be set to null."
+//                        )
+//                    }
 
-                    instanceProperty.name == AugmentableBaseEntity::pseudoProperties.name -> {
-                        if (data[AugmentableBaseEntity::pseudoProperties.name] == null) return@forEach
-                        if (newInstance is AugmentableBaseEntity) {
-                            validateDataAsPseudoProperties(
-                                newInstance, data[AugmentableBaseEntity::pseudoProperties.name]
-                            )
-                            val serialized = serialize(dataValue!!)
-                            instanceProperty.setter.call(newInstance, serialized)
-                        } else throw IllegalArgumentException("Entity does not support pseudoProperties")
-                    }
+//                    instanceProperty.name == AugmentableBaseEntity::pseudoProperties.name -> {
+//                        if (data[AugmentableBaseEntity::pseudoProperties.name] == null) return@forEach
+//                        if (newInstance is AugmentableBaseEntity) {
+//                            validateDataAsPseudoProperties(
+//                                newInstance, data[AugmentableBaseEntity::pseudoProperties.name]
+//                            )
+//                            val serialized = serialize(dataValue!!)
+//                            instanceProperty.setter.call(newInstance, serialized)
+//                        } else throw IllegalArgumentException("Entity does not support pseudoProperties")
+//                    }
 
-                    instanceProperty.name == IPseudoProperty::typeDescriptor.name -> {
-                        if (newInstance is IPseudoProperty) {
-                            validateTypeDescriptor(data[IPseudoProperty::typeDescriptor.name])
-                            instanceProperty.setter.call(newInstance, dataValue)
-                        } else throw IllegalArgumentException("Entity does not support typeDescriptor")
-                    }
+//                    instanceProperty.name == IPseudoProperty::typeDescriptor.name -> {
+//                        if (newInstance is IPseudoProperty) {
+//                            validateTypeDescriptor(data[IPseudoProperty::typeDescriptor.name])
+//                            instanceProperty.setter.call(newInstance, dataValue)
+//                        } else throw IllegalArgumentException("Entity does not support typeDescriptor")
+//                    }
 
-                    dataValue != null && dataValue::class.createType() != instanceProperty.returnType -> {
-                        throw IllegalArgumentException(
-                            "Type mismatch for property '${instanceProperty.name}': " + "Expected ${instanceProperty.returnType}, " + "Found ${dataValue::class.createType()}"
-                        )
-                    }
+//                    dataValue != null && dataValue::class.createType() != instanceProperty.returnType -> {
+//                        throw IllegalArgumentException(
+//                            "Type mismatch for property '${instanceProperty.name}': " + "Expected ${instanceProperty.returnType}, " + "Found ${dataValue::class.createType()}"
+//                        )
+//                    }
 
-                    else -> instanceProperty.setter.call(newInstance, dataValue)
-                }
-            }
+//                    else -> instanceProperty.setter.call(newInstance, dataValue)
+//                }
+//            }
 
-        return newInstance
+//        return newInstance
     }
 
     fun updateExistingEntity(data: Map<String, Any?>, entity: T): T {
