@@ -86,7 +86,7 @@ class ServiceUtility<T: BaseEntity>(
                         )
                     }
 
-                    else -> if (dataValue != null) instanceProperty.setter.call(newInstance, dataValue)
+                    else ->  instanceProperty.setter.call(newInstance, dataValue)
                 }
             }
 
