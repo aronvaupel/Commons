@@ -46,7 +46,7 @@ class ServiceUtility<T : BaseEntity>(
                                 instanceClass as AugmentableBaseEntity,
                                 data[AugmentableBaseEntity::pseudoProperties.name]
                             )
-                            serialize(data[AugmentableBaseEntity::pseudoProperties.name]!!)
+                            instanceClass.pseudoProperties + value as Map<String, Any?>
                         } else throw IllegalArgumentException("Entity does not support pseudoProperties")
                     }
 
@@ -111,8 +111,7 @@ fun updateExistingEntity(data: Map<String, Any?>, entity: T): T {
                     println("Validation passed")
                     val existingPseudoProperties = entity.pseudoProperties
                     println("EXISTING PSEUDO PROPERTIES: $existingPseudoProperties")
-                    val mergedPseudoProperties =
-                        mergePseudoProperties(existingPseudoProperties, value as Map<String, Any?>)
+                    val mergedPseudoProperties = existingPseudoProperties + value as Map<String, Any?>
                     println("MERGED PSEUDO PROPERTIES: $mergedPseudoProperties")
                     correspondingEntityProperty.setter.call(entity, mergedPseudoProperties)
                 } else {
@@ -123,8 +122,7 @@ fun updateExistingEntity(data: Map<String, Any?>, entity: T): T {
             key == IPseudoProperty::typeDescriptor.name -> {
                 if (entity is IPseudoProperty) {
                     validateTypeDescriptor(value)
-                    val serialized = serialize(value as TypeDescriptor)
-                    correspondingEntityProperty.setter.call(entity, serialized)
+                    correspondingEntityProperty.setter.call(entity, value)
                 } else {
                     throw IllegalArgumentException("Entity does not support typeDescriptor")
                 }
@@ -234,15 +232,10 @@ private fun TypeDescriptor.hasMinElementsOrEntries() = when (this) {
     else -> false
 }
 
-private fun mergePseudoProperties(existing: Map<String, Any?>, updates: Map<String, Any?>) =
-    serialize(existing + updates)
-
 
 private fun getValidPseudoProperties(entity: AugmentableBaseEntity): List<IPseudoProperty> {
     return _pseudoPropertyRepository.findAllByEntitySimpleName(entity::class.simpleName!!)
 }
 
-private fun serialize(value: Any): String {
-    return objectMapper.writeValueAsString(value)
-}
+
 }
