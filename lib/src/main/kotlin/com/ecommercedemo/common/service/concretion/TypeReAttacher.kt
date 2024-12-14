@@ -53,7 +53,7 @@ class TypeReAttacher(
 //    }
 
     private fun extractFieldTypesMap(entityClass: KClass<*>): Map<String, KType> {
-        val result =  entityClass.memberProperties.associate { property ->
+        val result = entityClass.memberProperties.associate { property ->
             property.name to property.returnType
         }
         println("FIELD TYPES: $result")
@@ -66,19 +66,14 @@ class TypeReAttacher(
         entityClass: KClass<*>
     ): Map<String, Any?> {
         println("DATA: $data")
-        val  typesForDataKeys = extractFieldTypesMap(entityClass).filterKeys { data.containsKey(it) }
+        val typesForDataKeys = extractFieldTypesMap(entityClass).filterKeys { data.containsKey(it) }
         println("TYPES FOR DATA KEYS: $typesForDataKeys")
 
         val typedData: Map<String, Any?> = typesForDataKeys.mapValues { (key, kType) ->
             val typeReference = object : TypeReference<Any>() {
                 override fun getType() = kType.javaType
             }
-            try {
-                objectMapper.convertValue(data[key], typeReference)
-            } catch (e: IllegalArgumentException) {
-                return@mapValues
-            }
-
+            objectMapper.convertValue(data[key], typeReference)
         }
 
         println("TYPED DATA: $typedData")
