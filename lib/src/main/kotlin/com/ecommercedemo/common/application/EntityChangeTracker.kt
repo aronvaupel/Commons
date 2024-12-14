@@ -30,7 +30,10 @@ class EntityChangeTracker<T : BaseEntity> {
                 && property.name == AugmentableBaseEntity::pseudoProperties.name
                 )
                 entityAfter.pseudoProperties
-            else property.get(entityAfter)
+            else {
+                property.isAccessible = true
+                property.get(entityAfter)
+            }
 
             if (oldValue != newValue) {
                 changedProperties[property.name] = if (property.name == AugmentableBaseEntity::pseudoProperties.name)
