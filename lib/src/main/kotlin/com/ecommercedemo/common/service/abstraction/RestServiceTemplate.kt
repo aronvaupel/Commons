@@ -39,13 +39,13 @@ abstract class RestServiceTemplate<T : BaseEntity>(
     override fun update(request: UpdateRequest): T {
         val original = getSingle(request.id)
         entityManager.detach(original)
-
+        val typedRequestProperties = typeReAttacher.reAttachType(request.properties, entityClass)
         if (original::class != entityClass) {
             throw IllegalArgumentException(
                 "Entity type mismatch. Expected ${entityClass.simpleName} but found ${original::class.simpleName}."
             )
         }
-        val updated = serviceUtility.updateExistingEntity(request.properties, original.copy() as T)
+        val updated = serviceUtility.updateExistingEntity(typedRequestProperties, original.copy() as T)
 
         return saveAndEmitEvent( original, updated, EntityEventType.UPDATE,)
     }

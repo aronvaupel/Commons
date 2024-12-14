@@ -82,13 +82,12 @@ class ServiceUtility<T : BaseEntity>(
 
 fun updateExistingEntity(data: Map<String, Any?>, entity: T): T {
     println("DATA IN UPDATE EXISTING ENTITY: $data")
-    val typedData = typeReAttacher.reAttachType(data, entity::class as KClass<T>)
-    println("TYPED DATA: $typedData")
+    println("TYPED DATA: $data")
 
     val entityProperties =
         entity::class.memberProperties.filterIsInstance<KMutableProperty<*>>().associateBy { it.name }
 
-    typedData.forEach { (key, value) ->
+    data.forEach { (key, value) ->
         val correspondingEntityProperty = entityProperties[key] ?: entityProperties[key.removePrefix("_")]
 
         if (correspondingEntityProperty == null) {
@@ -109,9 +108,12 @@ fun updateExistingEntity(data: Map<String, Any?>, entity: T): T {
             key == AugmentableBaseEntity::pseudoProperties.name -> {
                 if (entity is AugmentableBaseEntity) {
                     validateDataAsPseudoProperties(entity, value)
+                    println("Validation passed")
                     val existingPseudoProperties = entity.pseudoProperties
+                    println("EXISTING PSEUDO PROPERTIES: $existingPseudoProperties")
                     val mergedPseudoProperties =
                         mergePseudoProperties(existingPseudoProperties, value as Map<String, Any?>)
+                    println("MERGED PSEUDO PROPERTIES: $mergedPseudoProperties")
                     correspondingEntityProperty.setter.call(entity, mergedPseudoProperties)
                 } else {
                     throw IllegalArgumentException("Entity does not support pseudoProperties")
