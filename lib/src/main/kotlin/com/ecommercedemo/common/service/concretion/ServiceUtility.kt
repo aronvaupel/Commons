@@ -25,8 +25,7 @@ class ServiceUtility<T : BaseEntity>(
         data: Map<String, Any?>,
     ): T {
         if (instanceClass.isSubclassOf(AugmentableBaseEntity::class))
-            println("confirmed")
-            validatePseudoProperties(instanceClass as AugmentableBaseEntity, data)
+            validatePseudoProperties(instanceClass as KClass<out AugmentableBaseEntity>, data)
 
         val entityConstructor = instanceClass.constructors.find { it.parameters.isNotEmpty() }
             ?: throw IllegalArgumentException("No suitable constructor found for ${instanceClass.simpleName}")
@@ -74,6 +73,9 @@ class ServiceUtility<T : BaseEntity>(
 
 
     fun updateExistingEntity(data: Map<String, Any?>, entity: T): T {
+        if (entity is AugmentableBaseEntity) {
+            validatePseudoProperties(entity::class as KClass<out AugmentableBaseEntity>, data)
+        }
         val entityProperties =
             entity::class.memberProperties.filterIsInstance<KMutableProperty<*>>().associateBy { it.name }
 
@@ -97,7 +99,6 @@ class ServiceUtility<T : BaseEntity>(
 
                 key == AugmentableBaseEntity::pseudoProperties.name -> {
                     if (entity is AugmentableBaseEntity) {
-                        validatePseudoProperties(entity, data)
                         println("Validation passed")
                         val existingPseudoProperties = entity.pseudoProperties
                         println("EXISTING PSEUDO PROPERTIES: $existingPseudoProperties")
@@ -139,9 +140,9 @@ class ServiceUtility<T : BaseEntity>(
     }
 
     private fun validatePseudoProperties(
-        entity: AugmentableBaseEntity, data: Map<String, Any?>
+        entity: KClass<out AugmentableBaseEntity>, data: Map<String, Any?>
     ) {
-        val validPseudoProperties = getValidPseudoProperties(entity as AugmentableBaseEntity)
+        val validPseudoProperties = getValidPseudoProperties(entity)
         println("VALID PSEUDO PROPERTIES: $validPseudoProperties")
         val requiredPseudoProperties = validPseudoProperties.filter {
             when (val typeDescriptor = it.typeDescriptor) {
@@ -222,8 +223,8 @@ class ServiceUtility<T : BaseEntity>(
     }
 
 
-    private fun getValidPseudoProperties(entity: AugmentableBaseEntity): List<IPseudoProperty> {
-        return _pseudoPropertyRepository.findAllByEntitySimpleName(entity::class.simpleName!!)
+    private fun getValidPseudoProperties(entityClass: KClass<out AugmentableBaseEntity>): List<IPseudoProperty> {
+        return _pseudoPropertyRepository.findAllByEntitySimpleName(entityClass.simpleName!!)
     }
 
 
