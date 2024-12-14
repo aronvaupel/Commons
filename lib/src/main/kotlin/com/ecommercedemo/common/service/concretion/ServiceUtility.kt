@@ -16,7 +16,7 @@ import kotlin.reflect.jvm.isAccessible
 
 @Service
 @Suppress("UNCHECKED_CAST")
-class ServiceUtility<T: BaseEntity>(
+class ServiceUtility<T : BaseEntity>(
     private val objectMapper: ObjectMapper,
     private val _pseudoPropertyRepository: _PseudoPropertyRepository,
     private val typeReAttacher: TypeReAttacher,
@@ -30,17 +30,16 @@ class ServiceUtility<T: BaseEntity>(
         val entityConstructor = instanceClass.constructors.find { it.parameters.isNotEmpty() }
             ?: throw IllegalArgumentException("No suitable constructor found for ${instanceClass.simpleName}")
 
-        val typedData = typeReAttacher.reAttachType(data, instanceClass)
-
         val instanceConstructorParams = entityConstructor.parameters.associateWith { param ->
-            val value = typedData[param.name?.removePrefix("_")]
-            if (value == null && !param.isOptional && !param.type.isMarkedNullable) {
-                throw IllegalArgumentException("Field ${param.name} must be provided and cannot be null.")
+            val value = data[param.name?.removePrefix("_")]
+            when {
+                value != null -> value
+                param.isOptional -> null
+                param.type.isMarkedNullable -> null
+                else -> throw IllegalArgumentException("Field ${param.name} must be provided and cannot be null.")
             }
-            value
         }
         println("ENTITY CONSTRUCTOR PARAMS: $instanceConstructorParams")
-
 
         val newInstance = entityConstructor.callBy(instanceConstructorParams)
         println("NEW INSTANCE: $newInstance")
@@ -52,7 +51,7 @@ class ServiceUtility<T: BaseEntity>(
         instancePropertyMap.values.filterIsInstance<KMutableProperty<*>>().onEach { it.isAccessible = true }
             .forEach { instanceProperty ->
 
-                val dataValue = typedData[instanceProperty.name]
+                val dataValue = data[instanceProperty.name]
                 println("RESOLVED VALUE FROM REQUEST: $dataValue")
 
                 when {
@@ -75,7 +74,7 @@ class ServiceUtility<T: BaseEntity>(
 
                     instanceProperty.name == IPseudoProperty::typeDescriptor.name -> {
                         if (newInstance is IPseudoProperty) {
-                            validateTypeDescriptor(typedData[IPseudoProperty::typeDescriptor.name])
+                            validateTypeDescriptor(data[IPseudoProperty::typeDescriptor.name])
                             instanceProperty.setter.call(newInstance, dataValue)
                         } else throw IllegalArgumentException("Entity does not support typeDescriptor")
                     }
@@ -86,7 +85,7 @@ class ServiceUtility<T: BaseEntity>(
                         )
                     }
 
-                    else ->  instanceProperty.setter.call(newInstance, dataValue)
+                    else -> instanceProperty.setter.call(newInstance, dataValue)
                 }
             }
 

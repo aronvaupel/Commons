@@ -10,6 +10,7 @@ import com.ecommercedemo.common.controller.abstraction.util.Retriever
 import com.ecommercedemo.common.model.abstraction.BaseEntity
 import com.ecommercedemo.common.persistence.abstraction.IEntityPersistenceAdapter
 import com.ecommercedemo.common.service.concretion.ServiceUtility
+import com.ecommercedemo.common.service.concretion.TypeReAttacher
 import jakarta.persistence.EntityManager
 import jakarta.transaction.Transactional
 import org.springframework.http.HttpStatus
@@ -23,12 +24,14 @@ abstract class RestServiceTemplate<T : BaseEntity>(
     private val entityManager: EntityManager,
     private val eventProducer: EntityEventProducer,
     private val retriever: Retriever,
-    private val serviceUtility: ServiceUtility<T>
+    private val serviceUtility: ServiceUtility<T>,
+    private val typeReAttacher: TypeReAttacher,
 ) : IRestService<T> {
 
     @Transactional
     override fun create(request: CreateRequest): T {
-        val newInstance = serviceUtility.createNewInstance(entityClass, request.properties)
+        val typedRequestProperties = typeReAttacher.reAttachType(request.properties, entityClass)
+        val newInstance = serviceUtility.createNewInstance(entityClass, typedRequestProperties)
         return saveAndEmitEvent(null, newInstance, EntityEventType.CREATE)
     }
 
