@@ -24,6 +24,9 @@ class ServiceUtility<T : BaseEntity>(
         instanceClass: KClass<T>,
         data: Map<String, Any?>,
     ): T {
+        if (instanceClass.isSubclassOf(AugmentableBaseEntity::class))
+            validatePseudoProperties(instanceClass as AugmentableBaseEntity, data)
+
         val entityConstructor = instanceClass.constructors.find { it.parameters.isNotEmpty() }
             ?: throw IllegalArgumentException("No suitable constructor found for ${instanceClass.simpleName}")
 
@@ -36,7 +39,6 @@ class ServiceUtility<T : BaseEntity>(
                     param.name == AugmentableBaseEntity::pseudoProperties.name
                             && data[AugmentableBaseEntity::pseudoProperties.name] != null -> {
                         if (instanceClass is AugmentableBaseEntity) {
-                            validatePseudoProperties(instanceClass, data)
                             instanceClass.pseudoProperties + value as Map<String, Any?>
                         } else throw IllegalArgumentException("Entity does not support pseudoProperties")
                     }
