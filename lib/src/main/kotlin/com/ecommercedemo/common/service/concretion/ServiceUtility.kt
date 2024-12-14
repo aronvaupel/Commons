@@ -10,6 +10,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import org.springframework.stereotype.Service
 import kotlin.reflect.KClass
 import kotlin.reflect.KMutableProperty
+import kotlin.reflect.full.createInstance
 import kotlin.reflect.full.createType
 import kotlin.reflect.full.memberProperties
 import kotlin.reflect.jvm.isAccessible
@@ -27,32 +28,34 @@ class ServiceUtility<T : BaseEntity>(
         data: Map<String, Any?>,
     ): T {
         println("DATA IN CREATE NEW INSTANCE: $data")
-        val entityConstructor = instanceClass.constructors.find { it.parameters.isNotEmpty() }
-            ?: throw IllegalArgumentException("No suitable constructor found for ${instanceClass.simpleName}")
+//        val entityConstructor = instanceClass.constructors.find { it.parameters.isNotEmpty() }
+//            ?: throw IllegalArgumentException("No suitable constructor found for ${instanceClass.simpleName}")
+//
+//        val instanceConstructorParams = entityConstructor.parameters.associateWith { param ->
+//            val value = data[param.name?.removePrefix("_")]
+//            when {
+//                value != null -> value
+//                param.type.isMarkedNullable -> null
+//                param.isOptional -> null
+//                else -> throw IllegalArgumentException("Field ${param.name} must be provided and cannot be null.")
+//            }
+//        }.filter { !(it.value == null && it.key.isOptional) }
+//        println("ENTITY CONSTRUCTOR PARAMS: $instanceConstructorParams")
 
-        val instanceConstructorParams = entityConstructor.parameters.associateWith { param ->
-            val value = data[param.name?.removePrefix("_")]
-            when {
-                value != null -> value
-                param.type.isMarkedNullable -> null
-                param.isOptional -> null
-                else -> throw IllegalArgumentException("Field ${param.name} must be provided and cannot be null.")
-            }
-        }.filter { !(it.value == null && it.key.isOptional) }
-        println("ENTITY CONSTRUCTOR PARAMS: $instanceConstructorParams")
-
-        val newInstance = entityConstructor.callBy(instanceConstructorParams)
+//        val newInstance = entityConstructor.callBy(instanceConstructorParams)
+        val newInstance = instanceClass.createInstance()
         println("NEW INSTANCE: $newInstance")
 
 
         val instancePropertyMap = newInstance::class.memberProperties.associateBy { it.name }
         println("TARGET PROPERTY MAP: $instancePropertyMap")
 
-        instancePropertyMap.values.filterIsInstance<KMutableProperty<*>>().onEach { it.isAccessible = true }
+        instancePropertyMap.values.filterIsInstance<KMutableProperty<*>>()
+            .onEach { it.isAccessible = true }
             .forEach { instanceProperty ->
-
-                val dataValue = data[instanceProperty.name]
-                println("RESOLVED VALUE FROM REQUEST: $dataValue")
+                println("PROPERTY: ${instanceProperty.name}")
+                val dataValue = data[instanceProperty.name.removePrefix("_")]
+                println("VALUE: $dataValue")
 
                 when {
                     dataValue == null && (!instanceProperty.returnType.isMarkedNullable) -> {

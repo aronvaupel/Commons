@@ -73,7 +73,7 @@ class TypeReAttacher(
             val typeReference = object : TypeReference<Any>() {
                 override fun getType() = kType.javaType
             }
-            objectMapper.convertValue(data[key], typeReference)
+            objectMapper.convertValue(data, typeReference)
         }
 
         println("TYPED DATA: $typedData")
