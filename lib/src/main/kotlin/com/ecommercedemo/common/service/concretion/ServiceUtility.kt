@@ -150,13 +150,15 @@ class ServiceUtility<T : BaseEntity>(
                 else -> !typeDescriptor.isNullable()
             }
         }
-
-        if (requiredPseudoProperties.isEmpty() && !data.containsKey(AugmentableBaseEntity::pseudoProperties.name)) return
-        if (data[AugmentableBaseEntity::pseudoProperties.name] !is Map<*, *>)
-            throw IllegalArgumentException("PseudoProperties must be a Map")
+        when {
+            requiredPseudoProperties.isEmpty() && !data.containsKey(AugmentableBaseEntity::pseudoProperties.name) -> return
+            requiredPseudoProperties.isNotEmpty() && !data.containsKey(AugmentableBaseEntity::pseudoProperties.name) ->
+                throw IllegalArgumentException("PseudoProperties must be provided")
+            data[AugmentableBaseEntity::pseudoProperties.name] !is Map<*, *> ->
+                throw IllegalArgumentException("PseudoProperties must be a Map")
+        }
 
         val pseudoProperties = data[AugmentableBaseEntity::pseudoProperties.name] as Map<String, Any?>
-
 
         val missingPseudoProperties = requiredPseudoProperties.filterNot {
             pseudoProperties.containsKey(it.key)
