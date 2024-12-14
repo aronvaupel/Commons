@@ -24,8 +24,7 @@ class ServiceUtility<T : BaseEntity>(
         instanceClass: KClass<T>,
         data: Map<String, Any?>,
     ): T {
-        println("INSTANCE CLASS: $instanceClass")
-        if (instanceClass is AugmentableBaseEntity)
+        if (instanceClass.isSubclassOf(AugmentableBaseEntity::class))
             validatePseudoProperties(instanceClass as AugmentableBaseEntity, data)
 
         val entityConstructor = instanceClass.constructors.find { it.parameters.isNotEmpty() }
