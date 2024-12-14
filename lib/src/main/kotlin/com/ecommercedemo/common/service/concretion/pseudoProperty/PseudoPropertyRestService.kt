@@ -6,6 +6,7 @@ import com.ecommercedemo.common.model.concretion.pseudoProperty.PseudoProperty
 import com.ecommercedemo.common.persistence.abstraction.IEntityPersistenceAdapter
 import com.ecommercedemo.common.service.abstraction.RestServiceTemplate
 import com.ecommercedemo.common.service.concretion.ServiceUtility
+import com.ecommercedemo.common.service.concretion.TypeReAttacher
 import jakarta.persistence.EntityManager
 import jakarta.transaction.Transactional
 import org.springframework.stereotype.Service
@@ -18,11 +19,13 @@ open class PseudoPropertyRestService(
     eventProducer: EntityEventProducer,
     retriever: Retriever,
     serviceUtility: ServiceUtility<PseudoProperty>,
+    typeReAttacher: TypeReAttacher
 ) : RestServiceTemplate<PseudoProperty>(
     adapter,
     PseudoProperty::class,
     entityManager,
     eventProducer,
     retriever,
-    serviceUtility
+    serviceUtility,
+    typeReAttacher
 )
