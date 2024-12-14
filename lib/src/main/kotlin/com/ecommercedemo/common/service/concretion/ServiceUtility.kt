@@ -143,6 +143,7 @@ class ServiceUtility<T : BaseEntity>(
         entity: AugmentableBaseEntity, data: Map<String, Any?>
     ) {
         val validPseudoProperties = getValidPseudoProperties(entity)
+        println("VALID PSEUDO PROPERTIES: $validPseudoProperties")
         val requiredPseudoProperties = validPseudoProperties.filter {
             when (val typeDescriptor = it.typeDescriptor) {
                 is TypeDescriptor.CollectionDescriptor, is TypeDescriptor.MapDescriptor -> typeDescriptor.hasMinElementsOrEntries()
@@ -150,6 +151,7 @@ class ServiceUtility<T : BaseEntity>(
                 else -> !typeDescriptor.isNullable()
             }
         }
+        println("REQUIRED PSEUDO PROPERTIES: $requiredPseudoProperties")
         when {
             requiredPseudoProperties.isEmpty() && !data.containsKey(AugmentableBaseEntity::pseudoProperties.name) -> return
             requiredPseudoProperties.isNotEmpty() && !data.containsKey(AugmentableBaseEntity::pseudoProperties.name) ->
@@ -163,6 +165,7 @@ class ServiceUtility<T : BaseEntity>(
         val missingPseudoProperties = requiredPseudoProperties.filterNot {
             pseudoProperties.containsKey(it.key)
         }
+        println("MISSING PSEUDO PROPERTIES: $missingPseudoProperties")
 
         if (missingPseudoProperties.isNotEmpty()) {
             throw IllegalArgumentException(
