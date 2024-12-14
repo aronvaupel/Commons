@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service
 import kotlin.reflect.KClass
 import kotlin.reflect.KMutableProperty
 import kotlin.reflect.full.createType
+import kotlin.reflect.full.isSubclassOf
 import kotlin.reflect.full.memberProperties
 import kotlin.reflect.jvm.isAccessible
 
@@ -51,7 +52,7 @@ class ServiceUtility<T : BaseEntity>(
 
                     param.name == IPseudoProperty::typeDescriptor.name
                             && data[IPseudoProperty::typeDescriptor.name] != null -> {
-                        if (instanceClass is IPseudoProperty) {
+                        if (instanceClass.isSubclassOf(IPseudoProperty::class)) {
                             validateTypeDescriptor(data[IPseudoProperty::typeDescriptor.name])
                             serialize(data[IPseudoProperty::typeDescriptor.name]!!)
                         } else throw IllegalArgumentException("Entity does not support typeDescriptor")
