@@ -63,20 +63,14 @@ class TypeReAttacher(
         entityClass: KClass<*>
     ): Map<String, Any?> {
         println("DATA: $data")
-        val fieldTypesMap = extractFieldTypesMap(entityClass)
-        println("FIELD TYPES MAP: $fieldTypesMap")
-        val relevantFields = fieldTypesMap.filterKeys {
-            data.containsKey(it)
-        }
-        println("RELEVANT FIELDS: $relevantFields")
-        val typedData = data.mapValues { (key, value) ->
-            if (value != null) {
-                val targetClass = relevantFields[key]
-                    ?: throw IllegalArgumentException("Field $key not found in entity class")
-                objectMapper.convertValue(value, targetClass)
-            }
+        val  typesForDataKeys = extractFieldTypesMap(entityClass).filterKeys { data.containsKey(it) }
+        println("TYPES FOR DATA KEYS: $typesForDataKeys")
 
+        val typedData: Map<String, Any?> = typesForDataKeys.mapValues { (key, targetClass) ->
+            val rawValue = data[key]
+            if (rawValue != null) objectMapper.convertValue(rawValue, targetClass)
         }
+
         println("TYPED DATA: $typedData")
         return typedData
     }
