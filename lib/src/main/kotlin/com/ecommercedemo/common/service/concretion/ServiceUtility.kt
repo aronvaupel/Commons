@@ -34,11 +34,11 @@ class ServiceUtility<T : BaseEntity>(
             val value = data[param.name?.removePrefix("_")]
             when {
                 value != null -> value
-                param.isOptional -> null
                 param.type.isMarkedNullable -> null
+                param.isOptional -> null
                 else -> throw IllegalArgumentException("Field ${param.name} must be provided and cannot be null.")
             }
-        }
+        }.filter { !(it.value == null && it.key.isOptional) }
         println("ENTITY CONSTRUCTOR PARAMS: $instanceConstructorParams")
 
         val newInstance = entityConstructor.callBy(instanceConstructorParams)
