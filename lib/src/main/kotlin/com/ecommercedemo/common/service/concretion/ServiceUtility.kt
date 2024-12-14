@@ -25,6 +25,7 @@ class ServiceUtility<T : BaseEntity>(
         data: Map<String, Any?>,
     ): T {
         if (instanceClass.isSubclassOf(AugmentableBaseEntity::class))
+            println("confirmed")
             validatePseudoProperties(instanceClass as AugmentableBaseEntity, data)
 
         val entityConstructor = instanceClass.constructors.find { it.parameters.isNotEmpty() }
@@ -140,7 +141,7 @@ class ServiceUtility<T : BaseEntity>(
     private fun validatePseudoProperties(
         entity: AugmentableBaseEntity, data: Map<String, Any?>
     ) {
-        val validPseudoProperties = getValidPseudoProperties(entity)
+        val validPseudoProperties = getValidPseudoProperties(entity as AugmentableBaseEntity)
         println("VALID PSEUDO PROPERTIES: $validPseudoProperties")
         val requiredPseudoProperties = validPseudoProperties.filter {
             when (val typeDescriptor = it.typeDescriptor) {
