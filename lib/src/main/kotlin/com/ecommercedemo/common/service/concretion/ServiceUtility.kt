@@ -30,7 +30,9 @@ class ServiceUtility<T : BaseEntity>(
         val entityConstructor = instanceClass.constructors.find { it.parameters.isNotEmpty() }
             ?: throw IllegalArgumentException("No suitable constructor found for ${instanceClass.simpleName}")
 
-        val instanceConstructorParams = entityConstructor.parameters.associateWith { param ->
+        val instanceConstructorParams = entityConstructor.parameters
+            .filter { it.name?.removePrefix("_") in data.keys }
+            .associateWith { param ->
             println("PARAM: ${param.name}")
             val value = data[param.name?.removePrefix("_")]
             println("VALUE: $value")
@@ -61,7 +63,7 @@ class ServiceUtility<T : BaseEntity>(
 
                 else -> throw IllegalArgumentException("Field ${param.name} must be provided and cannot be null.")
             }
-        }.filter { !(it.value == null && !it.key.isOptional) }
+        }
         println("ENTITY CONSTRUCTOR PARAMS: $instanceConstructorParams")
 
         return entityConstructor.callBy(instanceConstructorParams)
