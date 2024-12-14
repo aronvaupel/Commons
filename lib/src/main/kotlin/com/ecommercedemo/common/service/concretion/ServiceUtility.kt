@@ -54,6 +54,7 @@ class ServiceUtility<T : BaseEntity>(
                             && data[IPseudoProperty::typeDescriptor.name] != null -> {
                         if (instanceClass.isSubclassOf(IPseudoProperty::class)) {
                             validateTypeDescriptor(data[IPseudoProperty::typeDescriptor.name])
+                            value
                         } else throw IllegalArgumentException("Entity does not support typeDescriptor")
                     }
 
