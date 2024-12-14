@@ -1,12 +1,9 @@
 package com.ecommercedemo.common.service.concretion
 
 import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.databind.type.TypeFactory
 import org.springframework.stereotype.Service
 import kotlin.reflect.KClass
-import kotlin.reflect.KType
 import kotlin.reflect.full.memberProperties
-import kotlin.reflect.jvm.javaType
 
 @Service
 @Suppress("UNCHECKED_CAST")
@@ -52,9 +49,11 @@ class TypeReAttacher(
 //        return typedData
 //    }
 
-    private fun extractFieldTypesMap(entityClass: KClass<*>): Map<String, KType> {
+    private fun extractFieldTypesMap(entityClass: KClass<*>): Map<String, Class<*>> {
         return entityClass.memberProperties.associate { property ->
-            property.name to property.returnType
+            val kClass = property.returnType.classifier as? KClass<*>
+                ?: throw IllegalArgumentException("Cannot extract KClass for property: ${property.name}")
+            property.name to kClass.java
         }
     }
 
@@ -72,10 +71,9 @@ class TypeReAttacher(
         println("RELEVANT FIELDS: $relevantFields")
         val typedData = data.mapValues { (key, value) ->
             if (value != null) {
-                val targetType = relevantFields[key]
+                val targetClass = relevantFields[key]
                     ?: throw IllegalArgumentException("Field $key not found in entity class")
-                val targetTypeAsJavaType = TypeFactory.defaultInstance().constructType(targetType.javaType)
-                objectMapper.convertValue(value, targetTypeAsJavaType::class.java)
+                objectMapper.convertValue(value, targetClass)
             }
 
         }
