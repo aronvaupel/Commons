@@ -34,31 +34,34 @@ class ServiceUtility<T : BaseEntity>(
             println("PARAM: ${param.name}")
             val value = data[param.name?.removePrefix("_")]
             println("VALUE: $value")
-            when {
-                value == null && !param.type.isMarkedNullable -> {
-                    throw IllegalArgumentException("Field ${param.name} must be provided and cannot be null.")
-                }
 
+            when {
                 param.name == AugmentableBaseEntity::pseudoProperties.name
                         && data[AugmentableBaseEntity::pseudoProperties.name] != null -> {
                     if (instanceClass is AugmentableBaseEntity) {
                         validateDataAsPseudoProperties(
-                            instanceClass, data[AugmentableBaseEntity::pseudoProperties.name]
+                            instanceClass as AugmentableBaseEntity,
+                            data[AugmentableBaseEntity::pseudoProperties.name]
                         )
                         serialize(data[AugmentableBaseEntity::pseudoProperties.name]!!)
                     } else throw IllegalArgumentException("Entity does not support pseudoProperties")
                 }
 
-                param.name == IPseudoProperty::typeDescriptor.name -> {
+                param.name == IPseudoProperty::typeDescriptor.name
+                        && data[IPseudoProperty::typeDescriptor.name] != null -> {
                     if (instanceClass is IPseudoProperty) {
                         validateTypeDescriptor(data[IPseudoProperty::typeDescriptor.name])
                         serialize(data[IPseudoProperty::typeDescriptor.name]!!)
                     } else throw IllegalArgumentException("Entity does not support typeDescriptor")
                 }
 
-                else -> value
+                value != null -> value
+
+                param.type.isMarkedNullable || param.isOptional -> null
+
+                else -> throw IllegalArgumentException("Field ${param.name} must be provided and cannot be null.")
             }
-        }.filter { !(it.value == null && it.key.isOptional) }
+        }.filter { it.value == null && !it.key.isOptional }
         println("ENTITY CONSTRUCTOR PARAMS: $instanceConstructorParams")
 
         return entityConstructor.callBy(instanceConstructorParams)
