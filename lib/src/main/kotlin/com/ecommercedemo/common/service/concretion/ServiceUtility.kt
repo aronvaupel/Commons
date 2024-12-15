@@ -54,18 +54,25 @@ class ServiceUtility<T : BaseEntity>(
                     else -> throw IllegalArgumentException("Field ${param.name} must be provided and cannot be null.")
                 }
             }
-        val memberProperties = this::class.memberProperties
+
+        val memberProperties = instanceClass::class.memberProperties
+        println("MEMBER PROPERTIES: $memberProperties")
+
         val privateFields = memberProperties
             .filter { it.name.startsWith("_") }
         println("PRIVATE FIELDS: $privateFields")
+
         val correspondingPublicFieldNames = privateFields.map { it.name.removePrefix("_") }
         println("CORRESPONDING PUBLIC FIELD NAMES: $correspondingPublicFieldNames")
+
         val otherFields = data.filter {
             !(it.key.startsWith("_")) && it.key !in instanceConstructorParams.keys.map { param -> param.name }
         }.map { it.key }
         println("OTHER FIELDS: $otherFields")
+
         val allAdditionalFieldNames = correspondingPublicFieldNames + otherFields
         println("ALL ADDITIONAL FIELD NAMES: $allAdditionalFieldNames")
+
         return entityConstructor.callBy(instanceConstructorParams).apply {
             memberProperties
                 .filter { it.name in allAdditionalFieldNames }
@@ -75,7 +82,6 @@ class ServiceUtility<T : BaseEntity>(
 
         }
     }
-
 
     fun updateExistingEntity(data: Map<String, Any?>, entity: T): T {
         if (entity is AugmentableBaseEntity) {
