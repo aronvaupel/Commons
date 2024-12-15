@@ -46,7 +46,7 @@ class PathResolver(
                 }
                 println("PATHRESOVER: ACTUAL VALUE: $actualValue")
                 return ResolvedSearchParam(
-                    deserializedValue = actualValue,
+                    deserializedValue = actualValue[0],
                     jpaPath = currentPath.get<Any>(segment),
                     jsonSegments = jsonSegments)
             } else {
