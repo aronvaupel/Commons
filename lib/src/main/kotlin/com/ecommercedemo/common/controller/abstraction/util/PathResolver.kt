@@ -3,6 +3,7 @@ package com.ecommercedemo.common.controller.abstraction.util
 import com.ecommercedemo.common.model.abstraction.AugmentableBaseEntity
 import com.ecommercedemo.common.model.abstraction.BaseEntity
 import com.ecommercedemo.common.persistence.concretion._pseudoProperty._PseudoPropertyRepository
+import com.fasterxml.jackson.databind.ObjectMapper
 import jakarta.persistence.criteria.Path
 import jakarta.persistence.criteria.Root
 import org.springframework.stereotype.Service
@@ -13,6 +14,7 @@ class PathResolver(
     private val validator: SearchParamValidation,
     private val deserializer: SearchParamDeserializer,
     private val _pseudoPropertyRepository: _PseudoPropertyRepository,
+    private val objectMapper: ObjectMapper
     ) {
     fun <T : BaseEntity> resolvePath(params: SearchParams, root: Root<T>): ResolvedSearchParam {
         println("PATHRESOVER: Resolving path: ${params.path}")
@@ -40,7 +42,7 @@ class PathResolver(
                             ?: throw IllegalArgumentException("PseudoProperty type not found")
                     )
                     println("PATHRESOVER: JSON SEGMENT VALUE: $segmentValue")
-                    segmentValue
+                    objectMapper.writeValueAsString(segmentValue)
                 }
                 println("PATHRESOVER: ACTUAL VALUE: $actualValue")
                 return ResolvedSearchParam(
