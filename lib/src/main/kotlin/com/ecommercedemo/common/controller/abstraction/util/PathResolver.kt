@@ -40,6 +40,7 @@ class PathResolver(
                             ?: throw IllegalArgumentException("PseudoProperty type not found")
                     )
                     println("PATHRESOVER: JSON SEGMENT VALUE: $segmentValue")
+                    segmentValue
                 }
                 println("PATHRESOVER: ACTUAL VALUE: $actualValue")
                 return ResolvedSearchParam(
