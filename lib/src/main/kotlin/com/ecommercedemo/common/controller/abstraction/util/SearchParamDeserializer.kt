@@ -8,7 +8,7 @@ class SearchParamDeserializer(private val objectMapper: ObjectMapper) {
 
     fun convertAnyIfNeeded(value: Any?, expectedType: Class<*>): Any? {
         println("SEARCHPARAMDESERIALIZER: VALUE: $value, EXPECTED TYPE: $expectedType")
-        return when (value) {
+        val result = when (value) {
             is Collection<*> -> {
                 println("Collection detected by deserializer")
                 value.map { element ->
@@ -17,6 +17,8 @@ class SearchParamDeserializer(private val objectMapper: ObjectMapper) {
             }
             else -> convertIfNeeded(value, expectedType)
         }
+        println("SEARCHPARAMDESERIALIZER: RESULT: $result")
+        return result
     }
 
     private fun convertIfNeeded(value: Any?, expectedType: Class<*>): Any? {
