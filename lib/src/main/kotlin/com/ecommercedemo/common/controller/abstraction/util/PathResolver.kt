@@ -15,40 +15,39 @@ class PathResolver(
     private val deserializer: SearchParamDeserializer,
     private val _pseudoPropertyRepository: _PseudoPropertyRepository,
     private val objectMapper: ObjectMapper
-    ) {
+) {
     fun <T : BaseEntity> resolvePath(params: SearchParams, root: Root<T>): ResolvedSearchParam {
         println("PATHRESOVER: Resolving path: ${params.path}")
         val segments = params.path.split(".")
-        println("PATHRESOVER: SEGMENTS: $segments")
         var currentPath: Path<*> = root
-        println("PATHRESOVER: CURRENT PATH: $currentPath")
         var currentClass: Class<*> = root.javaType
-        println("PATHRESOVER: CURRENT CLASS: $currentClass")
 
-        val registeredPseudoPropertyTypesMap = _pseudoPropertyRepository.findAllByEntitySimpleName(currentClass.simpleName)
-            .associate { it.key to it.typeDescriptor.type.typeInfo }
+        val registeredPseudoPropertyTypesMap =
+            _pseudoPropertyRepository.findAllByEntitySimpleName(currentClass.simpleName)
+                .associate { it.key to it.typeDescriptor.type.typeInfo }
 
         segments.forEachIndexed { index, segment ->
-            println("PATHRESOVER: SEGMENT: $segment")
             validator.validateFieldExistsAndIsAccessible(segment, currentClass)
             if (segment == AugmentableBaseEntity::pseudoProperties.name) {
                 val jsonSegments = segments.drop(index + 1)
-                println("PATHRESOVER: JSON SEGMENTS: $jsonSegments")
-                val actualValue =  jsonSegments.map { jsonSegment ->
-                   println("PATHRESOVER: JSON SEGMENT: $jsonSegment")
-                    val segmentValue = deserializer.convertAnyIfNeeded(
-                        params.searchValue,
-                        registeredPseudoPropertyTypesMap[jsonSegment]
-                            ?: throw IllegalArgumentException("PseudoProperty type not found")
-                    )
-                    println("PATHRESOVER: JSON SEGMENT VALUE: $segmentValue")
-                    objectMapper.writeValueAsString(segmentValue)
+                val relevantSegment = jsonSegments.find { jsonSegment ->
+                    jsonSegment == params.path.substringAfterLast(".")
                 }
-                println("PATHRESOVER: ACTUAL VALUE: $actualValue")
+                    ?: throw IllegalArgumentException("PseudoProperty not found")
+                println("PATHRESOVER: RELEVANT SEGMENT: $relevantSegment")
+
+                val segmentValue = deserializer.convertAnyIfNeeded(
+                    params.searchValue,
+                    registeredPseudoPropertyTypesMap[relevantSegment]
+                        ?: throw IllegalArgumentException("PseudoProperty type not found")
+                )
+                println("PATHRESOVER: JSON SEGMENT VALUE: $segmentValue")
+
                 return ResolvedSearchParam(
-                    deserializedValue = actualValue[0],
+                    deserializedValue = segmentValue,
                     jpaPath = currentPath.get<Any>(segment),
-                    jsonSegments = jsonSegments)
+                    jsonSegments = jsonSegments
+                )
             } else {
                 currentPath = currentPath.get<Any>(segment)
                 currentClass = currentPath.model.bindableJavaType
