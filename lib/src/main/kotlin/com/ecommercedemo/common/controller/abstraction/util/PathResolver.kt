@@ -45,7 +45,7 @@ class PathResolver(
                     jpaPath = currentPath.get<Any>(segment),
                     jsonSegments = jsonSegments
                 )
-
+                println("RESULT $result")
                 return result
             } else {
                 currentPath = currentPath.get<Any>(segment)
