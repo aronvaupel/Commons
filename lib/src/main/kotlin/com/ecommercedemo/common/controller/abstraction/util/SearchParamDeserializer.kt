@@ -7,7 +7,6 @@ import org.springframework.stereotype.Service
 class SearchParamDeserializer(private val objectMapper: ObjectMapper) {
 
     fun convertAnyIfNeeded(value: Any?, expectedType: Class<*>): Any? {
-        println("SEARCHPARAMDESERIALIZER: VALUE: $value, EXPECTED TYPE: $expectedType")
         val result = when (value) {
             is Collection<*> -> {
                 println("Collection detected by deserializer")

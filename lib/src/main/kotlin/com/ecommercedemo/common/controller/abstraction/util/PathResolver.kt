@@ -41,7 +41,7 @@ class PathResolver(
                     registeredPseudoPropertyTypesMap[relevantSegment]
                         ?: throw IllegalArgumentException("PseudoProperty type not found")
                 )
-                println("PATHRESOVER: JSON SEGMENT VALUE: $segmentValue")
+                println("PATHRESOVER: JSON SEGMENT VALUE: $segmentValue, JSON SEGMENTCLASS: ${segmentValue!!::class.java}")
 
                 return ResolvedSearchParam(
                     deserializedValue = segmentValue,
