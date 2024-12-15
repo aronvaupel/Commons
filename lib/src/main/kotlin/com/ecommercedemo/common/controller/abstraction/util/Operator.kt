@@ -426,26 +426,42 @@ enum class Operator(
         resolvedSearchParam: ResolvedSearchParam,
         criteriaBuilder: CriteriaBuilder
     ): Expression<*> {
+        var jsonPathExpr: Expression<*> = resolvedSearchParam.jpaPath
+
         // Dynamically build the JSON path for nested structures
-        val jsonPathExpr = resolvedSearchParam.jsonSegments.fold(resolvedSearchParam.jpaPath) { path, segment ->
-            criteriaBuilder.function("jsonb_extract_path", String::class.java, path, criteriaBuilder.literal(segment)) as Path<*>
+        resolvedSearchParam.jsonSegments.forEach { segment ->
+            jsonPathExpr = criteriaBuilder.function(
+                "jsonb_extract_path",
+                String::class.java,
+                jsonPathExpr,
+                criteriaBuilder.literal(segment)
+            )
         }
 
-        // Add quotes and cast to JSONB
+        // Convert all components to Expressions to satisfy CriteriaBuilder.concat
+        val openingQuoteExpr = criteriaBuilder.literal("\"") // Opening quote
+        val closingQuoteExpr = criteriaBuilder.literal("\"") // Closing quote
+        val jsonPathExprAsString = criteriaBuilder.function(
+            "cast",
+            String::class.java,
+            jsonPathExpr,
+            criteriaBuilder.literal("AS TEXT")
+        )
+
+        // Concatenate the components safely
+        val quotedJsonPathExpr = criteriaBuilder.concat(
+            criteriaBuilder.concat(openingQuoteExpr, jsonPathExprAsString),
+            closingQuoteExpr
+        )
+
+        // Cast the quoted result as JSONB
         return criteriaBuilder.function(
             "cast",
             String::class.java,
-            criteriaBuilder.concat(
-                "\"",
-                criteriaBuilder.concat(
-                    criteriaBuilder.function("cast", String::class.java, jsonPathExpr, criteriaBuilder.literal("AS TEXT")),
-                    "\""
-                )
-            ),
+            quotedJsonPathExpr,
             criteriaBuilder.literal("AS JSONB")
         )
     }
-
 
 
     fun isSupportedType(type: KClass<*>): Boolean {
