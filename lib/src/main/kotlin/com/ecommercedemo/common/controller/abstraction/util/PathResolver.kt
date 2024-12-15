@@ -34,11 +34,7 @@ class PathResolver(
                     jsonSegment == params.path.substringAfterLast(".")
                 } ?: throw IllegalArgumentException("PseudoProperty not found")
 
-                val segmentValue = deserializer.convertAnyIfNeeded(
-                    params.searchValue,
-                    registeredPseudoPropertyTypesMap[relevantSegment]
-                        ?: throw IllegalArgumentException("PseudoProperty type not found")
-                )
+                val segmentValue = objectMapper.writeValueAsString(mapOf(relevantSegment to params.searchValue))
 
                 val result = ResolvedSearchParam(
                     deserializedValue = segmentValue,
