@@ -426,17 +426,27 @@ enum class Operator(
         resolvedSearchParam: ResolvedSearchParam,
         criteriaBuilder: CriteriaBuilder
     ): Expression<*> {
-        var jsonPathExpr: Expression<*> = resolvedSearchParam.jpaPath
-        resolvedSearchParam.jsonSegments.forEach { segment ->
-            jsonPathExpr = criteriaBuilder.function(
-                "jsonb_extract_path",
-                String::class.java,
-                jsonPathExpr,
-                criteriaBuilder.literal(segment)
-            )
+        // Dynamically build the JSON path for nested structures
+        val jsonPathExpr = resolvedSearchParam.jsonSegments.fold(resolvedSearchParam.jpaPath) { path, segment ->
+            criteriaBuilder.function("jsonb_extract_path", String::class.java, path, criteriaBuilder.literal(segment)) as Path<*>
         }
-        return jsonPathExpr
+
+        // Add quotes and cast to JSONB
+        return criteriaBuilder.function(
+            "cast",
+            String::class.java,
+            criteriaBuilder.concat(
+                "\"",
+                criteriaBuilder.concat(
+                    criteriaBuilder.function("cast", String::class.java, jsonPathExpr, criteriaBuilder.literal("AS TEXT")),
+                    "\""
+                )
+            ),
+            criteriaBuilder.literal("AS JSONB")
+        )
     }
+
+
 
     fun isSupportedType(type: KClass<*>): Boolean {
         return supportedTypes.contains(type) || supportedTypes.contains(Any::class)
