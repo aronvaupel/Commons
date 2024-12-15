@@ -21,10 +21,9 @@ enum class Operator(
         override fun buildCondition(
             resolvedSearchParam: ResolvedSearchParam,
             criteriaBuilder: CriteriaBuilder,
-            value: Any?
         ): Expression<Boolean> {
             val jsonPathExpr = buildJsonPathExpression(resolvedSearchParam, criteriaBuilder)
-            return criteriaBuilder.equal(jsonPathExpr, criteriaBuilder.literal(value))
+            return criteriaBuilder.equal(jsonPathExpr, criteriaBuilder.literal(resolvedSearchParam.deserializedValue))
         }
     },
     NOT_EQUALS(setOf(Any::class)) {
@@ -34,10 +33,9 @@ enum class Operator(
         override fun buildCondition(
             resolvedSearchParam: ResolvedSearchParam,
             criteriaBuilder: CriteriaBuilder,
-            value: Any?
         ): Expression<Boolean> {
             val jsonPathExpr = buildJsonPathExpression(resolvedSearchParam, criteriaBuilder)
-            return criteriaBuilder.notEqual(jsonPathExpr, criteriaBuilder.literal(value))
+            return criteriaBuilder.notEqual(jsonPathExpr, criteriaBuilder.literal(resolvedSearchParam.deserializedValue))
         }
     },
     CONTAINS(setOf(String::class)) {
@@ -47,10 +45,9 @@ enum class Operator(
         override fun buildCondition(
             resolvedSearchParam: ResolvedSearchParam,
             criteriaBuilder: CriteriaBuilder,
-            value: Any?
         ): Expression<Boolean> {
             val jsonPathExpr = buildJsonPathExpression(resolvedSearchParam, criteriaBuilder)
-            return criteriaBuilder.like(jsonPathExpr as Expression<String>, "%$value%")
+            return criteriaBuilder.like(jsonPathExpr as Expression<String>, "%${resolvedSearchParam.deserializedValue}%")
         }
     },
     DOES_NOT_CONTAIN(setOf(String::class)) {
@@ -60,10 +57,9 @@ enum class Operator(
         override fun buildCondition(
             resolvedSearchParam: ResolvedSearchParam,
             criteriaBuilder: CriteriaBuilder,
-            value: Any?
         ): Expression<Boolean> {
             val jsonPathExpr = buildJsonPathExpression(resolvedSearchParam, criteriaBuilder)
-            return criteriaBuilder.not(criteriaBuilder.like(jsonPathExpr as Expression<String>, "%$value%"))
+            return criteriaBuilder.not(criteriaBuilder.like(jsonPathExpr as Expression<String>, "%$${resolvedSearchParam.deserializedValue}%"))
         }
     },
     STARTS_WITH(setOf(String::class)) {
@@ -73,10 +69,9 @@ enum class Operator(
         override fun buildCondition(
             resolvedSearchParam: ResolvedSearchParam,
             criteriaBuilder: CriteriaBuilder,
-            value: Any?
         ): Expression<Boolean> {
             val jsonPathExpr = buildJsonPathExpression(resolvedSearchParam, criteriaBuilder)
-            return criteriaBuilder.like(jsonPathExpr as Expression<String>, "$value%")
+            return criteriaBuilder.like(jsonPathExpr as Expression<String>, "$${resolvedSearchParam.deserializedValue}%")
         }
     },
     DOES_NOT_START_WITH(setOf(String::class)) {
@@ -86,10 +81,9 @@ enum class Operator(
         override fun buildCondition(
             resolvedSearchParam: ResolvedSearchParam,
             criteriaBuilder: CriteriaBuilder,
-            value: Any?
         ): Expression<Boolean> {
             val jsonPathExpr = buildJsonPathExpression(resolvedSearchParam, criteriaBuilder)
-            return criteriaBuilder.not(criteriaBuilder.like(jsonPathExpr as Expression<String>, "$value%"))
+            return criteriaBuilder.not(criteriaBuilder.like(jsonPathExpr as Expression<String>, "$${resolvedSearchParam.deserializedValue}%"))
         }
     },
     ENDS_WITH(setOf(String::class)) {
@@ -99,10 +93,9 @@ enum class Operator(
         override fun buildCondition(
             resolvedSearchParam: ResolvedSearchParam,
             criteriaBuilder: CriteriaBuilder,
-            value: Any?
         ): Expression<Boolean> {
             val jsonPathExpr = buildJsonPathExpression(resolvedSearchParam, criteriaBuilder)
-            return criteriaBuilder.like(jsonPathExpr as Expression<String>, "%$value")
+            return criteriaBuilder.like(jsonPathExpr as Expression<String>, "%$${resolvedSearchParam.deserializedValue}")
         }
     },
     DOES_NOT_END_WITH(setOf(String::class)) {
@@ -112,10 +105,9 @@ enum class Operator(
         override fun buildCondition(
             resolvedSearchParam: ResolvedSearchParam,
             criteriaBuilder: CriteriaBuilder,
-            value: Any?
         ): Expression<Boolean> {
             val jsonPathExpr = buildJsonPathExpression(resolvedSearchParam, criteriaBuilder)
-            return criteriaBuilder.not(criteriaBuilder.like(jsonPathExpr as Expression<String>, "%$value"))
+            return criteriaBuilder.not(criteriaBuilder.like(jsonPathExpr as Expression<String>, "%$${resolvedSearchParam.deserializedValue}"))
         }
     },
     GREATER_THAN(setOf(Int::class, Long::class, Short::class, Double::class, Float::class)) {
@@ -125,10 +117,9 @@ enum class Operator(
         override fun buildCondition(
             resolvedSearchParam: ResolvedSearchParam,
             criteriaBuilder: CriteriaBuilder,
-            value: Any?
         ): Expression<Boolean> {
             val jsonPathExpr = buildJsonPathExpression(resolvedSearchParam, criteriaBuilder)
-            return criteriaBuilder.greaterThan(jsonPathExpr as Expression<Comparable<Any>>, value as Comparable<Any>)
+            return criteriaBuilder.greaterThan(jsonPathExpr as Expression<Comparable<Any>>, resolvedSearchParam.deserializedValue as Comparable<Any>)
         }
     },
     LESS_THAN(setOf(Int::class, Long::class, Short::class, Double::class, Float::class)) {
@@ -138,10 +129,9 @@ enum class Operator(
         override fun buildCondition(
             resolvedSearchParam: ResolvedSearchParam,
             criteriaBuilder: CriteriaBuilder,
-            value: Any?
         ): Expression<Boolean> {
             val jsonPathExpr = buildJsonPathExpression(resolvedSearchParam, criteriaBuilder)
-            return criteriaBuilder.lessThan(jsonPathExpr as Expression<Comparable<Any>>, value as Comparable<Any>)
+            return criteriaBuilder.lessThan(jsonPathExpr as Expression<Comparable<Any>>, resolvedSearchParam.deserializedValue as Comparable<Any>)
         }
     },
     GREATER_THAN_OR_EQUAL(setOf(Int::class, Long::class, Short::class, Double::class, Float::class)) {
@@ -151,12 +141,11 @@ enum class Operator(
         override fun buildCondition(
             resolvedSearchParam: ResolvedSearchParam,
             criteriaBuilder: CriteriaBuilder,
-            value: Any?
         ): Expression<Boolean> {
             val jsonPathExpr = buildJsonPathExpression(resolvedSearchParam, criteriaBuilder)
             return criteriaBuilder.greaterThanOrEqualTo(
                 jsonPathExpr as Expression<Comparable<Any>>,
-                value as Comparable<Any>
+                resolvedSearchParam.deserializedValue as Comparable<Any>
             )
         }
     },
@@ -167,12 +156,11 @@ enum class Operator(
         override fun buildCondition(
             resolvedSearchParam: ResolvedSearchParam,
             criteriaBuilder: CriteriaBuilder,
-            value: Any?
         ): Expression<Boolean> {
             val jsonPathExpr = buildJsonPathExpression(resolvedSearchParam, criteriaBuilder)
             return criteriaBuilder.lessThanOrEqualTo(
                 jsonPathExpr as Expression<Comparable<Any>>,
-                value as Comparable<Any>
+                resolvedSearchParam.deserializedValue as Comparable<Any>
             )
         }
     },
@@ -183,10 +171,9 @@ enum class Operator(
         override fun buildCondition(
             resolvedSearchParam: ResolvedSearchParam,
             criteriaBuilder: CriteriaBuilder,
-            value: Any?
         ): Expression<Boolean> {
             val jsonPathExpr = buildJsonPathExpression(resolvedSearchParam, criteriaBuilder)
-            return criteriaBuilder.lessThan(jsonPathExpr as Expression<Comparable<Any>>, value as Comparable<Any>)
+            return criteriaBuilder.lessThan(jsonPathExpr as Expression<Comparable<Any>>, resolvedSearchParam.deserializedValue as Comparable<Any>)
         }
     },
     AFTER(setOf(LocalDate::class, LocalDateTime::class, Instant::class)) {
@@ -196,10 +183,9 @@ enum class Operator(
         override fun buildCondition(
             resolvedSearchParam: ResolvedSearchParam,
             criteriaBuilder: CriteriaBuilder,
-            value: Any?
         ): Expression<Boolean> {
             val jsonPathExpr = buildJsonPathExpression(resolvedSearchParam, criteriaBuilder)
-            return criteriaBuilder.greaterThan(jsonPathExpr as Expression<Comparable<Any>>, value as Comparable<Any>)
+            return criteriaBuilder.greaterThan(jsonPathExpr as Expression<Comparable<Any>>, resolvedSearchParam.deserializedValue as Comparable<Any>)
         }
     },
     BETWEEN(setOf(LocalDate::class, LocalDateTime::class, Instant::class)) {
@@ -211,9 +197,8 @@ enum class Operator(
         override fun buildCondition(
             resolvedSearchParam: ResolvedSearchParam,
             criteriaBuilder: CriteriaBuilder,
-            value: Any?
         ): Expression<Boolean> {
-            val (start, end) = restrictToTwoElements(value)
+            val (start, end) = restrictToTwoElements(resolvedSearchParam.deserializedValue)
             val jsonPathExpr = buildJsonPathExpression(resolvedSearchParam, criteriaBuilder)
             return criteriaBuilder.between(jsonPathExpr as Expression<Comparable<Any>>, start, end)
         }
@@ -227,9 +212,8 @@ enum class Operator(
         override fun buildCondition(
             resolvedSearchParam: ResolvedSearchParam,
             criteriaBuilder: CriteriaBuilder,
-            value: Any?
         ): Expression<Boolean> {
-            val (start, end) = restrictToTwoElements(value)
+            val (start, end) = restrictToTwoElements(resolvedSearchParam.deserializedValue)
             val jsonPathExpr = buildJsonPathExpression(resolvedSearchParam, criteriaBuilder)
             return criteriaBuilder.not(
                 criteriaBuilder.between(jsonPathExpr as Expression<Comparable<Any>>, start, end)
@@ -243,10 +227,9 @@ enum class Operator(
         override fun buildCondition(
             resolvedSearchParam: ResolvedSearchParam,
             criteriaBuilder: CriteriaBuilder,
-            value: Any?
         ): Expression<Boolean> {
             val jsonPathExpr = buildJsonPathExpression(resolvedSearchParam, criteriaBuilder)
-            return criteriaBuilder.equal(jsonPathExpr, criteriaBuilder.literal(value))
+            return criteriaBuilder.equal(jsonPathExpr, criteriaBuilder.literal(resolvedSearchParam.deserializedValue))
         }
     },
     ENUM_NOT_EQUALS(setOf(Enum::class)) {
@@ -256,10 +239,9 @@ enum class Operator(
         override fun buildCondition(
             resolvedSearchParam: ResolvedSearchParam,
             criteriaBuilder: CriteriaBuilder,
-            value: Any?
         ): Expression<Boolean> {
             val jsonPathExpr = buildJsonPathExpression(resolvedSearchParam, criteriaBuilder)
-            return criteriaBuilder.notEqual(jsonPathExpr, criteriaBuilder.literal(value))
+            return criteriaBuilder.notEqual(jsonPathExpr, criteriaBuilder.literal(resolvedSearchParam.deserializedValue))
         }
     },
     ENUM_IN(setOf(Enum::class)) {
@@ -269,10 +251,9 @@ enum class Operator(
         override fun buildCondition(
             resolvedSearchParam: ResolvedSearchParam,
             criteriaBuilder: CriteriaBuilder,
-            value: Any?
         ): Expression<Boolean> {
             val jsonPathExpr = buildJsonPathExpression(resolvedSearchParam, criteriaBuilder)
-            val values = (value as Collection<*>).map { criteriaBuilder.literal(it) }
+            val values = (resolvedSearchParam.deserializedValue as Collection<*>).map { criteriaBuilder.literal(it) }
             return criteriaBuilder.`in`(jsonPathExpr).value(values)
         }
     },
@@ -284,10 +265,9 @@ enum class Operator(
         override fun buildCondition(
             resolvedSearchParam: ResolvedSearchParam,
             criteriaBuilder: CriteriaBuilder,
-            value: Any?
         ): Expression<Boolean> {
             val jsonPathExpr = buildJsonPathExpression(resolvedSearchParam, criteriaBuilder)
-            val values = (value as Collection<*>).map { criteriaBuilder.literal(it) }
+            val values = (resolvedSearchParam.deserializedValue as Collection<*>).map { criteriaBuilder.literal(it) }
             return criteriaBuilder.not(criteriaBuilder.`in`(jsonPathExpr).value(values))
         }
     },
@@ -299,10 +279,9 @@ enum class Operator(
         override fun buildCondition(
             resolvedSearchParam: ResolvedSearchParam,
             criteriaBuilder: CriteriaBuilder,
-            value: Any?
         ): Expression<Boolean> {
             val jsonPathExpr = buildJsonPathExpression(resolvedSearchParam, criteriaBuilder)
-            val values = (value as Collection<*>).map { criteriaBuilder.literal(it.toString()) }
+            val values = (resolvedSearchParam.deserializedValue as Collection<*>).map { criteriaBuilder.literal(it.toString()) }
             return criteriaBuilder.`in`(jsonPathExpr).value(values)
         }
     },
@@ -314,10 +293,9 @@ enum class Operator(
         override fun buildCondition(
             resolvedSearchParam: ResolvedSearchParam,
             criteriaBuilder: CriteriaBuilder,
-            value: Any?
         ): Expression<Boolean> {
             val jsonPathExpr = buildJsonPathExpression(resolvedSearchParam, criteriaBuilder)
-            val values = (value as Collection<*>).map { criteriaBuilder.literal(it.toString()) }
+            val values = (resolvedSearchParam.deserializedValue as Collection<*>).map { criteriaBuilder.literal(it.toString()) }
             return criteriaBuilder.not(criteriaBuilder.`in`(jsonPathExpr).value(values))
         }
     },
@@ -329,10 +307,9 @@ enum class Operator(
         override fun buildCondition(
             resolvedSearchParam: ResolvedSearchParam,
             criteriaBuilder: CriteriaBuilder,
-            value: Any?
         ): Expression<Boolean> {
             val jsonPathExpr = buildJsonPathExpression(resolvedSearchParam, criteriaBuilder)
-            val values = (value as Collection<*>).joinToString(",") { "\"$it\"" }
+            val values = (resolvedSearchParam.deserializedValue as Collection<*>).joinToString(",") { "\"$it\"" }
             return criteriaBuilder.equal(
                 criteriaBuilder.function(
                     "jsonb_contains",
@@ -353,10 +330,9 @@ enum class Operator(
         override fun buildCondition(
             resolvedSearchParam: ResolvedSearchParam,
             criteriaBuilder: CriteriaBuilder,
-            value: Any?
         ): Expression<Boolean> {
             val jsonPathExpr = buildJsonPathExpression(resolvedSearchParam, criteriaBuilder)
-            val values = (value as Collection<*>).joinToString(",") { "\"$it\"" }
+            val values = (resolvedSearchParam.deserializedValue as Collection<*>).joinToString(",") { "\"$it\"" }
             return criteriaBuilder.notEqual(
                 criteriaBuilder.function(
                     "jsonb_contains",
@@ -376,10 +352,9 @@ enum class Operator(
         override fun buildCondition(
             resolvedSearchParam: ResolvedSearchParam,
             criteriaBuilder: CriteriaBuilder,
-            value: Any?
         ): Expression<Boolean> {
             val jsonPathExpr = buildJsonPathExpression(resolvedSearchParam, criteriaBuilder)
-            val values = (value as Collection<*>).joinToString(",") { "\"$it\"" }
+            val values = (resolvedSearchParam.deserializedValue as Collection<*>).joinToString(",") { "\"$it\"" }
             return criteriaBuilder.equal(
                 criteriaBuilder.function(
                     "jsonb_contains_any",
@@ -399,10 +374,9 @@ enum class Operator(
         override fun buildCondition(
             resolvedSearchParam: ResolvedSearchParam,
             criteriaBuilder: CriteriaBuilder,
-            value: Any?
         ): Expression<Boolean> {
             val jsonPathExpr = buildJsonPathExpression(resolvedSearchParam, criteriaBuilder)
-            val values = (value as Collection<*>).joinToString(",") { "\"$it\"" }
+            val values = (resolvedSearchParam.deserializedValue as Collection<*>).joinToString(",") { "\"$it\"" }
             return criteriaBuilder.notEqual(
                 criteriaBuilder.function(
                     "jsonb_contains_any",
@@ -419,7 +393,6 @@ enum class Operator(
     abstract fun buildCondition(
         resolvedSearchParam: ResolvedSearchParam,
         criteriaBuilder: CriteriaBuilder,
-        value: Any?
     ): Expression<Boolean>
 
     protected fun buildJsonPathExpression(
@@ -427,8 +400,6 @@ enum class Operator(
         criteriaBuilder: CriteriaBuilder
     ): Expression<*> {
         var jsonPathExpr: Expression<*> = resolvedSearchParam.jpaPath
-
-        // Dynamically build the JSON path for nested structures
         resolvedSearchParam.jsonSegments.forEach { segment ->
             jsonPathExpr = criteriaBuilder.function(
                 "jsonb_extract_path",
@@ -437,32 +408,8 @@ enum class Operator(
                 criteriaBuilder.literal(segment)
             )
         }
-
-        // Convert all components to Expressions to satisfy CriteriaBuilder.concat
-        val openingQuoteExpr = criteriaBuilder.literal("\"") // Opening quote
-        val closingQuoteExpr = criteriaBuilder.literal("\"") // Closing quote
-        val jsonPathExprAsString = criteriaBuilder.function(
-            "cast",
-            String::class.java,
-            jsonPathExpr,
-            criteriaBuilder.literal("AS TEXT")
-        )
-
-        // Concatenate the components safely
-        val quotedJsonPathExpr = criteriaBuilder.concat(
-            criteriaBuilder.concat(openingQuoteExpr, jsonPathExprAsString),
-            closingQuoteExpr
-        )
-
-        // Cast the quoted result as JSONB
-        return criteriaBuilder.function(
-            "cast",
-            String::class.java,
-            quotedJsonPathExpr,
-            criteriaBuilder.literal("AS JSONB")
-        )
+        return jsonPathExpr
     }
-
 
     fun isSupportedType(type: KClass<*>): Boolean {
         return supportedTypes.contains(type) || supportedTypes.contains(Any::class)

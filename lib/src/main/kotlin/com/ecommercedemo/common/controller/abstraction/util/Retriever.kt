@@ -29,7 +29,7 @@ class Retriever(
 
             if (resolvedPathInfo.jsonSegments.isNotEmpty()) {
                 criteriaBuilder.isTrue(
-                    param.operator.buildCondition(resolvedPathInfo, criteriaBuilder, param.searchValue)
+                    param.operator.buildCondition(resolvedPathInfo, criteriaBuilder)
                 )
             } else {
                 param.operator.buildPredicate(criteriaBuilder, resolvedPathInfo.jpaPath, deserializedValue)
