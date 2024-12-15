@@ -24,8 +24,17 @@ class ServiceUtility<T : BaseEntity>(
         instanceClass: KClass<T>,
         data: Map<String, Any?>,
     ): T {
-        if (instanceClass.isSubclassOf(AugmentableBaseEntity::class))
-            validatePseudoProperties(instanceClass as KClass<out AugmentableBaseEntity>, data)
+        when {
+            instanceClass.isSubclassOf(AugmentableBaseEntity::class) ->
+                validatePseudoProperties(instanceClass as KClass<out AugmentableBaseEntity>, data)
+
+            !(instanceClass.isSubclassOf(AugmentableBaseEntity::class))
+                    && data.containsKey(AugmentableBaseEntity::pseudoProperties.name) ->
+                throw IllegalArgumentException("Entity does not support pseudoProperties")
+
+            instanceClass.isSubclassOf(IPseudoProperty::class) ->
+                validateTypeDescriptor(data[IPseudoProperty::typeDescriptor.name])
+        }
 
         val entityConstructor = instanceClass.constructors.find { it.parameters.isNotEmpty() }
             ?: throw IllegalArgumentException("No suitable constructor found for ${instanceClass.simpleName}")
@@ -36,25 +45,12 @@ class ServiceUtility<T : BaseEntity>(
                 val value = data[param.name?.removePrefix("_")]
 
                 when {
-                    param.name == AugmentableBaseEntity::pseudoProperties.name
-                            && data[AugmentableBaseEntity::pseudoProperties.name] != null -> {
-                        if (instanceClass is AugmentableBaseEntity) {
-                            instanceClass.pseudoProperties + value as Map<String, Any?>
-                        } else throw IllegalArgumentException("Entity does not support pseudoProperties")
+                    value != null -> {
+                        println("VALUE: $value")
+                        value
                     }
-
-                    param.name == IPseudoProperty::typeDescriptor.name
-                            && data[IPseudoProperty::typeDescriptor.name] != null -> {
-                        if (instanceClass.isSubclassOf(IPseudoProperty::class)) {
-                            validateTypeDescriptor(data[IPseudoProperty::typeDescriptor.name])
-                            value
-                        } else throw IllegalArgumentException("Entity does not support typeDescriptor")
-                    }
-
-                    value != null -> value
 
                     param.type.isMarkedNullable || param.isOptional -> null
-
                     else -> throw IllegalArgumentException("Field ${param.name} must be provided and cannot be null.")
                 }
             }
@@ -76,15 +72,13 @@ class ServiceUtility<T : BaseEntity>(
         if (entity is AugmentableBaseEntity) {
             validatePseudoProperties(entity::class as KClass<out AugmentableBaseEntity>, data)
         }
+
         val entityProperties =
             entity::class.memberProperties.filterIsInstance<KMutableProperty<*>>().associateBy { it.name }
 
         data.forEach { (key, value) ->
-            val correspondingEntityProperty = entityProperties[key] ?: entityProperties[key.removePrefix("_")]
-
-            if (correspondingEntityProperty == null) {
-                throw IllegalArgumentException("Field $key does not exist in the entity.")
-            }
+            val correspondingEntityProperty = entityProperties[key.removePrefix("_")]
+                ?: throw IllegalArgumentException("Field $key does not exist in the entity.")
 
             correspondingEntityProperty.isAccessible = true
 
@@ -99,11 +93,10 @@ class ServiceUtility<T : BaseEntity>(
 
                 key == AugmentableBaseEntity::pseudoProperties.name -> {
                     if (entity is AugmentableBaseEntity) {
-                        println("Validation passed")
                         val existingPseudoProperties = entity.pseudoProperties
-                        println("EXISTING PSEUDO PROPERTIES: $existingPseudoProperties")
+
                         val mergedPseudoProperties = existingPseudoProperties + value as Map<String, Any?>
-                        println("MERGED PSEUDO PROPERTIES: $mergedPseudoProperties")
+
                         correspondingEntityProperty.setter.call(entity, mergedPseudoProperties)
                     } else {
                         throw IllegalArgumentException("Entity does not support pseudoProperties")
@@ -140,38 +133,43 @@ class ServiceUtility<T : BaseEntity>(
     }
 
     private fun validatePseudoProperties(
-        entity: KClass<out AugmentableBaseEntity>, data: Map<String, Any?>
+        entity: KClass<out AugmentableBaseEntity>, data: Map<String, Any?>, isUpdate: Boolean = false
     ) {
         val validPseudoProperties = getValidPseudoProperties(entity)
         println("VALID PSEUDO PROPERTIES: $validPseudoProperties")
-        val requiredPseudoProperties = validPseudoProperties.filter {
-            when (val typeDescriptor = it.typeDescriptor) {
-                is TypeDescriptor.CollectionDescriptor, is TypeDescriptor.MapDescriptor -> typeDescriptor.hasMinElementsOrEntries()
 
-                else -> !typeDescriptor.isNullable()
+        val pseudoProperties = data[AugmentableBaseEntity::pseudoProperties.name]
+
+        if (pseudoProperties !is Map<*, *>)
+                throw IllegalArgumentException("PseudoProperties must be a Map")
+
+
+        if (!isUpdate) {
+            val requiredPseudoProperties = validPseudoProperties.filter {
+                when (val typeDescriptor = it.typeDescriptor) {
+                    is TypeDescriptor.CollectionDescriptor, is TypeDescriptor.MapDescriptor -> typeDescriptor.hasMinElementsOrEntries()
+
+                    else -> !typeDescriptor.isNullable()
+                }
+            }
+            println("REQUIRED PSEUDO PROPERTIES: $requiredPseudoProperties")
+            when {
+                requiredPseudoProperties.isEmpty() && !data.containsKey(AugmentableBaseEntity::pseudoProperties.name) -> return
+                requiredPseudoProperties.isNotEmpty() && !data.containsKey(AugmentableBaseEntity::pseudoProperties.name) ->
+                    throw IllegalArgumentException("PseudoProperties must be provided")
+            }
+            val missingPseudoProperties = requiredPseudoProperties.filterNot {
+                pseudoProperties.containsKey(it.key)
+            }
+            println("MISSING PSEUDO PROPERTIES: $missingPseudoProperties")
+
+            if (missingPseudoProperties.isNotEmpty()) {
+                throw IllegalArgumentException(
+                    "Missing required pseudo-properties: ${missingPseudoProperties.joinToString(", ") { it.key }}"
+                )
             }
         }
-        println("REQUIRED PSEUDO PROPERTIES: $requiredPseudoProperties")
-        when {
-            requiredPseudoProperties.isEmpty() && !data.containsKey(AugmentableBaseEntity::pseudoProperties.name) -> return
-            requiredPseudoProperties.isNotEmpty() && !data.containsKey(AugmentableBaseEntity::pseudoProperties.name) ->
-                throw IllegalArgumentException("PseudoProperties must be provided")
-            data[AugmentableBaseEntity::pseudoProperties.name] !is Map<*, *> ->
-                throw IllegalArgumentException("PseudoProperties must be a Map")
-        }
 
-        val pseudoProperties = data[AugmentableBaseEntity::pseudoProperties.name] as Map<String, Any?>
-
-        val missingPseudoProperties = requiredPseudoProperties.filterNot {
-            pseudoProperties.containsKey(it.key)
-        }
-        println("MISSING PSEUDO PROPERTIES: $missingPseudoProperties")
-
-        if (missingPseudoProperties.isNotEmpty()) {
-            throw IllegalArgumentException(
-                "Missing required pseudo-properties: ${missingPseudoProperties.joinToString(", ") { it.key }}"
-            )
-        }
 
         val validationErrors = pseudoProperties.mapNotNull { (key, value) ->
             val registeredPseudoProperty = validPseudoProperties.firstOrNull { it.key == key }
@@ -207,6 +205,8 @@ class ServiceUtility<T : BaseEntity>(
                 }"
             )
         }
+
+
     }
 
     private fun TypeDescriptor.isNullable() = when (this) {
