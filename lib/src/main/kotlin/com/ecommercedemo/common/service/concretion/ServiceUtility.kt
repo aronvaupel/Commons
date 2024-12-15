@@ -55,12 +55,8 @@ class ServiceUtility<T : BaseEntity>(
                 }
             }
 
-
         return entityConstructor.callBy(instanceConstructorParams).apply {
             val memberProperties = this::class.memberProperties
-//            val privateFields = memberProperties
-//                .filter { it.name.startsWith("_") }
-//            val correspondingPublicFieldNames = privateFields.map { it.name.removePrefix("_") }
             val remainingFields = data.filter {
                 !(it.key.startsWith("_")) && it.key !in instanceConstructorParams.keys.map { param -> param.name }
             }.map { it.key }
@@ -71,7 +67,6 @@ class ServiceUtility<T : BaseEntity>(
                 .forEach { it.setter.call(this, data[it.name]) }
         }
     }
-
 
     fun updateExistingEntity(data: Map<String, Any?>, entity: T): T {
         if (entity is AugmentableBaseEntity) {
