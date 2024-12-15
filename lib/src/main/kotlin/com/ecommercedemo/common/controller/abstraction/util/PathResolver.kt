@@ -28,6 +28,8 @@ class PathResolver(
             if (segment == AugmentableBaseEntity::pseudoProperties.name) {
                 val jsonSegments = segments.drop(index + 1)
                 println("JSON SEGMENTS: $jsonSegments")
+                currentClass = currentPath.get<Any>(segment).model.bindableJavaType
+                println("CURRENT CLASS FOR SEGMENT: $currentClass")
                 val actualValue = deserializer.convertAnyIfNeeded(params.searchValue, currentClass)
                 println("ACTUAL VALUE: $actualValue")
                 return ResolvedSearchParam(actualValue, jpaPath = currentPath.get<Any>(segment), jsonSegments = jsonSegments)
