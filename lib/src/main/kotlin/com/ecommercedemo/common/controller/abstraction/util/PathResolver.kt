@@ -43,9 +43,12 @@ class PathResolver(
                 )
                 println("PATHRESOVER: JSON SEGMENT VALUE: $segmentValue, JSON SEGMENTCLASS: ${segmentValue!!::class.java}")
 
+                val pseudoPropertiesPath = currentPath.get<Map<String, Any>>(segment)
+                println("PATHRESOVER: Fully resolved path for pseudoProperties")
+
                 return ResolvedSearchParam(
                     deserializedValue = segmentValue,
-                    jpaPath = currentPath.get<Any>(segment),
+                    jpaPath = pseudoPropertiesPath,
                     jsonSegments = jsonSegments
                 )
             } else {
