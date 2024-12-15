@@ -26,7 +26,6 @@ class Retriever(
             val deserializedValue = resolvedPathInfo.deserializedValue
 
             if (resolvedPathInfo.jsonSegments.isNotEmpty()) {
-               //Todo: Check if deserialization is needed once pseudo properties and redis is implemented
                 criteriaBuilder.isTrue(
                     param.operator.buildCondition(resolvedPathInfo, criteriaBuilder, param.searchValue)
                 )

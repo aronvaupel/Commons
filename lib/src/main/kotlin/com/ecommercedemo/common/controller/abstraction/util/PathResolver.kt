@@ -32,25 +32,21 @@ class PathResolver(
                 val jsonSegments = segments.drop(index + 1)
                 val relevantSegment = jsonSegments.find { jsonSegment ->
                     jsonSegment == params.path.substringAfterLast(".")
-                }
-                    ?: throw IllegalArgumentException("PseudoProperty not found")
-                println("PATHRESOVER: RELEVANT SEGMENT: $relevantSegment")
+                } ?: throw IllegalArgumentException("PseudoProperty not found")
 
                 val segmentValue = deserializer.convertAnyIfNeeded(
                     params.searchValue,
                     registeredPseudoPropertyTypesMap[relevantSegment]
                         ?: throw IllegalArgumentException("PseudoProperty type not found")
                 )
-                println("PATHRESOVER: JSON SEGMENT VALUE: $segmentValue, JSON SEGMENTCLASS: ${segmentValue!!::class.java}")
 
-                val pseudoPropertiesPath = currentPath.get<Map<String, Any>>(segment)
-                println("PATHRESOVER: Fully resolved path for pseudoProperties: $pseudoPropertiesPath")
-
-                return ResolvedSearchParam(
+                val result = ResolvedSearchParam(
                     deserializedValue = segmentValue,
-                    jpaPath = pseudoPropertiesPath,
+                    jpaPath = currentPath.get<Any>(segment),
                     jsonSegments = jsonSegments
                 )
+
+                return result
             } else {
                 currentPath = currentPath.get<Any>(segment)
                 currentClass = currentPath.model.bindableJavaType
