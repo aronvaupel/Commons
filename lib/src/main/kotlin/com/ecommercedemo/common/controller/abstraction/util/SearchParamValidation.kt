@@ -9,7 +9,7 @@ import kotlin.reflect.full.memberProperties
 @Service
 @Suppress("unused")
 class SearchParamValidation(
-    private val deserializer: SearchParamDeserializer
+    private val deserializer: SearchParamConverter
 ) {
     fun validate(value: Any?, expectedType: Class<*>, declaringClass: KClass<*>, attributePath: String) {
         println("Start validating value")

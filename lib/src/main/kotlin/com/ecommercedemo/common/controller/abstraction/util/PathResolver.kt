@@ -12,7 +12,7 @@ import org.springframework.stereotype.Service
 @Service
 class PathResolver(
     private val validator: SearchParamValidation,
-    private val deserializer: SearchParamDeserializer,
+    private val converter: SearchParamConverter,
     private val _pseudoPropertyRepository: _PseudoPropertyRepository,
     private val objectMapper: ObjectMapper
 ) {
@@ -34,10 +34,22 @@ class PathResolver(
                     jsonSegment == params.path.substringAfterLast(".")
                 } ?: throw IllegalArgumentException("PseudoProperty not found")
 
-                val segmentValue = objectMapper.writeValueAsString(mapOf(relevantSegment to params.searchValue))
+                // Get the expected type for the relevant pseudo property
+                val expectedType = registeredPseudoPropertyTypesMap[relevantSegment]
+                    ?: throw IllegalArgumentException("PseudoProperty type not found")
+
+                // Convert the value if needed
+                val rawSegmentValue = converter.convertAnyIfNeeded(params.searchValue, expectedType)
+
+                // Serialize the segmentValue into valid JSON format
+                val serializedSegmentValue = when (rawSegmentValue) {
+                    is String -> "\"$rawSegmentValue\"" // Wrap strings in double quotes
+                    null -> null // Keep null values as null
+                    else -> objectMapper.writeValueAsString(rawSegmentValue) // Serialize other types using ObjectMapper
+                }
 
                 val result = ResolvedSearchParam(
-                    deserializedValue = segmentValue,
+                    deserializedValue = serializedSegmentValue,
                     jpaPath = currentPath.get<Any>(segment),
                     jsonSegments = jsonSegments
                 )
@@ -48,7 +60,7 @@ class PathResolver(
                 currentClass = currentPath.model.bindableJavaType
             }
         }
-        val actualValue = deserializer.convertAnyIfNeeded(params.searchValue, currentClass)
+        val actualValue = converter.convertAnyIfNeeded(params.searchValue, currentClass)
         validator.validate(actualValue, currentPath.model.bindableJavaType, currentClass.kotlin, currentPath.toString())
         println("Finished resolving path: ${params.path}")
         return ResolvedSearchParam(actualValue, jpaPath = currentPath, jsonSegments = emptyList())
