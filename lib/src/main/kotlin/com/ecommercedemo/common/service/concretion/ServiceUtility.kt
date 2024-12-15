@@ -54,16 +54,25 @@ class ServiceUtility<T : BaseEntity>(
                     else -> throw IllegalArgumentException("Field ${param.name} must be provided and cannot be null.")
                 }
             }
+        val memberProperties = this::class.memberProperties
+        val privateFields = memberProperties
+            .filter { it.name.startsWith("_") }
+        println("PRIVATE FIELDS: $privateFields")
+        val correspondingPublicFieldNames = privateFields.map { it.name.removePrefix("_") }
+        println("CORRESPONDING PUBLIC FIELD NAMES: $correspondingPublicFieldNames")
+        val otherFields = data.filter {
+            !(it.key.startsWith("_")) && it.key !in instanceConstructorParams.keys.map { param -> param.name }
+        }.map { it.key }
+        println("OTHER FIELDS: $otherFields")
+        val allAdditionalFieldNames = correspondingPublicFieldNames + otherFields
+        println("ALL ADDITIONAL FIELD NAMES: $allAdditionalFieldNames")
         return entityConstructor.callBy(instanceConstructorParams).apply {
-            val memberProperties = this::class.memberProperties
-            val privateFields = memberProperties
-                .filter { it.name.startsWith("_") }
-            val correspondingPublicFieldNames = privateFields.map { it.name.removePrefix("_") }
             memberProperties
-                .filter { it.name in correspondingPublicFieldNames }
+                .filter { it.name in allAdditionalFieldNames }
                 .filterIsInstance<KMutableProperty<*>>()
                 .onEach { it.isAccessible = true }
                 .forEach { it.setter.call(this, data[it.name]) }
+
         }
     }
 
@@ -141,7 +150,7 @@ class ServiceUtility<T : BaseEntity>(
         val pseudoProperties = data[AugmentableBaseEntity::pseudoProperties.name]
 
         if (pseudoProperties !is Map<*, *>)
-                throw IllegalArgumentException("PseudoProperties must be a Map")
+            throw IllegalArgumentException("PseudoProperties must be a Map")
 
 
         if (!isUpdate) {
