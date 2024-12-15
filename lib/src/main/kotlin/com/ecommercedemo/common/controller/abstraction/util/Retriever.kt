@@ -16,16 +16,13 @@ class Retriever(
 ) {
 
     fun <T : BaseEntity> executeSearch(searchRequest: SearchRequest, entity: KClass<T>): List<T> {
-        println("Start executing search")
         val criteriaBuilder = entityManager.criteriaBuilder
         val criteriaQuery = criteriaBuilder.createQuery(entity.java)
         val root = criteriaQuery.from(entity.java)
 
         val predicates = searchRequest.params.map { param ->
             val resolvedPathInfo = pathResolver.resolvePath(param, root)
-            println("Resolved path info: $resolvedPathInfo")
             val deserializedValue = resolvedPathInfo.deserializedValue
-            println("Deserialized value: $deserializedValue")
 
             if (resolvedPathInfo.jsonSegments.isNotEmpty()) {
                 criteriaBuilder.isTrue(

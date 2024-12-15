@@ -7,7 +7,7 @@ import org.hibernate.annotations.Type
 
 
 @MappedSuperclass
-@Suppress("unused", "UNCHECKED_CAST")
+@Suppress("unused")
 abstract class AugmentableBaseEntity: BaseEntity() {
     @Type(JsonType::class)
     @Column(name = "pseudo_properties", columnDefinition = "jsonb")
@@ -34,7 +34,6 @@ abstract class AugmentableBaseEntity: BaseEntity() {
             require(oldKey.isNotBlank()) { "Old key must not be blank." }
             require(newKey.isNotBlank()) { "New key must not be blank." }
             if (oldKey == newKey) {
-                println("No renaming needed: 'oldKey' and 'newKey' are the same.")
                 return
             }
             if (!pseudoProperties.containsKey(oldKey)) {
@@ -44,7 +43,6 @@ abstract class AugmentableBaseEntity: BaseEntity() {
             pseudoProperties = pseudoProperties.toMutableMap().apply {
                 this[newKey] = this.remove(oldKey)
             }
-            println("Successfully renamed key '$oldKey' to '$newKey'.")
         } catch (e: Exception) {
             println("Failed to rename key: ${e.message}")
             throw e

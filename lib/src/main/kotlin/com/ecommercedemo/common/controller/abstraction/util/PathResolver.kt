@@ -17,7 +17,6 @@ class PathResolver(
     private val objectMapper: ObjectMapper
 ) {
     fun <T : BaseEntity> resolvePath(params: SearchParams, root: Root<T>): ResolvedSearchParam {
-        println("PATHRESOVER: Resolving path: ${params.path}")
         val segments = params.path.split(".")
         var currentPath: Path<*> = root
         var currentClass: Class<*> = root.javaType
@@ -30,37 +29,27 @@ class PathResolver(
             validator.validateFieldExistsAndIsAccessible(segment, currentClass)
             if (segment == AugmentableBaseEntity::pseudoProperties.name) {
                 val jsonSegments = segments.drop(index + 1)
-                println("JSON SEGMENTS: $jsonSegments")
 
                 val relevantSegment = jsonSegments.find { jsonSegment ->
                     jsonSegment == params.path.substringAfterLast(".")
                 } ?: throw IllegalArgumentException("PseudoProperty not found")
-                println("RELEVANT SEGMENT: $relevantSegment")
 
-                // Get the expected type for the relevant pseudo property
                 val expectedType = registeredPseudoPropertyTypesMap[relevantSegment]
                     ?: throw IllegalArgumentException("PseudoProperty type not found")
-                println("EXPECTED TYPE: $expectedType")
 
-
-                // Convert the value if needed
                 val rawSegmentValue = converter.convertAnyIfNeeded(params.searchValue, expectedType)
-                println("RAW SEGMENT VALUE: $rawSegmentValue")
 
-                // Serialize the segmentValue into valid JSON format
                 val serializedSegmentValue = when (rawSegmentValue) {
-                    is String -> "\"$rawSegmentValue\"" // Wrap strings in double quotes
-                    null -> null // Keep null values as null
-                    else -> objectMapper.writeValueAsString(rawSegmentValue) // Serialize other types using ObjectMapper
+                    is String -> "\"$rawSegmentValue\""
+                    null -> null
+                    else -> objectMapper.writeValueAsString(rawSegmentValue)
                 }
-                println("SERIALIZED SEGMENT VALUE: $serializedSegmentValue")
 
                 val result = ResolvedSearchParam(
                     deserializedValue = serializedSegmentValue,
                     jpaPath = currentPath.get<Any>(segment),
                     jsonSegments = jsonSegments
                 )
-                println("RESULT $result")
                 return result
             } else {
                 currentPath = currentPath.get<Any>(segment)
@@ -69,7 +58,6 @@ class PathResolver(
         }
         val actualValue = converter.convertAnyIfNeeded(params.searchValue, currentClass)
         validator.validate(actualValue, currentPath.model.bindableJavaType, currentClass.kotlin, currentPath.toString())
-        println("Finished resolving path: ${params.path}")
         return ResolvedSearchParam(actualValue, jpaPath = currentPath, jsonSegments = emptyList())
     }
 

@@ -34,9 +34,7 @@ class MainEventHandler<T: BaseEntity>(
             EntityEventType.UPDATE -> IUpdateHandler::class.java
             EntityEventType.DELETE -> IDeleteHandler::class.java
         } as Class<IEventTypeHandler<T>>
-        println("Event type: ${event.type}")
         val result = getEntitySpecificUseCaseByEventType(useCaseClass, event.entityClassName)
-        println("Use case: $result")
         return result
     }
 

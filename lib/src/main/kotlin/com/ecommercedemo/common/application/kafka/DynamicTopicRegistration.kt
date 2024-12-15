@@ -22,7 +22,6 @@ class DynamicTopicRegistration @Autowired constructor(
 
     fun declareKafkaTopics(upstreamEntityNames: List<String>) {
         redisService.registerAsTopics(upstreamEntityNames)
-        println("Attempting to declare Kafka topics for upstream entities: $upstreamEntityNames")
         upstreamEntityNames.forEach { topicName ->
             val topic: NewTopic = TopicBuilder.name(topicName)
                 .partitions(defaultPartitions)
@@ -30,7 +29,6 @@ class DynamicTopicRegistration @Autowired constructor(
                 .build()
 
             kafkaAdmin.createOrModifyTopics(topic)
-            println("Declared Kafka topic: $topicName with $defaultPartitions partitions and $defaultReplicationFactor replication factor.")
         }
     }
 }

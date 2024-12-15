@@ -43,7 +43,6 @@ class EntityEventDeserializer(
                 propertiesNode,
                 objectMapper.typeFactory.constructMapType(Map::class.java, String::class.java, Any::class.java)
             )
-            println("DESERIALIZER: rawData: $rawData")
             TypeReAttacher(objectMapper).reAttachType(rawData, entityClass)
         } catch (e: Exception) {
             throw IllegalArgumentException("Failed to deserialize 'properties' for entity class: _$entityClassName", e)

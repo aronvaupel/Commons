@@ -7,7 +7,6 @@ import org.springframework.stereotype.Service
 class SearchParamConverter(private val objectMapper: ObjectMapper) {
 
     fun convertAnyIfNeeded(value: Any?, expectedType: Class<*>): Any? {
-        println("INPUT: value: $value, expectedType: $expectedType")
         val result = when (value) {
             is Collection<*> -> {
                 value.map { element ->
@@ -15,7 +14,6 @@ class SearchParamConverter(private val objectMapper: ObjectMapper) {
             }
             else -> convertIfNeeded(value, expectedType)
         }
-        println("CONVERTED VALUE: $result")
         return result
     }
 

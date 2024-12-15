@@ -46,7 +46,6 @@ class ServiceUtility<T : BaseEntity>(
 
                 when {
                     value != null -> {
-                        println("VALUE: $value")
                         value
                     }
 
@@ -136,7 +135,6 @@ class ServiceUtility<T : BaseEntity>(
         entity: KClass<out AugmentableBaseEntity>, data: Map<String, Any?>, isUpdate: Boolean = false
     ) {
         val validPseudoProperties = getValidPseudoProperties(entity)
-        println("VALID PSEUDO PROPERTIES: $validPseudoProperties")
 
         val pseudoProperties = data[AugmentableBaseEntity::pseudoProperties.name]
 
@@ -152,7 +150,7 @@ class ServiceUtility<T : BaseEntity>(
                     else -> !typeDescriptor.isNullable()
                 }
             }
-            println("REQUIRED PSEUDO PROPERTIES: $requiredPseudoProperties")
+
             when {
                 requiredPseudoProperties.isEmpty() && !data.containsKey(AugmentableBaseEntity::pseudoProperties.name) -> return
                 requiredPseudoProperties.isNotEmpty() && !data.containsKey(AugmentableBaseEntity::pseudoProperties.name) ->
@@ -161,7 +159,6 @@ class ServiceUtility<T : BaseEntity>(
             val missingPseudoProperties = requiredPseudoProperties.filterNot {
                 pseudoProperties.containsKey(it.key)
             }
-            println("MISSING PSEUDO PROPERTIES: $missingPseudoProperties")
 
             if (missingPseudoProperties.isNotEmpty()) {
                 throw IllegalArgumentException(

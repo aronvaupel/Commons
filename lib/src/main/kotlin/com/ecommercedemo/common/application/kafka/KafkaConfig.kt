@@ -21,7 +21,6 @@ open class KafkaConfig(
 
     @Bean
     open fun producerFactory(): ProducerFactory<String, Any> {
-        println("Registered Modules in Producer ObjectMapper: ${objectMapper.registeredModuleIds}")
         return DefaultKafkaProducerFactory(producerProperties())
     }
 

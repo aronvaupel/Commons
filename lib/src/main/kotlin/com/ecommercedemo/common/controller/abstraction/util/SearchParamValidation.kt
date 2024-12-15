@@ -12,7 +12,6 @@ class SearchParamValidation(
     private val deserializer: SearchParamConverter
 ) {
     fun validate(value: Any?, expectedType: Class<*>, declaringClass: KClass<*>, attributePath: String) {
-        println("Start validating value")
         if (value == null && declaringClass.memberProperties
                 .find { it.name == attributePath }
                 ?.returnType
@@ -26,7 +25,6 @@ class SearchParamValidation(
         }
 
         if (value is Collection<*>) {
-            println("Collection detected by validator")
             validateCollectionElements(value, expectedType, attributePath)
         } else if (!expectedType.isInstance(value)) {
             throw ValueTypeMismatchException(
@@ -38,7 +36,6 @@ class SearchParamValidation(
     }
 
     private fun validateCollectionElements(collection: Collection<*>, expectedType: Class<*>, attributePath: String) {
-        println("Start validating collection elements")
         collection.forEach { element ->
             if (element != null && !expectedType.isInstance(element)) {
                 throw ValueTypeMismatchException(

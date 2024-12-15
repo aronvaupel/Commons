@@ -9,7 +9,8 @@ import java.time.LocalDate
 import java.time.LocalDateTime
 import kotlin.reflect.KClass
 
-//Todo: Add support for more operators, i.e. regex, isNull, isNotNull, etc.
+//Todo: Add support for more operators, i.e. regex
+//Todo: Clean up, extract repetitive code
 @Suppress("UNCHECKED_CAST", "unused")
 enum class Operator(
     private val supportedTypes: Set<KClass<*>>
