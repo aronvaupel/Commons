@@ -23,7 +23,9 @@ class Retriever(
 
         val predicates = searchRequest.params.map { param ->
             val resolvedPathInfo = pathResolver.resolvePath(param, root)
+            println("Resolved path info: $resolvedPathInfo")
             val deserializedValue = resolvedPathInfo.deserializedValue
+            println("Deserialized value: $deserializedValue")
 
             if (resolvedPathInfo.jsonSegments.isNotEmpty()) {
                 criteriaBuilder.isTrue(

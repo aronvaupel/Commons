@@ -30,16 +30,22 @@ class PathResolver(
             validator.validateFieldExistsAndIsAccessible(segment, currentClass)
             if (segment == AugmentableBaseEntity::pseudoProperties.name) {
                 val jsonSegments = segments.drop(index + 1)
+                println("JSON SEGMENTS: $jsonSegments")
+
                 val relevantSegment = jsonSegments.find { jsonSegment ->
                     jsonSegment == params.path.substringAfterLast(".")
                 } ?: throw IllegalArgumentException("PseudoProperty not found")
+                println("RELEVANT SEGMENT: $relevantSegment")
 
                 // Get the expected type for the relevant pseudo property
                 val expectedType = registeredPseudoPropertyTypesMap[relevantSegment]
                     ?: throw IllegalArgumentException("PseudoProperty type not found")
+                println("EXPECTED TYPE: $expectedType")
+
 
                 // Convert the value if needed
                 val rawSegmentValue = converter.convertAnyIfNeeded(params.searchValue, expectedType)
+                println("RAW SEGMENT VALUE: $rawSegmentValue")
 
                 // Serialize the segmentValue into valid JSON format
                 val serializedSegmentValue = when (rawSegmentValue) {
@@ -47,6 +53,7 @@ class PathResolver(
                     null -> null // Keep null values as null
                     else -> objectMapper.writeValueAsString(rawSegmentValue) // Serialize other types using ObjectMapper
                 }
+                println("SERIALIZED SEGMENT VALUE: $serializedSegmentValue")
 
                 val result = ResolvedSearchParam(
                     deserializedValue = serializedSegmentValue,
