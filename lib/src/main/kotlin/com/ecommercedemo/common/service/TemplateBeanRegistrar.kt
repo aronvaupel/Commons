@@ -8,6 +8,7 @@ import org.springframework.beans.factory.support.BeanDefinitionBuilder
 import org.springframework.beans.factory.support.BeanDefinitionRegistry
 import org.springframework.context.annotation.ImportBeanDefinitionRegistrar
 import org.springframework.core.type.AnnotationMetadata
+import java.util.*
 
 class TemplateBeanRegistrar : ImportBeanDefinitionRegistrar {
 
@@ -22,11 +23,17 @@ class TemplateBeanRegistrar : ImportBeanDefinitionRegistrar {
         }
         scanner.findClassesWithAnnotation(PersistenceAdapterFor::class).forEach { clazz ->
             val beanDefinition = BeanDefinitionBuilder.genericBeanDefinition(clazz).beanDefinition
-            registry.registerBeanDefinition(clazz.simpleName, beanDefinition)
+            registry.registerBeanDefinition(
+                clazz.simpleName.replaceFirstChar { it.lowercase(Locale.getDefault()) },
+                beanDefinition
+            )
         }
         scanner.findClassesWithAnnotation(ControllerFor::class).forEach { clazz ->
             val beanDefinition = BeanDefinitionBuilder.genericBeanDefinition(clazz).beanDefinition
-            registry.registerBeanDefinition(clazz.simpleName, beanDefinition)
+            registry.registerBeanDefinition(
+                clazz.simpleName.replaceFirstChar { it.lowercase(Locale.getDefault()) },
+                beanDefinition
+            )
         }
     }
 
@@ -38,9 +45,11 @@ class TemplateBeanRegistrar : ImportBeanDefinitionRegistrar {
             clazz.isAnnotationPresent(RestServiceFor::class.java) -> {
                 clazz.getAnnotation(RestServiceFor::class.java).entity
             }
+
             clazz.isAnnotationPresent(EventServiceFor::class.java) -> {
                 clazz.getAnnotation(EventServiceFor::class.java).entity
             }
+
             else -> throw IllegalStateException("No valid annotation found on class ${clazz.name}")
         }
 
@@ -56,7 +65,10 @@ class TemplateBeanRegistrar : ImportBeanDefinitionRegistrar {
 
         val beanDefinition = BeanDefinitionBuilder.genericBeanDefinition(clazz)
         dependencies.forEach { dep -> beanDefinition.addConstructorArgValue(dep) }
-        registry.registerBeanDefinition(clazz.simpleName, beanDefinition.beanDefinition)
+        registry.registerBeanDefinition(
+            clazz.simpleName.replaceFirstChar { it.lowercase(Locale.getDefault()) },
+            beanDefinition.beanDefinition
+        )
     }
 
 }
