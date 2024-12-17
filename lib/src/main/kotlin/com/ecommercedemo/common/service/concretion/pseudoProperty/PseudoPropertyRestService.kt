@@ -1,34 +1,13 @@
 package com.ecommercedemo.common.service.concretion.pseudoProperty
 
-import com.ecommercedemo.common.application.kafka.EntityEventProducer
-import com.ecommercedemo.common.controller.abstraction.util.Retriever
 import com.ecommercedemo.common.model.concretion.pseudoProperty.PseudoProperty
-import com.ecommercedemo.common.persistence.abstraction.IEntityPersistenceAdapter
+import com.ecommercedemo.common.service.RestServiceFor
 import com.ecommercedemo.common.service.abstraction.RestServiceTemplate
-import com.ecommercedemo.common.service.concretion.EntityChangeTracker
-import com.ecommercedemo.common.service.concretion.ServiceUtility
-import com.ecommercedemo.common.service.concretion.TypeReAttacher
-import jakarta.persistence.EntityManager
 import jakarta.transaction.Transactional
 import org.springframework.stereotype.Service
 
 @Transactional
 @Service
+@RestServiceFor(PseudoProperty::class)
 open class PseudoPropertyRestService(
-    adapter: IEntityPersistenceAdapter<PseudoProperty>,
-    entityChangeTracker: EntityChangeTracker<PseudoProperty>,
-    entityManager: EntityManager,
-    eventProducer: EntityEventProducer,
-    retriever: Retriever,
-    serviceUtility: ServiceUtility<PseudoProperty>,
-    typeReAttacher: TypeReAttacher
-) : RestServiceTemplate<PseudoProperty>(
-    adapter,
-    PseudoProperty::class,
-    entityChangeTracker,
-    entityManager,
-    eventProducer,
-    retriever,
-    serviceUtility,
-    typeReAttacher
-)
+) : RestServiceTemplate<PseudoProperty>()
