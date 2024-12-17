@@ -27,7 +27,6 @@ import kotlin.reflect.KClass
 abstract class RestServiceTemplate<T : BaseEntity>: IRestService<T> {
     @Autowired
     private lateinit var adapter: IEntityPersistenceAdapter<T>
-    @Autowired
     private lateinit var entityClass: KClass<T>
     @Autowired
     private lateinit var entityChangeTracker: EntityChangeTracker<T>

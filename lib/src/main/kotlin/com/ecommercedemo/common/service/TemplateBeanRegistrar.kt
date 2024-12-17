@@ -15,7 +15,7 @@ class TemplateBeanRegistrar : ImportBeanDefinitionRegistrar {
         val scanner = ClassPathScanner()
 
         scanner.findClassesWithAnnotation(RestServiceFor::class).forEach { clazz ->
-            val entityClass = clazz.getAnnotation(RestServiceFor::class.java).entity.java
+            val entityClass = clazz.getAnnotation(RestServiceFor::class.java).entity
             val parentConstructor = clazz.superclass.constructors.firstOrNull()
                 ?: throw IllegalStateException("No constructor found for parent class of ${clazz.simpleName}")
 
