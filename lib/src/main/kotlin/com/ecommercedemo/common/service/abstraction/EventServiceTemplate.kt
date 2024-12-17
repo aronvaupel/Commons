@@ -19,7 +19,6 @@ abstract class EventServiceTemplate<T : BaseEntity>: IEventService<T> {
 
     @Autowired
     private lateinit var adapter: IEntityPersistenceAdapter<T>
-    @Autowired
     private lateinit var downstreamEntityClass: KClass<T>
     @Autowired
     private lateinit var serviceUtility: ServiceUtility<T>
