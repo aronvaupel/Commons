@@ -15,25 +15,10 @@ class TemplateBeanRegistrar : ImportBeanDefinitionRegistrar {
         val scanner = ClassPathScanner()
 
         scanner.findClassesWithAnnotation(RestServiceFor::class).forEach { clazz ->
-            val entityClass = clazz.getAnnotation(RestServiceFor::class.java).entity
-            val parentConstructor = clazz.superclass.constructors.firstOrNull()
-                ?: throw IllegalStateException("No constructor found for parent class of ${clazz.simpleName}")
-
-            val dependencies = parentConstructor.parameterTypes.map { paramType ->
-                when (paramType) {
-                    entityClass::class.java -> entityClass
-                    else -> SpringContextProvider.applicationContext.getBean(paramType)
-                }
-            }
-
-            val beanDefinition = BeanDefinitionBuilder.genericBeanDefinition(clazz)
-            dependencies.forEach { dep -> beanDefinition.addConstructorArgValue(dep) }
-            registry.registerBeanDefinition(clazz.simpleName, beanDefinition.beanDefinition)
+            registerWithEntiyClass(clazz, registry)
         }
-
         scanner.findClassesWithAnnotation(EventServiceFor::class).forEach { clazz ->
-            val beanDefinition = BeanDefinitionBuilder.genericBeanDefinition(clazz).beanDefinition
-            registry.registerBeanDefinition(clazz.simpleName, beanDefinition)
+            registerWithEntiyClass(clazz, registry)
         }
         scanner.findClassesWithAnnotation(PersistenceAdapterFor::class).forEach { clazz ->
             val beanDefinition = BeanDefinitionBuilder.genericBeanDefinition(clazz).beanDefinition
@@ -43,6 +28,26 @@ class TemplateBeanRegistrar : ImportBeanDefinitionRegistrar {
             val beanDefinition = BeanDefinitionBuilder.genericBeanDefinition(clazz).beanDefinition
             registry.registerBeanDefinition(clazz.simpleName, beanDefinition)
         }
+    }
+
+    private fun registerWithEntiyClass(
+        clazz: Class<*>,
+        registry: BeanDefinitionRegistry
+    ) {
+        val entityClass = clazz.getAnnotation(RestServiceFor::class.java).entity
+        val parentConstructor = clazz.superclass.constructors.firstOrNull()
+            ?: throw IllegalStateException("No constructor found for parent class of ${clazz.simpleName}")
+
+        val dependencies = parentConstructor.parameterTypes.map { paramType ->
+            when (paramType) {
+                entityClass::class.java -> entityClass
+                else -> SpringContextProvider.applicationContext.getBean(paramType)
+            }
+        }
+
+        val beanDefinition = BeanDefinitionBuilder.genericBeanDefinition(clazz)
+        dependencies.forEach { dep -> beanDefinition.addConstructorArgValue(dep) }
+        registry.registerBeanDefinition(clazz.simpleName, beanDefinition.beanDefinition)
     }
 
 }
