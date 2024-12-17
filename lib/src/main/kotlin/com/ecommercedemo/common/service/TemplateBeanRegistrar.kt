@@ -15,10 +15,10 @@ class TemplateBeanRegistrar : ImportBeanDefinitionRegistrar {
         val scanner = ClassPathScanner()
 
         scanner.findClassesWithAnnotation(RestServiceFor::class).forEach { clazz ->
-            registerWithEntiyClass(clazz, registry)
+            registerWithEntityClass(clazz, registry)
         }
         scanner.findClassesWithAnnotation(EventServiceFor::class).forEach { clazz ->
-            registerWithEntiyClass(clazz, registry)
+            registerWithEntityClass(clazz, registry)
         }
         scanner.findClassesWithAnnotation(PersistenceAdapterFor::class).forEach { clazz ->
             val beanDefinition = BeanDefinitionBuilder.genericBeanDefinition(clazz).beanDefinition
@@ -30,11 +30,20 @@ class TemplateBeanRegistrar : ImportBeanDefinitionRegistrar {
         }
     }
 
-    private fun registerWithEntiyClass(
+    private fun registerWithEntityClass(
         clazz: Class<*>,
-        registry: BeanDefinitionRegistry
+        registry: BeanDefinitionRegistry,
     ) {
-        val entityClass = clazz.getAnnotation(RestServiceFor::class.java).entity
+        val entityClass = when {
+            clazz.isAnnotationPresent(RestServiceFor::class.java) -> {
+                clazz.getAnnotation(RestServiceFor::class.java).entity
+            }
+            clazz.isAnnotationPresent(EventServiceFor::class.java) -> {
+                clazz.getAnnotation(EventServiceFor::class.java).entity
+            }
+            else -> throw IllegalStateException("No valid annotation found on class ${clazz.name}")
+        }
+
         val parentConstructor = clazz.superclass.constructors.firstOrNull()
             ?: throw IllegalStateException("No constructor found for parent class of ${clazz.simpleName}")
 
