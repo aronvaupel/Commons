@@ -135,8 +135,8 @@ class ServiceUtility<T : BaseEntity>(
         entity: KClass<out AugmentableBaseEntity>, data: Map<String, Any?>, isUpdate: Boolean = false
     ) {
         val validPseudoProperties = getValidPseudoProperties(entity)
-
         val pseudoProperties = data[AugmentableBaseEntity::pseudoProperties.name]
+        if (validPseudoProperties.isEmpty() && pseudoProperties != null) return
 
         if (pseudoProperties !is Map<*, *>)
                 throw IllegalArgumentException("PseudoProperties must be a Map")

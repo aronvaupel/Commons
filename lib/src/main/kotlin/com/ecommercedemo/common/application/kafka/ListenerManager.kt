@@ -34,6 +34,7 @@ class ListenerManager<T: BaseEntity> @Autowired constructor(
     private val listenerContainers = mutableMapOf<String, MessageListenerContainer>()
     private lateinit var downstreamEntities: List<String>
 
+    //Todo: can this be replaced with init block?
     @PostConstruct
     fun init() {
         if (serviceName.isBlank()) {

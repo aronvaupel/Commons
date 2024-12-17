@@ -13,7 +13,7 @@ class ApplicationStartup @Autowired constructor(
     private val dynamicTopicRegistration: DynamicTopicRegistration,
     private val entityScanner: EntityScanner,
 ) {
-
+    //Todo: can this be replaced with init block?
     @PostConstruct
     fun init() {
         val upstreamEntityNames = entityScanner.getUpstreamEntityNames()
