@@ -17,22 +17,31 @@ import com.ecommercedemo.common.service.concretion.TypeReAttacher
 import jakarta.persistence.EntityManager
 import jakarta.transaction.Transactional
 import mu.KotlinLogging
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.data.domain.Page
 import org.springframework.http.HttpStatus
 import java.util.*
 import kotlin.reflect.KClass
 
 @Suppress("UNCHECKED_CAST")
-abstract class RestServiceTemplate<T : BaseEntity>(
-    private val adapter: IEntityPersistenceAdapter<T>,
-    private val entityClass: KClass<T>,
-    private val entityChangeTracker: EntityChangeTracker<T>,
-    private val entityManager: EntityManager,
-    private val eventProducer: EntityEventProducer,
-    private val retriever: Retriever,
-    private val serviceUtility: ServiceUtility<T>,
-    private val typeReAttacher: TypeReAttacher,
-) : IRestService<T> {
+abstract class RestServiceTemplate<T : BaseEntity>: IRestService<T> {
+    @Autowired
+    private lateinit var adapter: IEntityPersistenceAdapter<T>
+    @Autowired
+    private lateinit var entityClass: KClass<T>
+    @Autowired
+    private lateinit var entityChangeTracker: EntityChangeTracker<T>
+    @Autowired
+    private lateinit var entityManager: EntityManager
+    @Autowired
+    private lateinit var eventProducer: EntityEventProducer
+    @Autowired
+    private lateinit var retriever: Retriever
+    @Autowired
+    private lateinit var serviceUtility: ServiceUtility<T>
+    @Autowired
+    private lateinit var typeReAttacher: TypeReAttacher
+
     private val log = KotlinLogging.logger {}
 
     @Transactional
