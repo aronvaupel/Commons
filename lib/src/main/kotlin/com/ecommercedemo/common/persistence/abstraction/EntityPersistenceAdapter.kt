@@ -1,16 +1,21 @@
 package com.ecommercedemo.common.persistence.abstraction
 
 import com.ecommercedemo.common.model.abstraction.BaseEntity
+import jakarta.persistence.EntityManager
+import jakarta.persistence.LockModeType
 import mu.KotlinLogging
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.PageRequest
 import java.util.*
 
-abstract class EntityPersistenceAdapter<T : BaseEntity>: IEntityPersistenceAdapter<T> {
+abstract class EntityPersistenceAdapter<T : BaseEntity> : IEntityPersistenceAdapter<T> {
 
     @Autowired
     private lateinit var repository: EntityRepository<T, UUID>
+
+    @Autowired
+    private lateinit var entityManager: EntityManager
 
     val log = KotlinLogging.logger {}
     override fun save(entity: T): T {
@@ -40,20 +45,26 @@ abstract class EntityPersistenceAdapter<T : BaseEntity>: IEntityPersistenceAdapt
         return repository.findById(id).orElseThrow() as T
     }
 
+    override fun getByIdWithLock(id: UUID): T {
+        val entity = repository.findByIdForUpdate(id)
+        entityManager.lock(this, LockModeType.PESSIMISTIC_WRITE)
+        return entity
+    }
+
     override fun getAllByIds(ids: List<UUID>): List<T> {
         return repository.findAllById(ids) as List<T>
     }
 
     override fun getAllByIdsWithLock(ids: List<UUID>): List<T> {
-        return repository.findAllByIdForUpdate(ids)
+        val entities = repository.findAllByIdForUpdate(ids)
+        return entities.map {
+            entityManager.lock(it, LockModeType.PESSIMISTIC_WRITE)
+            it
+        }
     }
 
     override fun getAllPaged(page: Int, size: Int): Page<T> {
         val pageable = PageRequest.of(page, size)
         return repository.findAll(pageable)
-    }
-
-    override fun getByIdWithLock(id: UUID): T {
-        return repository.findByIdForUpdate(id)
     }
 }
