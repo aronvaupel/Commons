@@ -8,10 +8,10 @@ import org.springframework.data.jpa.repository.Query
 
 interface EntityRepository<T: BaseEntity, ID> : JpaRepository<T, ID> {
     @Lock(LockModeType.PESSIMISTIC_WRITE)
-    @Query("SELECT e FROM #{#entityName} e WHERE e.id = :id")
+    @Query("SELECT e FROM #{#entityName} e WHERE e.id = :id", nativeQuery = true)
     fun findByIdForUpdate(id: ID): T
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
-    @Query("SELECT e FROM #{#entityName} e WHERE e.id IN :ids")
+    @Query("SELECT e FROM #{#entityName} e WHERE e.id IN :ids", nativeQuery = true)
     fun findAllByIdForUpdate(ids: List<ID>): List<T>
 }
