@@ -10,16 +10,22 @@ import com.ecommercedemo.common.service.concretion.ServiceUtility
 import com.ecommercedemo.common.service.concretion.TypeReAttacher
 import jakarta.transaction.Transactional
 import mu.KotlinLogging
+import org.springframework.beans.factory.annotation.Autowired
 import java.util.*
 import kotlin.reflect.KClass
 
 @Suppress("unused", "UNCHECKED_CAST")
-abstract class EventServiceTemplate<T : BaseEntity>(
-    private val adapter: IEntityPersistenceAdapter<T>,
-    private val downstreamEntityClass: KClass<T>,
-    private val serviceUtility: ServiceUtility<T>,
-    private val typeReAttacher: TypeReAttacher,
-) : IEventService<T> {
+abstract class EventServiceTemplate<T : BaseEntity>: IEventService<T> {
+
+    @Autowired
+    private lateinit var adapter: IEntityPersistenceAdapter<T>
+    @Autowired
+    private lateinit var downstreamEntityClass: KClass<T>
+    @Autowired
+    private lateinit var serviceUtility: ServiceUtility<T>
+    @Autowired
+    private lateinit var typeReAttacher: TypeReAttacher
+
     val log = KotlinLogging.logger {}
 
     @Transactional

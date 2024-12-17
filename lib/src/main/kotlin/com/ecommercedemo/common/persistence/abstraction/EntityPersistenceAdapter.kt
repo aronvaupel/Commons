@@ -2,13 +2,16 @@ package com.ecommercedemo.common.persistence.abstraction
 
 import com.ecommercedemo.common.model.abstraction.BaseEntity
 import mu.KotlinLogging
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.PageRequest
 import java.util.*
 
-abstract class EntityPersistenceAdapter<T : BaseEntity>(
-    private val repository: EntityRepository<T, UUID>
-): IEntityPersistenceAdapter<T> {
+abstract class EntityPersistenceAdapter<T : BaseEntity>: IEntityPersistenceAdapter<T> {
+
+    @Autowired
+    private lateinit var repository: EntityRepository<T, UUID>
+
     val log = KotlinLogging.logger {}
     override fun save(entity: T): T {
         val result = repository.save(entity) as T
