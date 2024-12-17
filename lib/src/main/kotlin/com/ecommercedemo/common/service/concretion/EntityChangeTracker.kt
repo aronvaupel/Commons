@@ -1,12 +1,14 @@
-package com.ecommercedemo.common.application
+package com.ecommercedemo.common.service.concretion
 
 import com.ecommercedemo.common.model.abstraction.AugmentableBaseEntity
 import com.ecommercedemo.common.model.abstraction.BaseEntity
 import com.fasterxml.jackson.databind.ObjectMapper
+import org.springframework.stereotype.Service
 import kotlin.reflect.KProperty1
 import kotlin.reflect.full.memberProperties
 import kotlin.reflect.jvm.isAccessible
 
+@Service
 class EntityChangeTracker<T : BaseEntity> {
 
     fun getChangedProperties(entityBefore: T?, entityAfter: T): MutableMap<String, Any?> {

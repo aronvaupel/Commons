@@ -1,4 +1,4 @@
-package com.ecommercedemo.common.application
+package com.ecommercedemo.common.service.concretion
 
 import jakarta.persistence.EntityManagerFactory
 import org.springframework.beans.factory.annotation.Autowired

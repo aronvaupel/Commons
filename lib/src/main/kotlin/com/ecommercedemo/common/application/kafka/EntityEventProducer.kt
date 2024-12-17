@@ -1,6 +1,7 @@
 package com.ecommercedemo.common.application.kafka
 
 import com.ecommercedemo.common.application.cache.RedisService
+import mu.KotlinLogging
 import org.springframework.kafka.core.KafkaTemplate
 import org.springframework.stereotype.Service
 import java.util.*
@@ -10,6 +11,7 @@ class EntityEventProducer(
     private val kafkaTemplate: KafkaTemplate<String, Any>,
     private val redisService: RedisService,
 ) {
+    private val log = KotlinLogging.logger {}
 
     fun emit(
         entityClassName: String,
@@ -28,7 +30,7 @@ class EntityEventProducer(
             )
 
             kafkaTemplate.send(entityClassName, event)
-            println("Produced event for topic: $entityClassName, event: $event")
+            log.info("Produced event for topic: $entityClassName, event: $event")
         } else {
             throw IllegalArgumentException("Topic $entityClassName is not registered in Redis.")
         }

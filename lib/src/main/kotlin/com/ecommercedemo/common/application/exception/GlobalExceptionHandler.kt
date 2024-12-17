@@ -1,7 +1,7 @@
 package com.ecommercedemo.common.application.exception
 
 import jakarta.validation.ConstraintViolationException
-import org.slf4j.LoggerFactory
+import mu.KotlinLogging
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.util.LinkedMultiValueMap
@@ -14,49 +14,46 @@ import javax.management.AttributeNotFoundException
 @ControllerAdvice
 class GlobalExceptionHandler {
 
-    private val logger = LoggerFactory.getLogger(GlobalExceptionHandler::class.java)
+    private val log = KotlinLogging.logger {}
 
     @ExceptionHandler(AttributeNotFoundException::class)
     fun handleAttributeNotFoundException(ex: AttributeNotFoundException): ResponseEntity<MultiValueMap<String, String>> {
-        logger.error("Invalid attribute error: ${ex.message}")
-
+        log.warn("Invalid attribute error: ${ex.message}")
+        log.debug { ex.printStackTrace() }
         val body: MultiValueMap<String, String> = LinkedMultiValueMap()
         body.add("error", "Invalid Attribute")
         body.add("message", ex.message ?: "Unknown error")
-
         return ResponseEntity(body, HttpStatus.BAD_REQUEST)
     }
 
     @ExceptionHandler(ValueTypeMismatchException::class)
     fun handleValueTypeMismatchException(ex: ValueTypeMismatchException): ResponseEntity<MultiValueMap<String, String>> {
-        logger.error("Type mismatch error: ${ex.message}")
-
+        log.warn("Type mismatch error: ${ex.message}")
+        log.debug { ex.printStackTrace() }
         val body: MultiValueMap<String, String> = LinkedMultiValueMap()
         body.add("error", "Type Mismatch")
         body.add("message", ex.message ?: "Unknown error")
-
         return ResponseEntity(body, HttpStatus.BAD_REQUEST)
     }
 
     @ExceptionHandler(Exception::class)
     fun handleGenericException(ex: Exception): ResponseEntity<Map<String, String>> {
-        logger.error("Unexpected error: ${ex.message}", ex)
+        log.warn("Unexpected error: ${ex.message}", ex)
+        log.debug { ex.printStackTrace() }
         return ResponseEntity(
-            mapOf("error" to "Internal Server Error", "message" to "An unexpected error occurred"),
+            mapOf("error" to "Internal Server Error", "message" to "${ex.message}"),
             HttpStatus.INTERNAL_SERVER_ERROR
         )
     }
 
     @ExceptionHandler(IllegalArgumentException::class)
     fun handleIllegalArgumentException(ex: IllegalArgumentException): ResponseEntity<Map<String, String>> {
-        ex.printStackTrace() // Log full stack trace
-        println("Exception caught in GlobalExceptionHandler: ${ex.message}")
-
+        log.warn("Exception caught in GlobalExceptionHandler: ${ex.message}")
+        log.debug { ex.printStackTrace() }
         val errorResponse = mapOf(
             "error" to (ex.message ?: "Invalid request"),
             "details" to "An illegal argument was provided. Please check the request payload or parameters."
         )
-
         return ResponseEntity(errorResponse, HttpStatus.BAD_REQUEST)
     }
 

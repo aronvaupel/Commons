@@ -3,6 +3,7 @@ package com.ecommercedemo.common.model.abstraction
 import io.hypersistence.utils.hibernate.type.json.JsonType
 import jakarta.persistence.Column
 import jakarta.persistence.MappedSuperclass
+import mu.KotlinLogging
 import org.hibernate.annotations.Type
 
 
@@ -30,6 +31,7 @@ abstract class AugmentableBaseEntity: BaseEntity() {
     }
 
     fun renamePseudoProperty(oldKey: String, newKey: String) {
+        val log = KotlinLogging.logger {}
         try {
             require(oldKey.isNotBlank()) { "Old key must not be blank." }
             require(newKey.isNotBlank()) { "New key must not be blank." }
@@ -44,7 +46,8 @@ abstract class AugmentableBaseEntity: BaseEntity() {
                 this[newKey] = this.remove(oldKey)
             }
         } catch (e: Exception) {
-            println("Failed to rename key: ${e.message}")
+            log.warn("Failed to rename key: ${e.message}")
+            log.debug { e.stackTraceToString() }
             throw e
         }
     }

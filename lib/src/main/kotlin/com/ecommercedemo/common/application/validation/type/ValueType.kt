@@ -1,6 +1,7 @@
 package com.ecommercedemo.common.application.validation.type
 
 import com.ecommercedemo.common.controller.abstraction.util.*
+import mu.KotlinLogging
 import java.math.BigDecimal
 import java.math.BigInteger
 import java.time.*
@@ -12,8 +13,6 @@ enum class ValueType(
     private val category: TypeCategory,
     val typeInfo: Class<*>
 ) {
-    //Todo: Enum is missing
-
     // === PRIMITIVE TYPES ===
     BYTE(TypeCategory.PRIMITIVE, Byte::class.java) {
         override fun validate(value: Any?, descriptor: TypeDescriptor): Boolean {
@@ -485,7 +484,7 @@ enum class ValueType(
     }
 
     fun validateTime(value: Any?, descriptor: TypeDescriptor.TimeDescriptor): Boolean {
-
+        val log = KotlinLogging.logger {}
         if (value !is String) {
             return false
         }
@@ -504,7 +503,8 @@ enum class ValueType(
             }
             true
         } catch (e: DateTimeParseException) {
-            println(e.message)
+            log.warn("Failed to parse time value: ${e.message}")
+            log.debug { e.stackTrace }
             false
         }
     }

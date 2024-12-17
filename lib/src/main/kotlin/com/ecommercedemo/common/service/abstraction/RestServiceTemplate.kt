@@ -1,6 +1,8 @@
 package com.ecommercedemo.common.service.abstraction
 
-import com.ecommercedemo.common.application.EntityChangeTracker
+import com.ecommercedemo.common.application.exception.FailedToCreateException
+import com.ecommercedemo.common.application.exception.FailedToDeleteException
+import com.ecommercedemo.common.application.exception.FailedToUpdateException
 import com.ecommercedemo.common.application.kafka.EntityEventProducer
 import com.ecommercedemo.common.application.kafka.EntityEventType
 import com.ecommercedemo.common.controller.abstraction.request.CreateRequest
@@ -9,10 +11,13 @@ import com.ecommercedemo.common.controller.abstraction.request.UpdateRequest
 import com.ecommercedemo.common.controller.abstraction.util.Retriever
 import com.ecommercedemo.common.model.abstraction.BaseEntity
 import com.ecommercedemo.common.persistence.abstraction.IEntityPersistenceAdapter
+import com.ecommercedemo.common.service.concretion.EntityChangeTracker
 import com.ecommercedemo.common.service.concretion.ServiceUtility
 import com.ecommercedemo.common.service.concretion.TypeReAttacher
 import jakarta.persistence.EntityManager
 import jakarta.transaction.Transactional
+import mu.KotlinLogging
+import org.springframework.data.domain.Page
 import org.springframework.http.HttpStatus
 import java.util.*
 import kotlin.reflect.KClass
@@ -21,33 +26,49 @@ import kotlin.reflect.KClass
 abstract class RestServiceTemplate<T : BaseEntity>(
     private val adapter: IEntityPersistenceAdapter<T>,
     private val entityClass: KClass<T>,
+    private val entityChangeTracker: EntityChangeTracker<T>,
     private val entityManager: EntityManager,
     private val eventProducer: EntityEventProducer,
     private val retriever: Retriever,
     private val serviceUtility: ServiceUtility<T>,
     private val typeReAttacher: TypeReAttacher,
 ) : IRestService<T> {
+    private val log = KotlinLogging.logger {}
 
     @Transactional
-    override fun create(request: CreateRequest): T {
-        val typedRequestProperties = typeReAttacher.reAttachType(request.properties, entityClass)
-        val newInstance = serviceUtility.createNewInstance(entityClass, typedRequestProperties)
-        return saveAndEmitEvent(null, newInstance, EntityEventType.CREATE)
+    override fun create(request: CreateRequest): T? {
+        try {
+            val typedRequestProperties = typeReAttacher.reAttachType(request.properties, entityClass)
+            val newInstance = serviceUtility.createNewInstance(entityClass, typedRequestProperties)
+            return saveAndEmitEvent(null, newInstance, EntityEventType.CREATE)
+        } catch (e: Exception) {
+            log.warn { "Failed to create. Cause: ${e.message}" }
+            log.debug { "${e.stackTrace}" }
+            throw FailedToCreateException("Failed to create", e)
+        }
+
     }
 
     @Transactional
     override fun update(request: UpdateRequest): T {
-        val original = getSingle(request.id)
-        entityManager.detach(original)
-        val typedRequestProperties = typeReAttacher.reAttachType(request.properties, entityClass)
-        if (original::class != entityClass) {
-            throw IllegalArgumentException(
-                "Entity type mismatch. Expected ${entityClass.simpleName} but found ${original::class.simpleName}."
-            )
-        }
-        val updated = serviceUtility.updateExistingEntity(typedRequestProperties, original.copy() as T)
+        try {
+            val original = getSingle(request.id)
+            entityManager.detach(original)
+            val typedRequestProperties = typeReAttacher.reAttachType(request.properties, entityClass)
+            if (original::class != entityClass) {
+                throw IllegalArgumentException(
+                    "Entity type mismatch. Expected ${entityClass.simpleName} but found ${original::class.simpleName}."
+                )
+            }
+            val updated = serviceUtility.updateExistingEntity(typedRequestProperties, original.copy() as T)
 
-        return saveAndEmitEvent( original, updated, EntityEventType.UPDATE,)
+            return saveAndEmitEvent( original, updated, EntityEventType.UPDATE,)
+        } catch (e: Exception) {
+            log.warn { "Failed to update. Cause: ${e.message}" }
+            log.debug { "${e.stackTrace}" }
+            throw FailedToUpdateException("Failed to update", e)
+        }
+
     }
 
     @Transactional
@@ -63,9 +84,9 @@ abstract class RestServiceTemplate<T : BaseEntity>(
             )
             HttpStatus.OK
         } catch (e: Exception) {
-            println("Error deleting entity with ID $id: ${e.message}")
-            e.printStackTrace()
-            HttpStatus.INTERNAL_SERVER_ERROR
+            log.info { "Failed to delete. Cause: ${e.message}" }
+            log.debug { "${e.stackTrace}" }
+            throw FailedToDeleteException("Failed to delete", e)
         }
     }
 
@@ -73,13 +94,14 @@ abstract class RestServiceTemplate<T : BaseEntity>(
 
     override fun getMultiple(ids: List<UUID>): List<T> = adapter.getAllByIds(ids)
 
+    override fun getAllPaged(page: Int, size: Int): Page<T> = adapter.getAllPaged(page, size)
+
     override fun search(request: SearchRequest): List<T> = retriever.executeSearch(request, entityClass)
 
     private fun saveAndEmitEvent(original: T?, updated: T, eventType: EntityEventType, ): T {
         val savedEntity = adapter.save(updated)
-        val tracker = EntityChangeTracker<T>()
-        val changes = original?.let { tracker.getChangedProperties(it, savedEntity) }
-            ?: tracker.getChangedProperties(null, savedEntity)
+        val changes = original?.let { entityChangeTracker.getChangedProperties(it, savedEntity) }
+            ?: entityChangeTracker.getChangedProperties(null, savedEntity)
         eventProducer.emit(entityClass.java.simpleName, savedEntity.id, eventType, changes)
 
         return savedEntity

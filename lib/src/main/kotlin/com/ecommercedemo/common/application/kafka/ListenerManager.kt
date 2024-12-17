@@ -1,9 +1,9 @@
 package com.ecommercedemo.common.application.kafka
 
-import com.ecommercedemo.common.application.EntityScanner
 import com.ecommercedemo.common.application.cache.RedisService
 import com.ecommercedemo.common.application.kafka.handling.MainEventHandler
 import com.ecommercedemo.common.model.abstraction.BaseEntity
+import com.ecommercedemo.common.service.concretion.EntityScanner
 import jakarta.annotation.PostConstruct
 import org.apache.kafka.common.errors.WakeupException
 import org.slf4j.LoggerFactory

@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize
 import com.fasterxml.jackson.datatype.jsr310.deser.LocalDateTimeDeserializer
 import com.fasterxml.jackson.datatype.jsr310.ser.LocalDateTimeSerializer
 import jakarta.persistence.*
+import mu.KotlinLogging
 import java.time.LocalDateTime
 import java.util.*
 import kotlin.reflect.KMutableProperty
@@ -41,6 +42,7 @@ abstract class BaseEntity{
     }
 
     fun copy(): BaseEntity {
+        val log = KotlinLogging.logger {}
         val constructor = this::class.primaryConstructor
             ?: throw IllegalStateException("No primary constructor for ${this::class.simpleName}")
 
@@ -76,7 +78,8 @@ abstract class BaseEntity{
                         property.setter.call(instance, value)
                     }
                 } catch (e: Exception) {
-                    println("WARNING: Failed to copy property '${property.name}' due to: ${e.message}")
+                    log.warn("Failed to copy property: ${e.message}")
+                    log.debug { e.stackTraceToString() }
                 }
             }
 

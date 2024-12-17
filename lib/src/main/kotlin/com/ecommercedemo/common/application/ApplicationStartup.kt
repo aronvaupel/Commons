@@ -1,6 +1,7 @@
 package com.ecommercedemo.common.application
 
 import com.ecommercedemo.common.application.kafka.DynamicTopicRegistration
+import com.ecommercedemo.common.service.concretion.EntityScanner
 import jakarta.annotation.PostConstruct
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass
