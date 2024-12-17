@@ -16,10 +16,10 @@ class TemplateBeanRegistrar : ImportBeanDefinitionRegistrar {
 
         scanner.findClassesWithAnnotation(RestServiceFor::class).forEach { clazz ->
             val entityClass = clazz.getAnnotation(RestServiceFor::class.java).entity.java
-            val parentConstructor = clazz.superclass.constructors.firstOrNull()
+            val constructor = clazz.constructors.firstOrNull()
                 ?: throw IllegalStateException("No constructor found for parent class of ${clazz.simpleName}")
 
-            val dependencies = parentConstructor.parameterTypes.map { paramType ->
+            val dependencies = constructor.parameterTypes.map { paramType ->
                 when (paramType) {
                     entityClass::class.java -> entityClass
                     else -> SpringContextProvider.applicationContext.getBean(paramType)
