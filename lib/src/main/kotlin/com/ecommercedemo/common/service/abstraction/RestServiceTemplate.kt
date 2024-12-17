@@ -11,6 +11,7 @@ import com.ecommercedemo.common.controller.abstraction.request.UpdateRequest
 import com.ecommercedemo.common.controller.abstraction.util.Retriever
 import com.ecommercedemo.common.model.abstraction.BaseEntity
 import com.ecommercedemo.common.persistence.abstraction.IEntityPersistenceAdapter
+import com.ecommercedemo.common.service.RestServiceFor
 import com.ecommercedemo.common.service.concretion.EntityChangeTracker
 import com.ecommercedemo.common.service.concretion.ServiceUtility
 import com.ecommercedemo.common.service.concretion.TypeReAttacher
@@ -22,24 +23,37 @@ import org.springframework.data.domain.Page
 import org.springframework.http.HttpStatus
 import java.util.*
 import kotlin.reflect.KClass
+import kotlin.reflect.full.findAnnotation
 
 @Suppress("UNCHECKED_CAST")
-abstract class RestServiceTemplate<T : BaseEntity>: IRestService<T> {
+abstract class RestServiceTemplate<T : BaseEntity>() : IRestService<T> {
+    private var entityClass: KClass<T>
+
     @Autowired
     private lateinit var adapter: IEntityPersistenceAdapter<T>
-    private lateinit var entityClass: KClass<T>
+
     @Autowired
     private lateinit var entityChangeTracker: EntityChangeTracker<T>
+
     @Autowired
     private lateinit var entityManager: EntityManager
+
     @Autowired
     private lateinit var eventProducer: EntityEventProducer
+
     @Autowired
     private lateinit var retriever: Retriever
+
     @Autowired
     private lateinit var serviceUtility: ServiceUtility<T>
+
     @Autowired
     private lateinit var typeReAttacher: TypeReAttacher
+
+    init {
+        entityClass = this::class.findAnnotation<RestServiceFor>()?.let { it.entity as KClass<T> }
+            ?: throw IllegalStateException("No valid annotation found on class ${this::class.simpleName}")
+    }
 
     private val log = KotlinLogging.logger {}
 
@@ -70,7 +84,7 @@ abstract class RestServiceTemplate<T : BaseEntity>: IRestService<T> {
             }
             val updated = serviceUtility.updateExistingEntity(typedRequestProperties, original.copy() as T)
 
-            return saveAndEmitEvent( original, updated, EntityEventType.UPDATE,)
+            return saveAndEmitEvent(original, updated, EntityEventType.UPDATE)
         } catch (e: Exception) {
             log.warn { "Failed to update. Cause: ${e.message}" }
             log.debug { "${e.stackTrace}" }
@@ -106,7 +120,7 @@ abstract class RestServiceTemplate<T : BaseEntity>: IRestService<T> {
 
     override fun search(request: SearchRequest): List<T> = retriever.executeSearch(request, entityClass)
 
-    private fun saveAndEmitEvent(original: T?, updated: T, eventType: EntityEventType, ): T {
+    private fun saveAndEmitEvent(original: T?, updated: T, eventType: EntityEventType): T {
         val savedEntity = adapter.save(updated)
         val changes = original?.let { entityChangeTracker.getChangedProperties(it, savedEntity) }
             ?: entityChangeTracker.getChangedProperties(null, savedEntity)

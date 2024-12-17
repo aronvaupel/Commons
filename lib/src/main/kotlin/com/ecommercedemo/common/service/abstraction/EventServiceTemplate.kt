@@ -6,6 +6,7 @@ import com.ecommercedemo.common.application.exception.FailedToUpdateByEventExcep
 import com.ecommercedemo.common.application.kafka.EntityEvent
 import com.ecommercedemo.common.model.abstraction.BaseEntity
 import com.ecommercedemo.common.persistence.abstraction.IEntityPersistenceAdapter
+import com.ecommercedemo.common.service.EventServiceFor
 import com.ecommercedemo.common.service.concretion.ServiceUtility
 import com.ecommercedemo.common.service.concretion.TypeReAttacher
 import jakarta.transaction.Transactional
@@ -13,25 +14,36 @@ import mu.KotlinLogging
 import org.springframework.beans.factory.annotation.Autowired
 import java.util.*
 import kotlin.reflect.KClass
+import kotlin.reflect.full.findAnnotation
 
 @Suppress("unused", "UNCHECKED_CAST")
-abstract class EventServiceTemplate<T : BaseEntity>: IEventService<T> {
+abstract class EventServiceTemplate<T : BaseEntity>() : IEventService<T> {
+
+    private var downstreamEntityClass: KClass<T>
 
     @Autowired
     private lateinit var adapter: IEntityPersistenceAdapter<T>
-    private lateinit var downstreamEntityClass: KClass<T>
+
     @Autowired
     private lateinit var serviceUtility: ServiceUtility<T>
+
     @Autowired
     private lateinit var typeReAttacher: TypeReAttacher
+
+    init {
+        downstreamEntityClass = this::class.findAnnotation<EventServiceFor>()?.let { it.entity as KClass<T> }
+            ?: throw IllegalStateException("No valid annotation found on class ${this::class.simpleName}")
+    }
+
 
     val log = KotlinLogging.logger {}
 
     @Transactional
     override fun createByEvent(event: EntityEvent) {
         try {
-            val typedProperties =  typeReAttacher.reAttachType(event.properties, downstreamEntityClass)
-            val newInstance = serviceUtility.createNewInstance(downstreamEntityClass, typedProperties).apply { id = event.properties[BaseEntity::id.name] as UUID}
+            val typedProperties = typeReAttacher.reAttachType(event.properties, downstreamEntityClass)
+            val newInstance = serviceUtility.createNewInstance(downstreamEntityClass, typedProperties)
+                .apply { id = event.properties[BaseEntity::id.name] as UUID }
             adapter.save(newInstance)
         } catch (e: Exception) {
             log.warn { "${e.message}" }
@@ -47,7 +59,7 @@ abstract class EventServiceTemplate<T : BaseEntity>: IEventService<T> {
             val original = adapter.getByIdWithLock(event.id)
             val updated = serviceUtility.updateExistingEntity(event.properties, original.copy() as T)
             adapter.save(updated)
-        } catch(e: Exception)  {
+        } catch (e: Exception) {
             log.warn { "${e.message}" }
             log.debug { "${e.stackTrace}" }
             throw FailedToUpdateByEventException("Failed to update by event", e)
