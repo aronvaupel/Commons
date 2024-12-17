@@ -11,6 +11,7 @@ import org.springframework.beans.factory.BeanFactory
 import org.springframework.beans.factory.NoSuchBeanDefinitionException
 import org.springframework.scheduling.annotation.Async
 import org.springframework.stereotype.Service
+import java.util.*
 
 @Service
 @Suppress("UNCHECKED_CAST", "unused", "ClassName")
@@ -140,7 +141,7 @@ open class _PseudoPropertyApplier(
     }
 
     private fun getAdapter(entityClass: Class<*>): IEntityPersistenceAdapter<AugmentableBaseEntity> {
-        val adapterName = "${entityClass.simpleName}PersistenceAdapter"
+        val adapterName = "${entityClass.simpleName.replaceFirstChar { it.lowercase(Locale.getDefault()) }}PersistenceAdapter"
         val adapter = try {
             beanFactory.getBean(adapterName)
         } catch (e: NoSuchBeanDefinitionException) {
