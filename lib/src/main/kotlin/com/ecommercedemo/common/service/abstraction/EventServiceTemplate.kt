@@ -56,7 +56,7 @@ abstract class EventServiceTemplate<T : BaseEntity>() : IEventService<T> {
     @Transactional
     override fun updateByEvent(event: EntityEvent) {
         try {
-            val original = adapter.getByIdWithLock(event.id)
+            val original = adapter.getById(event.id)
             val updated = serviceUtility.updateExistingEntity(event.properties, original.copy() as T)
             adapter.save(updated)
         } catch (e: Exception) {
@@ -70,7 +70,7 @@ abstract class EventServiceTemplate<T : BaseEntity>() : IEventService<T> {
     @Transactional
     override fun deleteByEvent(event: EntityEvent) {
         try {
-            val entity = adapter.getByIdWithLock(event.id)
+            val entity = adapter.getById(event.id)
             adapter.delete(entity.id)
         } catch (e: Exception) {
             log.warn { "${e.message}" }

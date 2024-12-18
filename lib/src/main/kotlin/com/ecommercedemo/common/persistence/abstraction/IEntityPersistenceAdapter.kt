@@ -8,8 +8,6 @@ interface IEntityPersistenceAdapter<T> {
     fun saveAll(entities: List<T>): List<T>
     fun delete(id: UUID)
     fun getById(id: UUID): T
-    fun getByIdWithLock(id: UUID): T
     fun getAllByIds(ids: List<UUID>): List<T>
-    fun getAllByIdsWithLock(ids: List<UUID>): List<T>
     fun getAllPaged(page: Int, size: Int): Page<T>
 }
