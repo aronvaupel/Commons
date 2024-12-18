@@ -70,17 +70,20 @@ open class _PseudoPropertyApplier(
         oldKey: String,
         newKey: String
     ) {
+        println("OLD KEY: $oldKey, NEW KEY: $newKey")
         val adapter = getAdapter(entityClass)
         val pageSize = 100
         var page = 0
 
         do {
             val pagedEntities = adapter.getAllPaged(page, pageSize)
-
+            println("PAGED ENTITIES: $pagedEntities")
             if (pagedEntities.hasContent()) {
                 val entities = pagedEntities.content
 
                 entities.forEach { entity ->
+                    println("ENTITY: $entity")
+                    println("ENTITY PSEUDO PROPERTIES: ${entity.pseudoProperties}")
                     entity.getPseudoProperty(oldKey)?.let {
                         entity.renamePseudoProperty(oldKey, newKey)
                     } ?: throw IllegalArgumentException(
