@@ -7,8 +7,7 @@ import com.ecommercedemo.common.model.abstraction.BaseEntity
 import com.ecommercedemo.common.model.abstraction.IPseudoProperty
 import com.ecommercedemo.common.persistence.concretion._pseudoProperty._PseudoPropertyRepository
 import org.springframework.stereotype.Service
-import kotlin.reflect.KClass
-import kotlin.reflect.KMutableProperty
+import kotlin.reflect.*
 import kotlin.reflect.full.createType
 import kotlin.reflect.full.isSubclassOf
 import kotlin.reflect.full.memberProperties
@@ -36,9 +35,38 @@ class ServiceUtility<T : BaseEntity>(
                 validateTypeDescriptor(data[IPseudoProperty::typeDescriptor.name])
         }
 
+        val entityConstructor = findConstructorWithArgs(instanceClass)
+
+        val instanceConstructorParams = createConstructorParams(entityConstructor, data)
+
+        return entityConstructor.callBy(instanceConstructorParams).apply {
+            val memberProperties = getAllMemberProperties(this)
+            val remainingFields = data.filter {
+                !(it.key.startsWith("_")) && it.key !in instanceConstructorParams.keys.map { param -> param.name }
+            }.map { it.key }
+            memberProperties
+                .filter { it.name in remainingFields }
+                .filterIsInstance<KMutableProperty<*>>()
+                .onEach { it.isAccessible = true }
+                .forEach { it.setter.call(this, data[it.name]) }
+        }
+    }
+
+    private fun findConstructorWithArgs(instanceClass: KClass<T>): KFunction<T> {
         val entityConstructor = instanceClass.constructors.find { it.parameters.isNotEmpty() }
             ?: throw IllegalArgumentException("No suitable constructor found for ${instanceClass.simpleName}")
+        return entityConstructor
+    }
 
+    private fun getAllMemberProperties(clazz: T): Collection<KProperty1<out T, *>> {
+        val memberProperties = clazz::class.memberProperties
+        return memberProperties
+    }
+
+    private fun createConstructorParams(
+        entityConstructor: KFunction<T>,
+        data: Map<String, Any?>
+    ): Map<KParameter, Any?> {
         val instanceConstructorParams = entityConstructor.parameters
             .filter { it.name in data.keys }
             .associateWith { param ->
@@ -53,18 +81,7 @@ class ServiceUtility<T : BaseEntity>(
                     else -> throw IllegalArgumentException("Field ${param.name} must be provided and cannot be null.")
                 }
             }
-
-        return entityConstructor.callBy(instanceConstructorParams).apply {
-            val memberProperties = this::class.memberProperties
-            val remainingFields = data.filter {
-                !(it.key.startsWith("_")) && it.key !in instanceConstructorParams.keys.map { param -> param.name }
-            }.map { it.key }
-            memberProperties
-                .filter { it.name in remainingFields }
-                .filterIsInstance<KMutableProperty<*>>()
-                .onEach { it.isAccessible = true }
-                .forEach { it.setter.call(this, data[it.name]) }
-        }
+        return instanceConstructorParams
     }
 
     fun updateExistingEntity(data: Map<String, Any?>, entity: T): T {
@@ -73,7 +90,7 @@ class ServiceUtility<T : BaseEntity>(
         }
 
         val entityProperties =
-            entity::class.memberProperties.filterIsInstance<KMutableProperty<*>>().associateBy { it.name }
+            findMutableProperties(entity)
 
         data.forEach { (key, value) ->
             val correspondingEntityProperty = entityProperties[key.removePrefix("_")]
@@ -124,6 +141,12 @@ class ServiceUtility<T : BaseEntity>(
         }
 
         return entity
+    }
+
+    private fun findMutableProperties(entity: T): Map<String, KMutableProperty<*>> {
+        val entityProperties =
+            entity::class.memberProperties.filterIsInstance<KMutableProperty<*>>().associateBy { it.name }
+        return entityProperties
     }
 
     private fun validateTypeDescriptor(value: Any?) {

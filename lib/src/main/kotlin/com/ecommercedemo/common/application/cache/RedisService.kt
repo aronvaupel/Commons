@@ -3,6 +3,7 @@ package com.ecommercedemo.common.application.cache
 import com.ecommercedemo.common.application.cache.keys.KafkaTopicRegistry
 import com.ecommercedemo.common.application.cache.values.Microservice
 import com.ecommercedemo.common.application.cache.values.TopicDetails
+import com.fasterxml.jackson.core.type.TypeReference
 import com.fasterxml.jackson.databind.ObjectMapper
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
@@ -78,6 +79,16 @@ class RedisService(
 
     private fun saveKafkaRegistry(kafkaTopicRegistry: KafkaTopicRegistry) {
         redisTemplate.opsForValue().set("kafka-topic-registry", objectMapper.writeValueAsString(kafkaTopicRegistry))
+    }
+
+    fun saveMappings(mappings: Map<String, Any>) {
+        val serializedData = objectMapper.writeValueAsString(mappings)
+        redisTemplate.opsForValue().set("service-mappings", serializedData)
+    }
+
+    fun getMappings(): Map<String, Any>? {
+        val serializedData = redisTemplate.opsForValue().get("service-mappings")
+        return serializedData?.let { objectMapper.readValue(it, object: TypeReference<Map<String, Any>>() {} ) }
     }
 
 }
