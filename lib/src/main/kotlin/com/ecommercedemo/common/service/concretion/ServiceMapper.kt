@@ -2,6 +2,7 @@ package com.ecommercedemo.common.service.concretion
 
 import com.ecommercedemo.common.application.ClassPathScanner
 import jakarta.persistence.Entity
+import org.springframework.context.annotation.DependsOn
 import org.springframework.stereotype.Component
 import org.springframework.stereotype.Service
 import java.util.concurrent.ConcurrentHashMap
@@ -9,6 +10,7 @@ import kotlin.reflect.full.declaredMemberProperties
 import kotlin.reflect.full.functions
 
 @Component
+@DependsOn("classPathScanner")
 class ServiceMapper(
     private val classPathScanner: ClassPathScanner,
 ) {
