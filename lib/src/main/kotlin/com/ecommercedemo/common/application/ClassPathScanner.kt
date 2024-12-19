@@ -2,8 +2,10 @@ package com.ecommercedemo.common.application
 
 import org.springframework.context.annotation.ClassPathScanningCandidateComponentProvider
 import org.springframework.core.type.filter.AnnotationTypeFilter
+import org.springframework.stereotype.Component
 import kotlin.reflect.KClass
 
+@Component
 class ClassPathScanner {
 
     fun <A : Annotation> findClassesWithAnnotation(annotation: KClass<A>): Set<Class<*>> {
