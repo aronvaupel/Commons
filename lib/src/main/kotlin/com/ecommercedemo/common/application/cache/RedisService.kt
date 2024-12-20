@@ -97,14 +97,15 @@ class RedisService(
     }
 
     fun getCachedSearchResultsOrNullList(searchRequest: SearchRequest): List<Pair<SearchParam, List<UUID>>?> {
-        return searchRequest.params.map { param ->
+        val result =  searchRequest.params.map { param ->
             val hashedKey = generateCacheKey(param)
             val cachedIds = redisTemplate.opsForValue().get(hashedKey)?.let {
                 objectMapper.readValue(it, object : TypeReference<List<UUID>>() {})
             }
             if (cachedIds != null) param to cachedIds else null
-
         }
+        println("getCachedSearchResultsOrNullList: $result")
+        return result
     }
 
     fun overwriteSearchResults(
