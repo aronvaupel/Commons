@@ -122,9 +122,9 @@ abstract class RestServiceTemplate<T : BaseEntity>() : IRestService<T> {
     override fun getAllPaged(page: Int, size: Int): Page<T> = adapter.getAllPaged(page, size)
 
     override fun search(request: SearchRequest): List<T> {
-        val startTime = System.currentTimeMillis() // Start timing
+        val startTime = System.currentTimeMillis()
 
-        val cachedSearchResultsOrNullList = redisService.getCachedSearchResultsOrNullList(request)
+        val cachedSearchResultsOrNullList = redisService.getCachedSearchResultsOrNullList(request, entityClass.simpleName!!)
         println("cachedSearchResultsOrNullList: $cachedSearchResultsOrNullList")
 
         val result: List<T>

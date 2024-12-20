@@ -7,6 +7,7 @@ import com.ecommercedemo.common.controller.abstraction.request.SearchRequest
 import com.ecommercedemo.common.controller.abstraction.util.SearchParam
 import com.fasterxml.jackson.core.type.TypeReference
 import com.fasterxml.jackson.databind.ObjectMapper
+import mu.KotlinLogging
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.data.redis.core.StringRedisTemplate
@@ -22,6 +23,8 @@ class RedisService(
     @Value("\${spring.application.name}")
     private val serviceName: String
 ) {
+
+    val log = KotlinLogging.logger {}
 
     fun registerAsTopics(upstreamEntities: List<String>) {
         val kafkaRegistry = getKafkaRegistry()
@@ -96,17 +99,22 @@ class RedisService(
         return serializedData?.let { objectMapper.readValue(it, object: TypeReference<Map<String, Any>>() {} ) }
     }
 
-    fun getCachedSearchResultsOrNullList(searchRequest: SearchRequest): List<Pair<SearchParam, List<UUID>>?> {
+    fun getCachedSearchResultsOrNullList(searchRequest: SearchRequest, entityName: String): List<Pair<SearchParam, List<UUID>>?> {
         val result =  searchRequest.params.map { param ->
             val hashedKey = generateCacheKey(param)
-            println("hashedKey: $hashedKey")
-            val cachedIds = redisTemplate.opsForValue().get(hashedKey)?.let {
-                println("Redis key found")
-                val mappedValue = objectMapper.readValue(it, object : TypeReference<List<UUID>>() {})
-                println("mappedValue: $mappedValue")
-                mappedValue
+            val fieldName = param.path.substringAfterLast(".")
+            val cachedIds = try {
+                redisTemplate.opsForValue().get(
+                    "entities:$entityName:$fieldName:$hashedKey"
+                )?.let {
+                    objectMapper.readValue(it, object : TypeReference<List<UUID>>() {})
+                }
+            } catch (e: Exception) {
+                log.error("Error retrieving cached value for key: $hashedKey", e)
+                null
             }
-            println("cachedIds: $cachedIds")
+
+            log.debug("Key: {}, Cached IDs: {}", hashedKey, cachedIds ?: "NOT FOUND")
             if (cachedIds != null) param to cachedIds else null
         }
         println("getCachedSearchResultsOrNullList: $result")
