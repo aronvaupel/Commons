@@ -96,17 +96,24 @@ class RedisService(
 
     private fun getMappings(): Map<String, Any>? {
         val serializedData = redisTemplate.opsForValue().get("service-mappings")
-        return serializedData?.let { objectMapper.readValue(it, object: TypeReference<Map<String, Any>>() {} ) }
+        return serializedData?.let { objectMapper.readValue(it, object : TypeReference<Map<String, Any>>() {}) }
     }
 
-    fun getCachedSearchResultsOrNullList(searchRequest: SearchRequest, entityName: String): List<Pair<SearchParam, List<UUID>>?> {
-        val result =  searchRequest.params.map { param ->
+    fun getCachedSearchResultsOrNullList(
+        searchRequest: SearchRequest,
+        entityName: String
+    ): List<Pair<SearchParam, List<UUID>>?> {
+        val result = searchRequest.params.map { param ->
             val hashedKey = generateCacheKey(param)
+            println("hashedKey: $hashedKey")
             val fieldName = param.path.substringAfterLast(".")
+            println("fieldName: $fieldName")
             val cachedIds = try {
-                redisTemplate.opsForValue().get(
+                val raw = redisTemplate.opsForValue().get(
                     "entities:$entityName:$fieldName:$hashedKey"
-                )?.let {
+                )
+                println("raw: $raw")
+                raw?.let {
                     objectMapper.readValue(it, object : TypeReference<List<UUID>>() {})
                 }
             } catch (e: Exception) {
@@ -114,7 +121,7 @@ class RedisService(
                 null
             }
 
-            log.debug("Key: {}, Cached IDs: {}", hashedKey, cachedIds ?: "NOT FOUND")
+            log.info("Key: {}, Cached IDs: {}", hashedKey, cachedIds ?: "NOT FOUND")
             if (cachedIds != null) param to cachedIds else null
         }
         println("getCachedSearchResultsOrNullList: $result")
@@ -126,17 +133,21 @@ class RedisService(
         searchRequest: SearchRequest,
         resultIds: List<UUID>
     ) {
+        println("Overwriting search results for entity: $entityName")
         val mappings = getMappings()?.toMutableMap() ?: mutableMapOf()
+        println("mappings: $mappings")
 
         val entityMap = mappings.getOrPut("entities") { mutableMapOf<String, Any>() } as MutableMap<String, Any>
+        println("entityMap: $entityMap")
 
         searchRequest.params.forEach { param ->
             val hashedKey = generateCacheKey(param)
+            println("hashedKey in overwriting: $hashedKey")
             val fieldName = param.path.substringAfterLast(".")
-
+            println("fieldName in overwriting: $fieldName")
             val fieldMap = (entityMap.getOrPut(entityName) { mutableMapOf<String, Any>() } as MutableMap<String, Any>)
                 .getOrPut(fieldName) { mutableMapOf<String, List<UUID>>() } as MutableMap<String, List<UUID>>
-
+            println("fieldMap in overwriting: $fieldMap")
             fieldMap[hashedKey] = resultIds
         }
 
