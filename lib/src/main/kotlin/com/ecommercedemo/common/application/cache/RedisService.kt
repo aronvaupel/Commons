@@ -99,9 +99,14 @@ class RedisService(
     fun getCachedSearchResultsOrNullList(searchRequest: SearchRequest): List<Pair<SearchParam, List<UUID>>?> {
         val result =  searchRequest.params.map { param ->
             val hashedKey = generateCacheKey(param)
+            println("hashedKey: $hashedKey")
             val cachedIds = redisTemplate.opsForValue().get(hashedKey)?.let {
-                objectMapper.readValue(it, object : TypeReference<List<UUID>>() {})
+                println("Redis key found")
+                val mappedValue = objectMapper.readValue(it, object : TypeReference<List<UUID>>() {})
+                println("mappedValue: $mappedValue")
+                mappedValue
             }
+            println("cachedIds: $cachedIds")
             if (cachedIds != null) param to cachedIds else null
         }
         println("getCachedSearchResultsOrNullList: $result")
