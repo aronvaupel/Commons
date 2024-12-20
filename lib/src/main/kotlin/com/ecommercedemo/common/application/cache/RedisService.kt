@@ -103,29 +103,22 @@ class RedisService(
         searchRequest: SearchRequest,
         entityName: String
     ): List<Pair<SearchParam, List<UUID>>?> {
-        val result = searchRequest.params.map { param ->
-            val hashedKey = generateCacheKey(param)
-            println("hashedKey: $hashedKey")
-            val fieldName = param.path.substringAfterLast(".")
-            println("fieldName: $fieldName")
-            val cachedIds = try {
-                val raw = redisTemplate.opsForValue().get(
-                    "entities:$entityName:$fieldName:$hashedKey"
-                )
-                println("raw: $raw")
-                raw?.let {
-                    objectMapper.readValue(it, object : TypeReference<List<UUID>>() {})
-                }
-            } catch (e: Exception) {
-                log.error("Error retrieving cached value for key: $hashedKey", e)
-                null
-            }
+        val mappings = getMappings()?.get("entities") as? Map<String, Any>
+        val entityMap = mappings?.get(entityName) as? Map<String, Any>
 
-            log.info("Key: {}, Cached IDs: {}", hashedKey, cachedIds ?: "NOT FOUND")
+        return searchRequest.params.map { param ->
+            val hashedKey = generateCacheKey(param)
+            val fieldName = param.path.substringAfterLast(".")
+            println("hashedKey: $hashedKey, fieldName: $fieldName")
+
+            val fieldMap = entityMap?.get(fieldName) as? Map<String, List<UUID>>
+            val cachedIds = fieldMap?.get(hashedKey)
+
+            println("Cached IDs for hashedKey $hashedKey: ${cachedIds ?: "NOT FOUND"}")
             if (cachedIds != null) param to cachedIds else null
+        }.also {
+            println("getCachedSearchResultsOrNullList: $it")
         }
-        println("getCachedSearchResultsOrNullList: $result")
-        return result
     }
 
     fun overwriteSearchResults(
