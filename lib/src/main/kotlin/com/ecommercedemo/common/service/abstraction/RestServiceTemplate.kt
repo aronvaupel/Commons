@@ -10,6 +10,7 @@ import com.ecommercedemo.common.controller.abstraction.request.CreateRequest
 import com.ecommercedemo.common.controller.abstraction.request.SearchRequest
 import com.ecommercedemo.common.controller.abstraction.request.UpdateRequest
 import com.ecommercedemo.common.controller.abstraction.util.Retriever
+import com.ecommercedemo.common.controller.abstraction.util.SearchParam
 import com.ecommercedemo.common.model.abstraction.BaseEntity
 import com.ecommercedemo.common.persistence.abstraction.IEntityPersistenceAdapter
 import com.ecommercedemo.common.service.RestServiceFor
@@ -123,36 +124,37 @@ abstract class RestServiceTemplate<T : BaseEntity>() : IRestService<T> {
     override fun search(request: SearchRequest): List<T> {
         val startTime = System.currentTimeMillis() // Start timing
 
-        val cachedSearchMap = redisService.getCachedSearchMap(request)
+        val cachedSearchResultsOrNullList = redisService.getCachedSearchResultsOrNullList(request)
 
         val result: List<T>
         val cacheStatus: String
 
         when {
-            cachedSearchMap.all { it.value.isNotEmpty() } -> {
-                result = getMultiple(redisService.combineCachedIds(cachedSearchMap))
+            cachedSearchResultsOrNullList.all { it != null } -> {
+                result = getMultiple(redisService.combineCachedIds(cachedSearchResultsOrNullList))
                 cacheStatus = "FULLY_CACHED"
             }
-            cachedSearchMap.all { it.value.isEmpty() } -> {
+
+            cachedSearchResultsOrNullList.all { it == null } -> {
                 result = computeWholeSearch(request)
                 cacheStatus = "UNCACHED"
             }
+
             else -> {
-                result = computePartialSearch(cachedSearchMap, request)
+                result = computePartialSearch(cachedSearchResultsOrNullList, request)
                 cacheStatus = "PARTIALLY_CACHED"
             }
         }
 
-        // Update cache if necessary
-        if (cachedSearchMap.any { it.value.isEmpty() }) {
+        if (cachedSearchResultsOrNullList.any { it == null }) {
             redisService.overwriteSearchResults(
                 entityName = entityClass.simpleName!!,
-                updatedSearchRequest = request,
+                searchRequest = request,
                 resultIds = result.map { it.id }
             )
         }
 
-        val endTime = System.currentTimeMillis() // End timing
+        val endTime = System.currentTimeMillis()
         log.info(
             "Search completed in ${endTime - startTime}ms. Cache status: $cacheStatus. Entity: ${entityClass.simpleName}."
         )
@@ -160,13 +162,13 @@ abstract class RestServiceTemplate<T : BaseEntity>() : IRestService<T> {
         return result
     }
 
-
-
     private fun computePartialSearch(
-        cachedSearchMap: Map<String, List<UUID>>,
+        cachedSearchKeysList: List<Pair<SearchParam, List<UUID>>?>,
         request: SearchRequest
-    ): List<T> = getMultiple(redisService.combineCachedIds(cachedSearchMap)) + retriever.executeSearch(
-        SearchRequest(params = redisService.findUncachedParams(cachedSearchMap, request)), entityClass
+    ): List<T> = getMultiple(redisService.combineCachedIds(cachedSearchKeysList)) + retriever.executeSearch(
+        SearchRequest(params = request.params.filterNot { param ->
+            cachedSearchKeysList.any { it?.first == param }
+        }), entityClass
     )
 
     private fun computeWholeSearch(request: SearchRequest): List<T> = retriever.executeSearch(request, entityClass)

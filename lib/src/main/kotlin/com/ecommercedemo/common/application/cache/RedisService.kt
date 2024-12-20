@@ -96,26 +96,27 @@ class RedisService(
         return serializedData?.let { objectMapper.readValue(it, object: TypeReference<Map<String, Any>>() {} ) }
     }
 
-    fun getCachedSearchMap(searchRequest: SearchRequest): Map<String, List<UUID>> {
-        return searchRequest.params.associate { param ->
+    fun getCachedSearchResultsOrNullList(searchRequest: SearchRequest): List<Pair<SearchParam, List<UUID>>?> {
+        return searchRequest.params.map { param ->
             val hashedKey = generateCacheKey(param)
             val cachedIds = redisTemplate.opsForValue().get(hashedKey)?.let {
                 objectMapper.readValue(it, object : TypeReference<List<UUID>>() {})
             }
-            hashedKey to (cachedIds ?: emptyList())
+            if (cachedIds != null) param to cachedIds else null
+
         }
     }
 
     fun overwriteSearchResults(
         entityName: String,
-        updatedSearchRequest: SearchRequest,
+        searchRequest: SearchRequest,
         resultIds: List<UUID>
     ) {
         val mappings = getMappings()?.toMutableMap() ?: mutableMapOf()
 
         val entityMap = mappings.getOrPut("entities") { mutableMapOf<String, Any>() } as MutableMap<String, Any>
 
-        updatedSearchRequest.params.forEach { param ->
+        searchRequest.params.forEach { param ->
             val hashedKey = generateCacheKey(param)
             val fieldName = param.path.substringAfterLast(".")
 
@@ -138,17 +139,10 @@ class RedisService(
             .joinToString("") { "%02x".format(it) }
     }
 
-    fun combineCachedIds(cachedSearchMap: Map<String, List<UUID>>): List<UUID> {
-        return cachedSearchMap.values.reduce { acc, ids -> acc.intersect(ids.toSet()).toList() }
-    }
-
-    fun findUncachedParams(
-        cachedSearchMap: Map<String, List<UUID>>,
-        request: SearchRequest
-    ): List<SearchParam> {
-        return request.params.filterNot { param ->
-            cachedSearchMap.containsKey(generateCacheKey(param))
-        }
+    fun combineCachedIds(cachedSearchKeysList: List<Pair<SearchParam, List<UUID>>?>): List<UUID> {
+        return cachedSearchKeysList.filterNotNull()
+            .map { it.second }
+            .reduceOrNull { acc, ids -> acc.intersect(ids.toSet()).toList() } ?: emptyList()
     }
 
 }
