@@ -125,7 +125,6 @@ abstract class RestServiceTemplate<T : BaseEntity>() : IRestService<T> {
         val startTime = System.currentTimeMillis()
 
         val cachedSearchResultsOrNullList = redisService.getCachedSearchResultsOrNullList(request, entityClass.simpleName!!)
-        println("cachedSearchResultsOrNullList: $cachedSearchResultsOrNullList")
 
         val result: List<T>
         val cacheStatus: String

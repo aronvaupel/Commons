@@ -109,15 +109,9 @@ class RedisService(
         return searchRequest.params.map { param ->
             val hashedKey = generateCacheKey(param)
             val fieldName = param.path.substringAfterLast(".")
-            println("hashedKey: $hashedKey, fieldName: $fieldName")
-
             val fieldMap = entityMap?.get(fieldName) as? Map<String, List<UUID>>
             val cachedIds = fieldMap?.get(hashedKey)
-
-            println("Cached IDs for hashedKey $hashedKey: ${cachedIds ?: "NOT FOUND"}")
             if (cachedIds != null) param to cachedIds else null
-        }.also {
-            println("getCachedSearchResultsOrNullList: $it")
         }
     }
 
@@ -126,21 +120,15 @@ class RedisService(
         searchRequest: SearchRequest,
         resultIds: List<UUID>
     ) {
-        println("Overwriting search results for entity: $entityName")
         val mappings = getMappings()?.toMutableMap() ?: mutableMapOf()
-        println("mappings: $mappings")
 
         val entityMap = mappings.getOrPut("entities") { mutableMapOf<String, Any>() } as MutableMap<String, Any>
-        println("entityMap: $entityMap")
 
         searchRequest.params.forEach { param ->
             val hashedKey = generateCacheKey(param)
-            println("hashedKey in overwriting: $hashedKey")
             val fieldName = param.path.substringAfterLast(".")
-            println("fieldName in overwriting: $fieldName")
             val fieldMap = (entityMap.getOrPut(entityName) { mutableMapOf<String, Any>() } as MutableMap<String, Any>)
                 .getOrPut(fieldName) { mutableMapOf<String, List<UUID>>() } as MutableMap<String, List<UUID>>
-            println("fieldMap in overwriting: $fieldMap")
             fieldMap[hashedKey] = resultIds
         }
 
