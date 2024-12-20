@@ -16,7 +16,7 @@ class PathResolver(
     private val _pseudoPropertyRepository: _PseudoPropertyRepository,
     private val objectMapper: ObjectMapper
 ) {
-    fun <T : BaseEntity> resolvePath(params: SearchParams, root: Root<T>): ResolvedSearchParam {
+    fun <T : BaseEntity> resolvePath(params: SearchParam, root: Root<T>): ResolvedSearchParam {
         val segments = params.path.split(".")
         var currentPath: Path<*> = root
         var currentClass: Class<*> = root.javaType

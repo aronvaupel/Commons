@@ -1,5 +1,6 @@
 package com.ecommercedemo.common.service.abstraction
 
+import com.ecommercedemo.common.application.cache.RedisService
 import com.ecommercedemo.common.application.exception.FailedToCreateException
 import com.ecommercedemo.common.application.exception.FailedToDeleteException
 import com.ecommercedemo.common.application.exception.FailedToUpdateException
@@ -27,7 +28,8 @@ import kotlin.reflect.full.findAnnotation
 
 @Suppress("UNCHECKED_CAST")
 abstract class RestServiceTemplate<T : BaseEntity>() : IRestService<T> {
-    private var entityClass: KClass<T>
+    private var entityClass: KClass<T> = this::class.findAnnotation<RestServiceFor>()?.let { it.entity as KClass<T> }
+        ?: throw IllegalStateException("No valid annotation found on class ${this::class.simpleName}")
 
     @Autowired
     private lateinit var adapter: IEntityPersistenceAdapter<T>
@@ -50,10 +52,8 @@ abstract class RestServiceTemplate<T : BaseEntity>() : IRestService<T> {
     @Autowired
     private lateinit var typeReAttacher: TypeReAttacher
 
-    init {
-        entityClass = this::class.findAnnotation<RestServiceFor>()?.let { it.entity as KClass<T> }
-            ?: throw IllegalStateException("No valid annotation found on class ${this::class.simpleName}")
-    }
+    @Autowired
+    private lateinit var redisService: RedisService
 
     private val log = KotlinLogging.logger {}
 
@@ -93,6 +93,7 @@ abstract class RestServiceTemplate<T : BaseEntity>() : IRestService<T> {
 
     }
 
+    //Todo: Consider returning the status in the controller, does not belong here
     @Transactional
     override fun delete(id: UUID): HttpStatus {
         return try {
@@ -114,19 +115,69 @@ abstract class RestServiceTemplate<T : BaseEntity>() : IRestService<T> {
 
     override fun getSingle(id: UUID): T = adapter.getById(id)
 
+    //Todo: Consider optional pagination
     override fun getMultiple(ids: List<UUID>): List<T> = adapter.getAllByIds(ids)
 
     override fun getAllPaged(page: Int, size: Int): Page<T> = adapter.getAllPaged(page, size)
 
-    override fun search(request: SearchRequest): List<T> = retriever.executeSearch(request, entityClass)
+    override fun search(request: SearchRequest): List<T> {
+        val startTime = System.currentTimeMillis() // Start timing
+
+        val cachedSearchMap = redisService.getCachedSearchMap(request)
+
+        val result: List<T>
+        val cacheStatus: String
+
+        when {
+            cachedSearchMap.all { it.value.isNotEmpty() } -> {
+                result = getMultiple(redisService.combineCachedIds(cachedSearchMap))
+                cacheStatus = "FULLY_CACHED"
+            }
+            cachedSearchMap.all { it.value.isEmpty() } -> {
+                result = computeWholeSearch(request)
+                cacheStatus = "UNCACHED"
+            }
+            else -> {
+                result = computePartialSearch(cachedSearchMap, request)
+                cacheStatus = "PARTIALLY_CACHED"
+            }
+        }
+
+        // Update cache if necessary
+        if (cachedSearchMap.any { it.value.isEmpty() }) {
+            redisService.overwriteSearchResults(
+                entityName = entityClass.simpleName!!,
+                updatedSearchRequest = request,
+                resultIds = result.map { it.id }
+            )
+        }
+
+        val endTime = System.currentTimeMillis() // End timing
+        log.info(
+            "Search completed in ${endTime - startTime}ms. Cache status: $cacheStatus. Entity: ${entityClass.simpleName}."
+        )
+
+        return result
+    }
+
+
+
+    private fun computePartialSearch(
+        cachedSearchMap: Map<String, List<UUID>>,
+        request: SearchRequest
+    ): List<T> = getMultiple(redisService.combineCachedIds(cachedSearchMap)) + retriever.executeSearch(
+        SearchRequest(params = redisService.findUncachedParams(cachedSearchMap, request)), entityClass
+    )
+
+    private fun computeWholeSearch(request: SearchRequest): List<T> = retriever.executeSearch(request, entityClass)
 
     private fun saveAndEmitEvent(original: T?, updated: T, eventType: EntityEventType): T {
         val savedEntity = adapter.save(updated)
         val changes = original?.let { entityChangeTracker.getChangedProperties(it, savedEntity) }
             ?: entityChangeTracker.getChangedProperties(null, savedEntity)
         eventProducer.emit(entityClass.java.simpleName, savedEntity.id, eventType, changes)
-
         return savedEntity
     }
+
 
 }

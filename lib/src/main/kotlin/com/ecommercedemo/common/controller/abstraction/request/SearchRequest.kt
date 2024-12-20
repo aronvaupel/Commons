@@ -1,7 +1,7 @@
 package com.ecommercedemo.common.controller.abstraction.request
 
-import com.ecommercedemo.common.controller.abstraction.util.SearchParams
+import com.ecommercedemo.common.controller.abstraction.util.SearchParam
 
 data class SearchRequest(
-    val params: List<SearchParams> = emptyList()
+    val params: List<SearchParam> = emptyList()
 )

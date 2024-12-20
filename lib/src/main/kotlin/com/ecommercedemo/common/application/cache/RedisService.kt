@@ -3,14 +3,19 @@ package com.ecommercedemo.common.application.cache
 import com.ecommercedemo.common.application.cache.keys.KafkaTopicRegistry
 import com.ecommercedemo.common.application.cache.values.Microservice
 import com.ecommercedemo.common.application.cache.values.TopicDetails
+import com.ecommercedemo.common.controller.abstraction.request.SearchRequest
+import com.ecommercedemo.common.controller.abstraction.util.SearchParam
 import com.fasterxml.jackson.core.type.TypeReference
 import com.fasterxml.jackson.databind.ObjectMapper
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.data.redis.core.StringRedisTemplate
 import org.springframework.stereotype.Service
+import java.security.MessageDigest
+import java.util.*
 
 @Service
+@Suppress("UNCHECKED_CAST")
 class RedisService(
     @Autowired private val objectMapper: ObjectMapper,
     private val redisTemplate: StringRedisTemplate,
@@ -86,9 +91,64 @@ class RedisService(
         redisTemplate.opsForValue().set("service-mappings", serializedData)
     }
 
-    fun getMappings(): Map<String, Any>? {
+    private fun getMappings(): Map<String, Any>? {
         val serializedData = redisTemplate.opsForValue().get("service-mappings")
         return serializedData?.let { objectMapper.readValue(it, object: TypeReference<Map<String, Any>>() {} ) }
+    }
+
+    fun getCachedSearchMap(searchRequest: SearchRequest): Map<String, List<UUID>> {
+        return searchRequest.params.associate { param ->
+            val hashedKey = generateCacheKey(param)
+            val cachedIds = redisTemplate.opsForValue().get(hashedKey)?.let {
+                objectMapper.readValue(it, object : TypeReference<List<UUID>>() {})
+            }
+            hashedKey to (cachedIds ?: emptyList())
+        }
+    }
+
+    fun overwriteSearchResults(
+        entityName: String,
+        updatedSearchRequest: SearchRequest,
+        resultIds: List<UUID>
+    ) {
+        val mappings = getMappings()?.toMutableMap() ?: mutableMapOf()
+
+        val entityMap = mappings.getOrPut("entities") { mutableMapOf<String, Any>() } as MutableMap<String, Any>
+
+        updatedSearchRequest.params.forEach { param ->
+            val hashedKey = generateCacheKey(param)
+            val fieldName = param.path.substringAfterLast(".")
+
+            val fieldMap = (entityMap.getOrPut(entityName) { mutableMapOf<String, Any>() } as MutableMap<String, Any>)
+                .getOrPut(fieldName) { mutableMapOf<String, List<UUID>>() } as MutableMap<String, List<UUID>>
+
+            fieldMap[hashedKey] = resultIds
+        }
+
+        saveMappings(mappings)
+    }
+
+    private fun generateCacheKey(param: SearchParam): String {
+        return hash("${param.operator.name}:${param.searchValue}")
+    }
+
+    private fun hash(input: String): String {
+        return MessageDigest.getInstance("SHA-256")
+            .digest(input.toByteArray())
+            .joinToString("") { "%02x".format(it) }
+    }
+
+    fun combineCachedIds(cachedSearchMap: Map<String, List<UUID>>): List<UUID> {
+        return cachedSearchMap.values.reduce { acc, ids -> acc.intersect(ids.toSet()).toList() }
+    }
+
+    fun findUncachedParams(
+        cachedSearchMap: Map<String, List<UUID>>,
+        request: SearchRequest
+    ): List<SearchParam> {
+        return request.params.filterNot { param ->
+            cachedSearchMap.containsKey(generateCacheKey(param))
+        }
     }
 
 }
