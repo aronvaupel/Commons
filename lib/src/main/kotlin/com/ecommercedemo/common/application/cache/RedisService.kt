@@ -127,7 +127,7 @@ open class RedisService(
             val redisKey = "$redisKeyPrefix:${param.path}:$hashedParam"
 
             val entry = mapOf(
-                "memoryUsage" to newEntryMemoryUsage,
+                "memoryUsage" to newEntryMemoryUsage.toString(),
                 "result" to resultIds
             )
             redisTemplate.opsForHash<String, Any>().putAll(redisKey, entry)
