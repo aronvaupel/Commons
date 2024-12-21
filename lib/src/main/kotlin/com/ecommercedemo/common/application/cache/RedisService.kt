@@ -105,7 +105,9 @@ open class RedisService(
             redisTemplate.opsForZSet().add("ranking", redisKey, System.currentTimeMillis().toDouble())
 
             val entry = redisTemplate.opsForHash<String, Any>().entries(redisKey)
-            val result = entry["result"] as? List<UUID> ?: emptyList()
+            val result = objectMapper.readValue(
+                objectMapper.writeValueAsString(entry["result"]),
+                object : TypeReference<List<UUID>>() {}) as List<UUID>
             Pair(param, result)
         }
     }
@@ -127,8 +129,8 @@ open class RedisService(
             val redisKey = "$redisKeyPrefix:${param.path}:$hashedParam"
 
             val entry = mapOf(
-                "memoryUsage" to newEntryMemoryUsage.toString(),
-                "result" to resultIds
+                "memoryUsage" to objectMapper.writeValueAsString(newEntryMemoryUsage),
+                "result" to objectMapper.writeValueAsString(resultIds)
             )
             redisTemplate.opsForHash<String, Any>().putAll(redisKey, entry)
 
@@ -136,7 +138,7 @@ open class RedisService(
         }
 
         val updatedMemoryUsage = currentMemoryUsage + newEntryMemoryUsage - freedMemory
-        redisTemplate.opsForValue().set("total-memory-usage", updatedMemoryUsage.toString())
+        redisTemplate.opsForValue().set("total-memory-usage", objectMapper.writeValueAsString(updatedMemoryUsage))
     }
 
 
@@ -160,7 +162,6 @@ open class RedisService(
 
         return memoryFreed
     }
-
 
 
     private fun calculateMemoryUsageOfNewEntry(resultIds: List<UUID>): Long {
