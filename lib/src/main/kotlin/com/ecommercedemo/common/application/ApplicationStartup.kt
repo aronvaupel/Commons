@@ -23,7 +23,7 @@ class ApplicationStartup @Autowired constructor(
         val upstreamEntityNames = entityScanner.getUpstreamEntityNames()
         dynamicTopicRegistration.declareKafkaTopics(upstreamEntityNames)
 
-        val mappings = serviceMapper.mapEntitiesAndServiceClasses()
+        val mappings = serviceMapper.mapEntities()
         redisService.saveMappings(mappings)
     }
 }

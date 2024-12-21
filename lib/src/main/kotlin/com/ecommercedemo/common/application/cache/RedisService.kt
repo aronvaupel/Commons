@@ -21,6 +21,8 @@ import java.util.*
 class RedisService(
     @Autowired private val objectMapper: ObjectMapper,
     private val redisTemplate: StringRedisTemplate,
+    @Value("\${cache.memory.max-size}")
+    private val maxMemorySize: Long,
     @Value("\${spring.application.name}")
     private val serviceName: String
 ) {
@@ -91,28 +93,52 @@ class RedisService(
     }
 
     fun saveMappings(mappings: Map<String, Any>) {
-        val serializedData = objectMapper.writeValueAsString(mappings)
-        redisTemplate.opsForValue().set("service-mappings", serializedData)
+        val serializedMappings = objectMapper.writeValueAsString(mappings)
+        val serializedSize = serializedMappings.toByteArray().size.toLong()
+
+        val metadataSize = "totalMemoryUsageInBytes".toByteArray().size + Long.SIZE_BYTES
+        val totalMemoryUsage = serializedSize + metadataSize
+
+        val mappingsAndMemoryUsage = mappings.toMutableMap().apply {
+            put("totalMemoryUsageInBytes", totalMemoryUsage)
+        }
+
+        val enhancedSerializedData = objectMapper.writeValueAsString(mappingsAndMemoryUsage)
+        redisTemplate.opsForValue().set("service-mappings", enhancedSerializedData)
     }
 
-    private fun getMappings(): Map<String, Any>? {
-        val serializedData = redisTemplate.opsForValue().get("service-mappings")
-        return serializedData?.let { objectMapper.readValue(it, object : TypeReference<Map<String, Any>>() {}) }
-    }
 
+
+    //Todo: what about pseudo property paths?
     fun getCachedSearchResultsOrNullList(
         searchRequest: SearchRequest,
         entityName: String
     ): List<Pair<SearchParam, List<UUID>>?> {
-        val mappings = getMappings()?.get("entities") as? Map<String, Any>
-        val entityMap = mappings?.get(entityName) as? Map<String, Any>
-
-        return searchRequest.params.map { param ->
-            val hashedKey = generateCacheKey(param)
+        val redisKeys = searchRequest.params.map { param ->
             val fieldName = param.path.substringAfterLast(".")
-            val fieldMap = entityMap?.get(fieldName) as? Map<String, List<UUID>>
-            val cachedIds = fieldMap?.get(hashedKey)
-            if (cachedIds != null) param to cachedIds else null
+            val hashedKey = generateCacheKey(param)
+            "entities:$entityName:$fieldName:$hashedKey"
+        }
+
+        val results = redisTemplate.executePipelined { connection ->
+            redisKeys.forEach { redisKey ->
+                connection.stringCommands().get(redisKey.toByteArray())
+            }
+        }
+
+        return searchRequest.params.mapIndexed { index, param ->
+            val cachedEntry = results[index]?.let { result ->
+                objectMapper.readValue(result.toString(), object : TypeReference<Map<String, Any>>() {})
+            }
+
+            val cachedIds = cachedEntry?.get("results") as? List<UUID>
+            if (cachedIds != null) {
+                val updatedEntry = cachedEntry.toMutableMap().apply {
+                    put("lastAccess", System.currentTimeMillis())
+                }
+                redisTemplate.opsForValue().set(redisKeys[index], objectMapper.writeValueAsString(updatedEntry))
+                param to cachedIds
+            } else null
         }
     }
 
@@ -121,19 +147,66 @@ class RedisService(
         searchRequest: SearchRequest,
         resultIds: List<UUID>
     ) {
-        val mappings = getMappings()?.toMutableMap() ?: mutableMapOf()
+        val rankingKey = "ranking:searches"
 
-        val entityMap = mappings.getOrPut("entities") { mutableMapOf<String, Any>() } as MutableMap<String, Any>
+        val newEntrySize = calculateMemoryUsageOfNewEntry(resultIds)
+        val currentTotalMemory = redisTemplate.opsForValue().get("totalMemoryUsageInBytes")?.toLong() ?: 0L
+
+        val requiredMemory = currentTotalMemory + newEntrySize
+
+        if (requiredMemory > maxMemorySize) {
+            val memoryToFree = requiredMemory - maxMemorySize
+            evictOldestEntries(rankingKey, memoryToFree)
+        }
 
         searchRequest.params.forEach { param ->
             val hashedKey = generateCacheKey(param)
             val fieldName = param.path.substringAfterLast(".")
-            val fieldMap = (entityMap.getOrPut(entityName) { mutableMapOf<String, Any>() } as MutableMap<String, Any>)
-                .getOrPut(fieldName) { mutableMapOf<String, List<UUID>>() } as MutableMap<String, List<UUID>>
-            fieldMap[hashedKey] = resultIds
+            val redisKey = "entities:$entityName:$fieldName:$hashedKey"
+
+            val cacheEntry = mapOf(
+                "lastAccess" to System.currentTimeMillis(),
+                "memoryUsageInBytes" to newEntrySize,
+                "results" to resultIds
+            )
+
+            redisTemplate.opsForValue().set(redisKey, objectMapper.writeValueAsString(cacheEntry))
         }
 
-        saveMappings(mappings)
+        val updatedTotalMemory = redisTemplate.opsForValue().get("totalMemoryUsageInBytes")?.toLong() ?: 0L
+        redisTemplate.opsForValue().set("totalMemoryUsageInBytes", (updatedTotalMemory + newEntrySize).toString())
+    }
+
+    private fun evictOldestEntries(rankingKey: String, memoryToFree: Long) {
+        var freedMemory = 0L
+
+        while (freedMemory < memoryToFree) {
+            val oldestEntry = redisTemplate.opsForZSet().popMin(rankingKey)
+            if (oldestEntry == null) {
+                log.warn("Eviction failed: no entries left to evict.")
+                break
+            }
+            val redisKey = oldestEntry.value?.toString()
+            if (redisKey != null) {
+                val entrySize = redisTemplate.opsForValue().get(redisKey)?.let {
+                val cacheEntry = objectMapper.readValue(it, object : TypeReference<Map<String, Any>>() {})
+                cacheEntry["memoryUsageInBytes"] as Long
+            } ?: 0L
+                redisTemplate.delete(redisKey)
+                freedMemory += entrySize
+                redisTemplate.opsForValue().increment("totalMemoryUsageInBytes", -entrySize)
+            }
+        }
+        log.info("Evicted entries freeing $freedMemory bytes.")
+    }
+
+    private fun calculateMemoryUsageOfNewEntry(resultIds: List<UUID>): Long {
+        val hashedKeySize = 64L
+        val metadataSize = 16L
+        val resultsSize = resultIds.size * 36L
+        val serializationOverhead = (hashedKeySize + metadataSize + resultsSize) / 10 //approximation
+
+        return hashedKeySize + metadataSize + resultsSize + serializationOverhead
     }
 
     private fun generateCacheKey(param: SearchParam): String {
