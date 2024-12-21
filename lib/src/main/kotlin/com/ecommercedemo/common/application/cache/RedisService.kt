@@ -104,7 +104,9 @@ open class RedisService(
 
             redisTemplate.opsForZSet().add("ranking", redisKey, System.currentTimeMillis().toDouble())
 
-            val entry = redisTemplate.opsForHash<String, Any>().entries(redisKey)
+            val entry = objectMapper.readValue(
+                redisTemplate.opsForValue().get(redisKey),
+                object : TypeReference<Map<String, Any>>() {})
             val result = entry["result"] as List<UUID>
             Pair(param, result)
         }
@@ -132,7 +134,7 @@ open class RedisService(
                     "result" to resultIds
                 )
 
-            redisTemplate.opsForHash<String, Any>().putAll(redisKey, entry)
+            redisTemplate.opsForValue().set(redisKey, objectMapper.writeValueAsString(entry))
 
             redisTemplate.opsForZSet().add("ranking", redisKey, System.currentTimeMillis().toDouble())
         }
@@ -153,10 +155,15 @@ open class RedisService(
                     val entry = this.next()
                     val key = entry.value ?: throw NullKeyInZSetException("Null key in zSet", zSetKey, entry)
 
+                    val memoryUsage = redisTemplate.opsForValue().get(key)?.let {
+                        objectMapper.readValue(
+                            it,
+                            object : TypeReference<Map<String, Any>>() {})["memoryUsage"] as? Long ?: 0L
+                    } ?: 0L
                     redisTemplate.delete(key)
                     redisTemplate.opsForZSet().remove(zSetKey, key)
 
-                    memoryFreed += redisTemplate.opsForHash<String, Long>().get(key, "memoryUsage") ?: 0L
+                    memoryFreed += memoryUsage
                 }
             } ?: log.info { "No entries to evict. Consider allocating more memory to the cache" }
 
