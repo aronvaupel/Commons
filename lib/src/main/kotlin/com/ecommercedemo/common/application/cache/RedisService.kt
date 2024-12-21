@@ -91,24 +91,25 @@ open class RedisService(
         redisTemplate.opsForValue().set("kafka-topic-registry", objectMapper.writeValueAsString(kafkaTopicRegistry))
     }
 
-    fun saveMappings(mappings: Map<String, Any>) {
+    fun saveApplicationMap(mappings: Map<String, Any>) {
         val serializedMappings = objectMapper.writeValueAsString(mappings)
         val serializedSize = serializedMappings.toByteArray().size.toLong()
 
         val metadataSize = "total-memory-usage-in-bytes".toByteArray().size + Long.SIZE_BYTES
         val totalMemoryUsage = serializedSize + metadataSize
 
-        val mappingsAndMemoryUsage = mappings.toMutableMap().apply {
+        val mappingsAndMemoryUsage = mutableMapOf<String, Any>().apply {
+            put("entities", mappings)
             put("total-memory-usage-in-bytes", totalMemoryUsage)
-            put("eviction-candidates", mutableMapOf<String, Long>()) //accessKey to size
+            put("eviction-candidates", mutableMapOf<String, Long>())
         }
 
         val enhancedSerializedData = objectMapper.writeValueAsString(mappingsAndMemoryUsage)
-        redisTemplate.opsForValue().set("service-mappings", enhancedSerializedData)
+        redisTemplate.opsForValue().set("application-map", enhancedSerializedData)
     }
 
     private fun getMappings(): Map<String, Any>? {
-        val serializedMappings = redisTemplate.opsForValue().get("service-mappings")
+        val serializedMappings = redisTemplate.opsForValue().get("application-map")
         return serializedMappings?.let {
             objectMapper.readValue(it, object : TypeReference<Map<String, Any>>() {})
         }
@@ -361,7 +362,7 @@ open class RedisService(
         }
 
         mappings["eviction-candidates"] = updatedCandidateList
-        saveMappings(mappings)
+        saveApplicationMap(mappings)
     }
 
 }

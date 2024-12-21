@@ -9,7 +9,7 @@ import kotlin.reflect.full.declaredMemberProperties
 
 @Component
 @DependsOn("classPathScanner")
-class ServiceMapper(
+class EntityMapper(
     private val classPathScanner: ClassPathScanner,
 ) {
     fun mapEntities(): Map<String, Any> {
