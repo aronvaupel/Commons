@@ -81,7 +81,7 @@ abstract class RestServiceTemplate<T : BaseEntity>() : IRestService<T> {
                 eventType = ModificationType.CREATE
             )
 
-            redisService.invalidateCaches(
+            redisService.invalidateSearchCaches(
                 entityName = entityClass.simpleName!!,
                 id = result.id,
                 fields = request.properties.keys,
@@ -121,7 +121,7 @@ abstract class RestServiceTemplate<T : BaseEntity>() : IRestService<T> {
                 eventType = ModificationType.UPDATE
             )
 
-            redisService.invalidateCaches(
+            redisService.invalidateSearchCaches(
                 entityName = entityClass.simpleName!!,
                 id = result.id,
                 fields = request.properties.keys,
@@ -149,7 +149,7 @@ abstract class RestServiceTemplate<T : BaseEntity>() : IRestService<T> {
                 modificationType = ModificationType.DELETE,
                 properties = mutableMapOf()
             )
-            redisService.invalidateCaches(
+            redisService.invalidateSearchCaches(
                 entityName = entityClass.simpleName!!,
                 id = id,
                 fields = setOf(),
@@ -180,7 +180,7 @@ abstract class RestServiceTemplate<T : BaseEntity>() : IRestService<T> {
 
         when {
             cachedSearchResultsOrNullList.all { it != null } -> {
-                result = getMultiple(redisService.combineCachedIds(cachedSearchResultsOrNullList))
+                result = getMultiple(redisService.resultIntersection(cachedSearchResultsOrNullList))
                 cacheStatus = "FULLY_CACHED"
             }
 
@@ -214,7 +214,7 @@ abstract class RestServiceTemplate<T : BaseEntity>() : IRestService<T> {
     private fun computePartialSearch(
         cachedSearchKeysList: List<Pair<SearchParam, List<UUID>>?>,
         request: SearchRequest
-    ): List<T> = getMultiple(redisService.combineCachedIds(cachedSearchKeysList)) + retriever.executeSearch(
+    ): List<T> = getMultiple(redisService.resultIntersection(cachedSearchKeysList)) + retriever.executeSearch(
         SearchRequest(params = request.params.filterNot { param ->
             cachedSearchKeysList.any { it?.first == param }
         }), entityClass

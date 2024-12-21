@@ -3,6 +3,7 @@ package com.ecommercedemo.common.application.cache
 import com.ecommercedemo.common.application.cache.keys.KafkaTopicRegistry
 import com.ecommercedemo.common.application.cache.values.Microservice
 import com.ecommercedemo.common.application.cache.values.TopicDetails
+import com.ecommercedemo.common.application.exception.NullKeyInZSetException
 import com.ecommercedemo.common.application.validation.modification.ModificationType
 import com.ecommercedemo.common.controller.abstraction.request.SearchRequest
 import com.ecommercedemo.common.controller.abstraction.util.SearchParam
@@ -12,10 +13,8 @@ import mu.KotlinLogging
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.data.redis.core.StringRedisTemplate
-import org.springframework.scheduling.annotation.Async
 import org.springframework.stereotype.Service
 import java.security.MessageDigest
-import java.time.Duration
 import java.util.*
 
 @Service
@@ -23,7 +22,7 @@ import java.util.*
 open class RedisService(
     @Autowired private val objectMapper: ObjectMapper,
     private val redisTemplate: StringRedisTemplate,
-    @Value("\${cache.memory.max-size}") private val maxMemorySize: Long,
+    @Value("\${cache.memory.max-size}") private val maxMemory: Long,
     @Value("\${spring.application.name}") private val serviceName: String
 ) {
 
@@ -91,151 +90,77 @@ open class RedisService(
         redisTemplate.opsForValue().set("kafka-topic-registry", objectMapper.writeValueAsString(kafkaTopicRegistry))
     }
 
-    fun saveApplicationMap(mappings: Map<String, Any>) {
-        val serializedMappings = objectMapper.writeValueAsString(mappings)
-        val serializedSize = serializedMappings.toByteArray().size.toLong()
-
-        val metadataSize = "total-memory-usage-in-bytes".toByteArray().size + Long.SIZE_BYTES
-        val totalMemoryUsage = serializedSize + metadataSize
-
-        val mappingsAndMemoryUsage = mutableMapOf<String, Any>().apply {
-            put("entities", mappings)
-            put("total-memory-usage-in-bytes", totalMemoryUsage)
-            put("eviction-candidates", listOf(mapOf<String, Long>()))
-        }
-
-        val enhancedSerializedData = objectMapper.writeValueAsString(mappingsAndMemoryUsage)
-        redisTemplate.opsForValue().set("application-map", enhancedSerializedData)
-    }
-
-    private fun getMappings(): Map<String, Any>? {
-        val serializedMappings = redisTemplate.opsForValue().get("application-map")
-        return serializedMappings?.let {
-            objectMapper.readValue(it, object : TypeReference<Map<String, Any>>() {})
-        }
-    }
-
     //Todo: what about pseudo property paths?
     fun getCachedSearchResultsOrNullList(
         searchRequest: SearchRequest, entityName: String
     ): List<Pair<SearchParam, List<UUID>>?> {
-        val redisKeys = searchRequest.params.map { param ->
-            val fieldName = param.path.substringAfterLast(".")
-            val hashedKey = generateCacheKey(param)
-            "entities:$entityName:$fieldName:$hashedKey"
-        }
+        val redisKeyPrefix = "search:$entityName"
+        return searchRequest.params.map { param ->
+            val paramHash = generateCacheKey(param)
+            val redisKey = "$redisKeyPrefix:${param.path}:$paramHash"
 
-        val results = redisTemplate.executePipelined { connection ->
-            val stringCommands = connection.stringCommands()
-            redisKeys.forEach { redisKey ->
-                stringCommands.get(redisKey.toByteArray())
-            }
-            null
-        }
-        return searchRequest.params.mapIndexed { index, param ->
-            val cachedEntry = results[index]?.let { result ->
-                objectMapper.readValue(result.toString(), object : TypeReference<Map<String, Any>>() {})
-            }
+            val existsInRanking = redisTemplate.opsForZSet().rank("ranking", redisKey) != null
+            if (!existsInRanking) return@map null
 
-            val cachedIds = cachedEntry?.get("results") as? List<UUID>
-            if (cachedIds != null) {
-                val updatedEntry = cachedEntry.toMutableMap().apply {
-                    put("last-access", System.currentTimeMillis())
-                }
-                redisTemplate.opsForValue().set(redisKeys[index], objectMapper.writeValueAsString(updatedEntry))
-                param to cachedIds
-            } else null
+            redisTemplate.opsForZSet().add("ranking", redisKey, System.currentTimeMillis().toDouble())
+
+            val entry = redisTemplate.opsForHash<String, Any>().entries(redisKey)
+            val result = entry["result"] as? List<UUID> ?: emptyList()
+            Pair(param, result)
         }
     }
+
 
     fun overwriteSearchResults(
         entityName: String, searchRequest: SearchRequest, resultIds: List<UUID>
     ) {
-        val newEntrySize = calculateMemoryUsageOfNewEntry(resultIds)
-        var currentTotalMemory = redisTemplate.opsForValue().get("total-memory-usage-in-bytes")?.toLong() ?: 0L
-        val excess = currentTotalMemory + newEntrySize - maxMemorySize
+        val redisKeyPrefix = "search:$entityName"
+        val newEntryMemoryUsage = calculateMemoryUsageOfNewEntry(resultIds)
+        val currentMemoryUsage = redisTemplate.opsForValue().get("total-memory-usage")?.toLong() ?: 0L
 
-        if (excess > 0) {
-            currentTotalMemory -= evictOldestEntries(excess)
-            refreshEvictionCandidates()
-        }
+        val excess = (currentMemoryUsage + newEntryMemoryUsage) - maxMemory
+        var freedMemory = 0L
+        if (excess > 0) freedMemory = evictOldestEntries(excess)
 
         searchRequest.params.forEach { param ->
-            val hashedKey = generateCacheKey(param)
-            val fieldName = param.path.substringAfterLast(".")
-            val redisKey = "entities:$entityName:$fieldName:$hashedKey"
+            val hashedParam = generateCacheKey(param)
+            val redisKey = "$redisKeyPrefix:${param.path}:$hashedParam"
 
-            val cacheEntry = mapOf(
-                "last-access" to System.currentTimeMillis(),
-                "memory-usage-in-bytes" to newEntrySize,
-                "results" to resultIds
+            val entry = mapOf(
+                "memoryUsage" to newEntryMemoryUsage,
+                "result" to resultIds
             )
-            redisTemplate.opsForValue().set(redisKey, objectMapper.writeValueAsString(cacheEntry))
-            redisTemplate.opsForValue().set("total-memory-usage-in-bytes", (currentTotalMemory + newEntrySize).toString())
+            redisTemplate.opsForHash<String, Any>().putAll(redisKey, entry)
 
-            val numberEvictionCandidates = redisTemplate.opsForValue()
-                        .get("eviction-candidates")?.let {
-                            objectMapper.readValue(it, object : TypeReference<List<Map<String, Long>>>() {})
-                        }?.size ?: 0
-            if (numberEvictionCandidates < 100)
-                redisTemplate.opsForZSet().add(
-                    "eviction-candidates",
-                    redisKey,
-                    System.currentTimeMillis().toDouble()
-                )
+            redisTemplate.opsForZSet().add("ranking", redisKey, System.currentTimeMillis().toDouble())
         }
+
+        val updatedMemoryUsage = currentMemoryUsage + newEntryMemoryUsage - freedMemory
+        redisTemplate.opsForValue().set("total-memory-usage", updatedMemoryUsage.toString())
     }
+
 
     private fun evictOldestEntries(excess: Long): Long {
-        var freedMemory = 0L
-        val candidateKeysToEvict = mutableListOf<String>()
+        var memoryFreed = 0L
+        val zSetKey = "ranking"
 
-        val leastRecentCandidates =
-            redisTemplate.opsForZSet().rangeWithScores("eviction-candidates", 0, -1) ?: emptySet()
+        redisTemplate.opsForZSet()
+            .rangeWithScores(zSetKey, 0, -1)
+            ?.iterator()?.run {
+                while (this.hasNext() && memoryFreed < excess) {
+                    val entry = this.next()
+                    val key = entry.value ?: throw NullKeyInZSetException("Null key in zSet", zSetKey, entry)
 
+                    redisTemplate.delete(key)
+                    redisTemplate.opsForZSet().remove(zSetKey, key)
 
-        for (candidate in leastRecentCandidates) {
-            if (freedMemory >= excess) break
-
-            val redisKey = candidate.value?.toString()
-            val memoryUsageInBytes = redisKey?.let { key ->
-                redisTemplate.opsForValue().get(key)?.let {
-                    val cacheEntry = objectMapper.readValue(it, object : TypeReference<Map<String, Any>>() {})
-                    cacheEntry["memory-usage-in-bytes"] as? Long ?: 0L
+                    memoryFreed += redisTemplate.opsForHash<String, Long>().get(key, "memoryUsage") ?: 0L
                 }
-            } ?: continue
+            } ?: log.info { "No entries to evict. Consider allocating more memory to the cache" }
 
-            candidateKeysToEvict.add(redisKey)
-            freedMemory += memoryUsageInBytes
-        }
-
-        candidateKeysToEvict.forEach { redisKey ->
-            redisTemplate.delete(redisKey)
-            redisTemplate.opsForZSet().remove("eviction-candidates", redisKey)
-        }
-
-        if (freedMemory < excess) {
-            val remainingKeys = redisTemplate.keys("entities:*") ?: emptySet()
-
-            var additionalFreedMemory = 0L
-            val keysToEvict = remainingKeys.mapNotNull { key ->
-                if (additionalFreedMemory >= excess - freedMemory) return@mapNotNull null
-                val cachedEntry = redisTemplate.opsForValue().get(key)?.let {
-                    objectMapper.readValue(it, object : TypeReference<Map<String, Any>>() {})
-                }
-                val lastAccess = cachedEntry?.get("last-access") as? Long
-                additionalFreedMemory += cachedEntry?.get("memory-usage-in-bytes") as? Long ?: 0L
-                key to lastAccess
-            }.sortedBy { it.second }
-
-            redisTemplate.delete(keysToEvict.map { it.first })
-            refreshEvictionCandidates()
-        }
-
-        redisTemplate.opsForValue().increment("total-memory-usage-in-bytes", -freedMemory)
-        log.info("Evicted entries freeing $freedMemory bytes.")
-        return freedMemory
+        return memoryFreed
     }
+
 
 
     private fun calculateMemoryUsageOfNewEntry(resultIds: List<UUID>): Long {
@@ -255,12 +180,13 @@ open class RedisService(
         return MessageDigest.getInstance("SHA-256").digest(input.toByteArray()).joinToString("") { "%02x".format(it) }
     }
 
-    fun combineCachedIds(cachedSearchKeysList: List<Pair<SearchParam, List<UUID>>?>): List<UUID> {
+    //Todo: consider moving to RestServiceTemplate
+    fun resultIntersection(cachedSearchKeysList: List<Pair<SearchParam, List<UUID>>?>): List<UUID> {
         return cachedSearchKeysList.filterNotNull().map { it.second }
             .reduceOrNull { acc, ids -> acc.intersect(ids.toSet()).toList() } ?: emptyList()
     }
 
-    fun invalidateCaches(
+    fun invalidateSearchCaches(
         entityName: String, id: UUID, fields: Set<String>, modificationType: ModificationType
     ) {
         when (modificationType) {
@@ -292,77 +218,6 @@ open class RedisService(
                 else redisTemplate.opsForValue().set(key, objectMapper.writeValueAsString(updatedIds))
             }
         }
-    }
-
-    @Async
-    open fun refreshEvictionCandidates() {
-        val lockKey = "refresh-eviction-candidates-lock"
-        val lockExpiration = 60L
-        val maxRetries = 5
-        val retryDelayMillis = 12000L
-        var retries = 0
-
-        while (retries < maxRetries) {
-            val lockValue = UUID.randomUUID().toString()
-            val lockAcquired =
-                redisTemplate.opsForValue().setIfAbsent(lockKey, lockValue, Duration.ofSeconds(lockExpiration))
-
-            if (lockAcquired == true) {
-                try {
-                    performEvictionCandidateRefresh()
-                    return
-                } catch (e: Exception) {
-                    log.error("Error refreshing least recent candidates", e)
-                } finally {
-                    val currentLockValue = redisTemplate.opsForValue().get(lockKey)
-                    if (lockValue == currentLockValue) {
-                        redisTemplate.delete(lockKey)
-                    }
-                }
-            } else {
-                retries++
-                Thread.sleep(retryDelayMillis)
-            }
-        }
-    }
-
-
-    private fun performEvictionCandidateRefresh() {
-        val mappings = getMappings()?.toMutableMap() ?: throw Exception("Mappings not found")
-        val currentCandidates = mappings["eviction-candidates"] as? List<Map<String, Long>> ?: emptyList()
-        val currentCandidateKeys = currentCandidates.map { it.keys.first() }.toSet()
-
-        val allKeysInCache = redisTemplate.keys("entities:*") ?: emptySet()
-        val potentialNewCandidates = allKeysInCache - currentCandidateKeys
-
-        val candidates = redisTemplate.executePipelined { connection ->
-            potentialNewCandidates.forEach { key ->
-                connection.stringCommands().get(key.toByteArray())
-            }
-            null
-        }.mapIndexedNotNull { index, result ->
-            val key = potentialNewCandidates.elementAt(index)
-            val cachedEntry = result?.toString()?.let {
-                objectMapper.readValue(it, object : TypeReference<Map<String, Any>>() {})
-            }
-            val lastAccess = cachedEntry?.get("last-access") as? Long
-            val memoryUsageInBytes = cachedEntry?.get("memory-usage-in-bytes") as? Long
-            if (lastAccess != null && memoryUsageInBytes != null) {
-                key to (lastAccess to memoryUsageInBytes)
-            } else null
-        }
-
-        val combinedCandidates = (currentCandidates.map {
-            val entry = it.entries.first()
-            entry.key to (entry.value to 0L)
-        } + candidates).sortedBy { it.second.first }.take(100)
-
-        val updatedCandidateList = combinedCandidates.map { (key, data) ->
-            mapOf(key to data.second)
-        }
-
-        mappings["eviction-candidates"] = updatedCandidateList
-        saveApplicationMap(mappings)
     }
 
 }
