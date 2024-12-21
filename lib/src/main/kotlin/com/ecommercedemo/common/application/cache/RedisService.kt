@@ -101,7 +101,7 @@ open class RedisService(
         val mappingsAndMemoryUsage = mutableMapOf<String, Any>().apply {
             put("entities", mappings)
             put("total-memory-usage-in-bytes", totalMemoryUsage)
-            put("eviction-candidates", mutableMapOf<String, Long>())
+            put("eviction-candidates", listOf(mapOf<String, Long>()))
         }
 
         val enhancedSerializedData = objectMapper.writeValueAsString(mappingsAndMemoryUsage)
@@ -174,9 +174,9 @@ open class RedisService(
             redisTemplate.opsForValue().set("total-memory-usage-in-bytes", (currentTotalMemory + newEntrySize).toString())
 
             val numberEvictionCandidates = redisTemplate.opsForValue()
-                .get("eviction-candidates")?.let {
-                    objectMapper.readValue(it, object : TypeReference<List<Map<String, Long>>>() {})
-                }?.size ?: 0
+                        .get("eviction-candidates")?.let {
+                            objectMapper.readValue(it, object : TypeReference<List<Map<String, Long>>>() {})
+                        }?.size ?: 0
             if (numberEvictionCandidates < 100)
                 redisTemplate.opsForZSet().add(
                     "eviction-candidates",
