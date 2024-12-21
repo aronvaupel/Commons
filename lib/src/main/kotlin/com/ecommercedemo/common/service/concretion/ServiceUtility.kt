@@ -6,17 +6,21 @@ import com.ecommercedemo.common.model.abstraction.AugmentableBaseEntity
 import com.ecommercedemo.common.model.abstraction.BaseEntity
 import com.ecommercedemo.common.model.abstraction.IPseudoProperty
 import com.ecommercedemo.common.persistence.concretion._pseudoProperty._PseudoPropertyRepository
+import com.ecommercedemo.common.service.CachingEligible
 import org.springframework.stereotype.Service
-import kotlin.reflect.*
+import kotlin.reflect.KClass
+import kotlin.reflect.KFunction
+import kotlin.reflect.KMutableProperty
+import kotlin.reflect.KParameter
 import kotlin.reflect.full.createType
 import kotlin.reflect.full.isSubclassOf
-import kotlin.reflect.full.memberProperties
 import kotlin.reflect.jvm.isAccessible
 
 @Service
 @Suppress("UNCHECKED_CAST")
 class ServiceUtility<T : BaseEntity>(
     private val _pseudoPropertyRepository: _PseudoPropertyRepository,
+    private val reflectionService: ReflectionService,
 ) {
 
     fun createNewInstance(
@@ -35,39 +39,26 @@ class ServiceUtility<T : BaseEntity>(
                 validateTypeDescriptor(data[IPseudoProperty::typeDescriptor.name])
         }
 
-        val entityConstructor = findConstructorWithArgs(instanceClass)
+        val entityConstructor = reflectionService.findConstructorWithArgs(instanceClass)
 
         val instanceConstructorParams = createConstructorParams(entityConstructor, data)
 
         return entityConstructor.callBy(instanceConstructorParams).apply {
-            val memberProperties = getAllMemberProperties(this)
+            val memberProperties = reflectionService.getMemberProperties(this)
             val remainingFields = data.filter {
                 !(it.key.startsWith("_")) && it.key !in instanceConstructorParams.keys.map { param -> param.name }
             }.map { it.key }
-            memberProperties
-                .filter { it.name in remainingFields }
-                .filterIsInstance<KMutableProperty<*>>()
-                .onEach { it.isAccessible = true }
-                .forEach { it.setter.call(this, data[it.name]) }
+            memberProperties?.filter { it.name in remainingFields }?.filterIsInstance<KMutableProperty<*>>()
+                ?.onEach { it.isAccessible = true }?.forEach { it.setter.call(this, data[it.name]) }
         }
     }
 
-    private fun findConstructorWithArgs(instanceClass: KClass<T>): KFunction<T> {
-        val entityConstructor = instanceClass.constructors.find { it.parameters.isNotEmpty() }
-            ?: throw IllegalArgumentException("No suitable constructor found for ${instanceClass.simpleName}")
-        return entityConstructor
-    }
-
-    private fun getAllMemberProperties(clazz: T): Collection<KProperty1<out T, *>> {
-        val memberProperties = clazz::class.memberProperties
-        return memberProperties
-    }
-
+    @CachingEligible
     private fun createConstructorParams(
         entityConstructor: KFunction<T>,
         data: Map<String, Any?>
     ): Map<KParameter, Any?> {
-        val instanceConstructorParams = entityConstructor.parameters
+        val instanceConstructorParams = reflectionService.getConstructorParams(entityConstructor)
             .filter { it.name in data.keys }
             .associateWith { param ->
                 val value = data[param.name?.removePrefix("_")]
@@ -90,7 +81,7 @@ class ServiceUtility<T : BaseEntity>(
         }
 
         val entityProperties =
-            findMutableProperties(entity)
+            reflectionService.findMutableMemberProperties(entity)
 
         data.forEach { (key, value) ->
             val correspondingEntityProperty = entityProperties[key.removePrefix("_")]
@@ -143,17 +134,14 @@ class ServiceUtility<T : BaseEntity>(
         return entity
     }
 
-    private fun findMutableProperties(entity: T): Map<String, KMutableProperty<*>> {
-        val entityProperties =
-            entity::class.memberProperties.filterIsInstance<KMutableProperty<*>>().associateBy { it.name }
-        return entityProperties
-    }
 
+    @CachingEligible
     private fun validateTypeDescriptor(value: Any?) {
         if (value == null) throw IllegalArgumentException("TypeDescriptor must be provided")
         if (value !is TypeDescriptor) throw IllegalArgumentException("TypeDescriptor must be a TypeDescriptor")
     }
 
+    @CachingEligible
     private fun validatePseudoProperties(
         entity: KClass<out AugmentableBaseEntity>, data: Map<String, Any?>, isUpdate: Boolean = false
     ) {
@@ -242,7 +230,7 @@ class ServiceUtility<T : BaseEntity>(
         else -> false
     }
 
-
+    @CachingEligible
     private fun getValidPseudoProperties(entityClass: KClass<out AugmentableBaseEntity>): List<IPseudoProperty> {
         return _pseudoPropertyRepository.findAllByEntitySimpleName(entityClass.simpleName!!)
     }

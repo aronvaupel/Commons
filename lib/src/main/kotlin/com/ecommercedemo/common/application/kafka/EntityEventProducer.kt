@@ -1,6 +1,7 @@
 package com.ecommercedemo.common.application.kafka
 
 import com.ecommercedemo.common.application.cache.RedisService
+import com.ecommercedemo.common.application.validation.modification.ModificationType
 import mu.KotlinLogging
 import org.springframework.kafka.core.KafkaTemplate
 import org.springframework.stereotype.Service
@@ -16,7 +17,7 @@ class EntityEventProducer(
     fun emit(
         entityClassName: String,
         id: UUID,
-        entityEventType: EntityEventType,
+        modificationType: ModificationType,
         properties: MutableMap<String, Any?>
     ) {
         val kafkaRegistry = redisService.getKafkaRegistry()
@@ -25,7 +26,7 @@ class EntityEventProducer(
             val event = EntityEvent(
                 entityClassName = entityClassName,
                 id = id,
-                type = entityEventType,
+                type = modificationType,
                 properties = properties
             )
 

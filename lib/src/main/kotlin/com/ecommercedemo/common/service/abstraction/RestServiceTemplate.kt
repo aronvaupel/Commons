@@ -5,7 +5,7 @@ import com.ecommercedemo.common.application.exception.FailedToCreateException
 import com.ecommercedemo.common.application.exception.FailedToDeleteException
 import com.ecommercedemo.common.application.exception.FailedToUpdateException
 import com.ecommercedemo.common.application.kafka.EntityEventProducer
-import com.ecommercedemo.common.application.kafka.EntityEventType
+import com.ecommercedemo.common.application.validation.modification.ModificationType
 import com.ecommercedemo.common.controller.abstraction.request.CreateRequest
 import com.ecommercedemo.common.controller.abstraction.request.SearchRequest
 import com.ecommercedemo.common.controller.abstraction.request.UpdateRequest
@@ -15,6 +15,7 @@ import com.ecommercedemo.common.model.abstraction.BaseEntity
 import com.ecommercedemo.common.persistence.abstraction.IEntityPersistenceAdapter
 import com.ecommercedemo.common.service.RestServiceFor
 import com.ecommercedemo.common.service.concretion.EntityChangeTracker
+import com.ecommercedemo.common.service.concretion.ReflectionService
 import com.ecommercedemo.common.service.concretion.ServiceUtility
 import com.ecommercedemo.common.service.concretion.TypeReAttacher
 import jakarta.persistence.EntityManager
@@ -56,20 +57,43 @@ abstract class RestServiceTemplate<T : BaseEntity>() : IRestService<T> {
     @Autowired
     private lateinit var redisService: RedisService
 
+    @Autowired
+    private lateinit var reflectionService: ReflectionService
+
     private val log = KotlinLogging.logger {}
 
     @Transactional
     override fun create(request: CreateRequest): T? {
         try {
-            val typedRequestProperties = typeReAttacher.reAttachType(request.properties, entityClass)
-            val newInstance = serviceUtility.createNewInstance(entityClass, typedRequestProperties)
-            return saveAndEmitEvent(null, newInstance, EntityEventType.CREATE)
+            val typedRequestProperties = typeReAttacher.reAttachType(
+                data = request.properties,
+                entityClass = entityClass
+            )
+
+            val newInstance = serviceUtility.createNewInstance(
+                instanceClass = entityClass,
+                data = typedRequestProperties
+            )
+
+            val result = saveAndEmitEvent(
+                original = null,
+                updated = newInstance,
+                eventType = ModificationType.CREATE
+            )
+
+            redisService.invalidateCaches(
+                entityName = entityClass.simpleName!!,
+                id = result.id,
+                fields = request.properties.keys,
+                modificationType = ModificationType.CREATE
+            )
+
+            return result
         } catch (e: Exception) {
             log.warn { "Failed to create. Cause: ${e.message}" }
             log.debug { "${e.stackTrace}" }
             throw FailedToCreateException("Failed to create", e)
         }
-
     }
 
     @Transactional
@@ -77,15 +101,34 @@ abstract class RestServiceTemplate<T : BaseEntity>() : IRestService<T> {
         try {
             val original = getSingle(request.id)
             entityManager.detach(original)
-            val typedRequestProperties = typeReAttacher.reAttachType(request.properties, entityClass)
+            val typedRequestProperties = typeReAttacher.reAttachType(
+                data = request.properties,
+                entityClass = entityClass
+            )
             if (original::class != entityClass) {
                 throw IllegalArgumentException(
                     "Entity type mismatch. Expected ${entityClass.simpleName} but found ${original::class.simpleName}."
                 )
             }
-            val updated = serviceUtility.updateExistingEntity(typedRequestProperties, original.copy() as T)
+            val updated = serviceUtility.updateExistingEntity(
+                data = typedRequestProperties,
+                entity = reflectionService.copy(original) as T
+            )
 
-            return saveAndEmitEvent(original, updated, EntityEventType.UPDATE)
+            val result = saveAndEmitEvent(
+                original = original,
+                updated = updated,
+                eventType = ModificationType.UPDATE
+            )
+
+            redisService.invalidateCaches(
+                entityName = entityClass.simpleName!!,
+                id = result.id,
+                fields = request.properties.keys,
+                modificationType = ModificationType.UPDATE
+            )
+
+            return result
         } catch (e: Exception) {
             log.warn { "Failed to update. Cause: ${e.message}" }
             log.debug { "${e.stackTrace}" }
@@ -97,16 +140,22 @@ abstract class RestServiceTemplate<T : BaseEntity>() : IRestService<T> {
     //Todo: Consider returning the status in the controller, does not belong here
     @Transactional
     override fun delete(id: UUID): HttpStatus {
-        return try {
+        try {
             val entity = getSingle(id)
             adapter.delete(entity.id)
             eventProducer.emit(
-                entity.javaClass.simpleName,
-                id,
-                EntityEventType.DELETE,
-                mutableMapOf()
+                entityClassName = entity.javaClass.simpleName,
+                id = id,
+                modificationType = ModificationType.DELETE,
+                properties = mutableMapOf()
             )
-            HttpStatus.OK
+            redisService.invalidateCaches(
+                entityName = entityClass.simpleName!!,
+                id = id,
+                fields = setOf(),
+                modificationType = ModificationType.DELETE
+            )
+            return HttpStatus.OK
         } catch (e: Exception) {
             log.info { "Failed to delete. Cause: ${e.message}" }
             log.debug { "${e.stackTrace}" }
@@ -173,7 +222,7 @@ abstract class RestServiceTemplate<T : BaseEntity>() : IRestService<T> {
 
     private fun computeWholeSearch(request: SearchRequest): List<T> = retriever.executeSearch(request, entityClass)
 
-    private fun saveAndEmitEvent(original: T?, updated: T, eventType: EntityEventType): T {
+    private fun saveAndEmitEvent(original: T?, updated: T, eventType: ModificationType): T {
         val savedEntity = adapter.save(updated)
         val changes = original?.let { entityChangeTracker.getChangedProperties(it, savedEntity) }
             ?: entityChangeTracker.getChangedProperties(null, savedEntity)

@@ -2,17 +2,20 @@ package com.ecommercedemo.common.controller.abstraction.util
 
 import com.ecommercedemo.common.application.exception.InvalidAttributeException
 import com.ecommercedemo.common.application.exception.ValueTypeMismatchException
+import com.ecommercedemo.common.service.CachingEligible
+import com.ecommercedemo.common.service.concretion.ReflectionService
 import org.springframework.stereotype.Service
 import kotlin.reflect.KClass
-import kotlin.reflect.full.memberProperties
 
 @Service
 @Suppress("unused")
 class SearchParamValidation(
-    private val deserializer: SearchParamConverter
+    private val deserializer: SearchParamConverter,
+    private val reflectionService: ReflectionService,
 ) {
+    @CachingEligible
     fun validate(value: Any?, expectedType: Class<*>, declaringClass: KClass<*>, attributePath: String) {
-        if (value == null && declaringClass.memberProperties
+        if (value == null && reflectionService.getMemberProperties(declaringClass)
                 .find { it.name == attributePath }
                 ?.returnType
                 ?.isMarkedNullable == true
@@ -35,6 +38,7 @@ class SearchParamValidation(
         }
     }
 
+    @CachingEligible
     private fun validateCollectionElements(collection: Collection<*>, expectedType: Class<*>, attributePath: String) {
         collection.forEach { element ->
             if (element != null && !expectedType.isInstance(element)) {
@@ -47,6 +51,7 @@ class SearchParamValidation(
         }
     }
 
+    @CachingEligible
     fun validateFieldExistsAndIsAccessible(segment: String, currentClass: Class<*>) {
         var classToCheck: Class<*>? = currentClass
 

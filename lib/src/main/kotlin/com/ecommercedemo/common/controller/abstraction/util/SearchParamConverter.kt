@@ -1,11 +1,13 @@
 package com.ecommercedemo.common.controller.abstraction.util
 
+import com.ecommercedemo.common.service.CachingEligible
 import com.fasterxml.jackson.databind.ObjectMapper
 import org.springframework.stereotype.Service
 
 @Service
 class SearchParamConverter(private val objectMapper: ObjectMapper) {
 
+    @CachingEligible
     fun convertAnyIfNeeded(value: Any?, expectedType: Class<*>): Any? {
         val result = when (value) {
             is Collection<*> -> {
@@ -17,6 +19,7 @@ class SearchParamConverter(private val objectMapper: ObjectMapper) {
         return result
     }
 
+    @CachingEligible
     private fun convertIfNeeded(value: Any?, expectedType: Class<*>): Any? {
         return value?.takeIf { expectedType.isInstance(it) } ?: objectMapper.convertValue(value, expectedType)
     }

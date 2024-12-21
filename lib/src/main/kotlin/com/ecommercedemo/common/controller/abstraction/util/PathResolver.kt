@@ -3,6 +3,7 @@ package com.ecommercedemo.common.controller.abstraction.util
 import com.ecommercedemo.common.model.abstraction.AugmentableBaseEntity
 import com.ecommercedemo.common.model.abstraction.BaseEntity
 import com.ecommercedemo.common.persistence.concretion._pseudoProperty._PseudoPropertyRepository
+import com.ecommercedemo.common.service.CachingEligible
 import com.fasterxml.jackson.databind.ObjectMapper
 import jakarta.persistence.criteria.Path
 import jakarta.persistence.criteria.Root
@@ -16,6 +17,7 @@ class PathResolver(
     private val _pseudoPropertyRepository: _PseudoPropertyRepository,
     private val objectMapper: ObjectMapper
 ) {
+    @CachingEligible
     fun <T : BaseEntity> resolvePath(params: SearchParam, root: Root<T>): ResolvedSearchParam {
         val segments = params.path.split(".")
         var currentPath: Path<*> = root

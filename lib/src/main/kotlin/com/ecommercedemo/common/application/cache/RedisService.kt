@@ -3,6 +3,7 @@ package com.ecommercedemo.common.application.cache
 import com.ecommercedemo.common.application.cache.keys.KafkaTopicRegistry
 import com.ecommercedemo.common.application.cache.values.Microservice
 import com.ecommercedemo.common.application.cache.values.TopicDetails
+import com.ecommercedemo.common.application.validation.modification.ModificationType
 import com.ecommercedemo.common.controller.abstraction.request.SearchRequest
 import com.ecommercedemo.common.controller.abstraction.util.SearchParam
 import com.fasterxml.jackson.core.type.TypeReference
@@ -149,6 +150,43 @@ class RedisService(
         return cachedSearchKeysList.filterNotNull()
             .map { it.second }
             .reduceOrNull { acc, ids -> acc.intersect(ids.toSet()).toList() } ?: emptyList()
+    }
+
+    fun invalidateCaches(
+        entityName: String,
+        id: UUID,
+        fields: Set<String>,
+        modificationType: ModificationType
+    ) {
+        when (modificationType) {
+            ModificationType.CREATE, ModificationType.UPDATE -> invalidateWhenModified(entityName, fields)
+            ModificationType.DELETE -> invalidateWhenDeleted(entityName, id)
+        }
+    }
+
+
+    private fun invalidateWhenModified(entityName: String, modifiedFields: Set<String>) {
+        modifiedFields.forEach { fieldName ->
+            val fieldKeys = redisTemplate.keys("entities:$entityName:$fieldName:*")
+            fieldKeys.forEach { key ->
+                println("Invalidating key: $key")
+                redisTemplate.delete(key)
+            }
+        }
+    }
+
+    private fun invalidateWhenDeleted(entityName: String, entityId: UUID) {
+        val keysToCheck = redisTemplate.keys("entities:$entityName:*")
+        keysToCheck.forEach { key ->
+            val cachedIds = redisTemplate.opsForValue().get(key)?.let {
+                objectMapper.readValue(it, object : TypeReference<List<UUID>>() {})
+            }
+            if (cachedIds != null) {
+                val updatedIds = cachedIds.filterNot { it == entityId }
+                if (updatedIds.isEmpty()) redisTemplate.delete(key)
+                else redisTemplate.opsForValue().set(key, objectMapper.writeValueAsString(updatedIds))
+            }
+        }
     }
 
 }

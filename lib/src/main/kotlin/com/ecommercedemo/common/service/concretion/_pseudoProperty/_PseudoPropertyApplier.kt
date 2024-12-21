@@ -1,9 +1,10 @@
 package com.ecommercedemo.common.service.concretion._pseudoProperty
 
 import com.ecommercedemo.common.application.kafka.EntityEventProducer
-import com.ecommercedemo.common.application.kafka.EntityEventType
+import com.ecommercedemo.common.application.validation.modification.ModificationType
 import com.ecommercedemo.common.model.abstraction.AugmentableBaseEntity
 import com.ecommercedemo.common.persistence.abstraction.IEntityPersistenceAdapter
+import com.ecommercedemo.common.service.CachingEligible
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.google.common.util.concurrent.RateLimiter
 import jakarta.transaction.Transactional
@@ -53,7 +54,7 @@ open class _PseudoPropertyApplier(
                     eventProducer.emit(
                         entity.javaClass.simpleName,
                         entity.id,
-                        EntityEventType.CREATE,
+                        ModificationType.CREATE,
                         getChanges(entity)
                     )
                 }
@@ -88,7 +89,7 @@ open class _PseudoPropertyApplier(
                     eventProducer.emit(
                         entity.javaClass.simpleName,
                         entity.id,
-                        EntityEventType.UPDATE,
+                        ModificationType.UPDATE,
                         getChanges(entity)
                     )
                 }
@@ -124,7 +125,7 @@ open class _PseudoPropertyApplier(
                     eventProducer.emit(
                         entity.javaClass.simpleName,
                         entity.id,
-                        EntityEventType.DELETE,
+                        ModificationType.DELETE,
                         getChanges(entity)
                     )
                 }
@@ -134,6 +135,7 @@ open class _PseudoPropertyApplier(
         } while (pagedEntities.hasNext())
     }
 
+    @CachingEligible
     private fun getAdapter(entityClass: Class<*>): IEntityPersistenceAdapter<AugmentableBaseEntity> {
         val adapterName = "${entityClass.simpleName.replaceFirstChar { it.lowercase(Locale.getDefault()) }}PersistenceAdapter"
         val adapter = try {

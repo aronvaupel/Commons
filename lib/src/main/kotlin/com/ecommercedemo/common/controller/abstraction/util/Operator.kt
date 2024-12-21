@@ -1,5 +1,6 @@
 package com.ecommercedemo.common.controller.abstraction.util
 
+import com.ecommercedemo.common.service.CachingEligible
 import jakarta.persistence.criteria.CriteriaBuilder
 import jakarta.persistence.criteria.Expression
 import jakarta.persistence.criteria.Path
@@ -396,6 +397,7 @@ enum class Operator(
         criteriaBuilder: CriteriaBuilder,
     ): Expression<Boolean>
 
+    @CachingEligible
     protected fun buildJsonPathExpression(
         resolvedSearchParam: ResolvedSearchParam,
         criteriaBuilder: CriteriaBuilder

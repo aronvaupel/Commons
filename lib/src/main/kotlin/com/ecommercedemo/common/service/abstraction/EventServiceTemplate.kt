@@ -7,6 +7,7 @@ import com.ecommercedemo.common.application.kafka.EntityEvent
 import com.ecommercedemo.common.model.abstraction.BaseEntity
 import com.ecommercedemo.common.persistence.abstraction.IEntityPersistenceAdapter
 import com.ecommercedemo.common.service.EventServiceFor
+import com.ecommercedemo.common.service.concretion.ReflectionService
 import com.ecommercedemo.common.service.concretion.ServiceUtility
 import com.ecommercedemo.common.service.concretion.TypeReAttacher
 import jakarta.transaction.Transactional
@@ -26,6 +27,9 @@ abstract class EventServiceTemplate<T : BaseEntity>() : IEventService<T> {
 
     @Autowired
     private lateinit var serviceUtility: ServiceUtility<T>
+
+    @Autowired
+    private lateinit var reflectionService: ReflectionService
 
     @Autowired
     private lateinit var typeReAttacher: TypeReAttacher
@@ -57,7 +61,7 @@ abstract class EventServiceTemplate<T : BaseEntity>() : IEventService<T> {
     override fun updateByEvent(event: EntityEvent) {
         try {
             val original = adapter.getById(event.id)
-            val updated = serviceUtility.updateExistingEntity(event.properties, original.copy() as T)
+            val updated = serviceUtility.updateExistingEntity(event.properties, reflectionService.copy(original) as T)
             adapter.save(updated)
         } catch (e: Exception) {
             log.warn { "${e.message}" }

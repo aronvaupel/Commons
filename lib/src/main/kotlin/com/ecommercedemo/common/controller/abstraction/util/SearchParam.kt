@@ -1,6 +1,8 @@
 package com.ecommercedemo.common.controller.abstraction.util
 
-@com.ecommercedemo.common.application.validation.operator.ValidOperator
+import com.ecommercedemo.common.application.validation.operator.ValidOperator
+
+@ValidOperator
 data class SearchParam(
     val operator: Operator,
     val searchValue: Any? = null,
