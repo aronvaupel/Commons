@@ -29,6 +29,7 @@ class RedisService(
 
     val log = KotlinLogging.logger {}
 
+    //Todo: use the other mapping
     fun registerAsTopics(upstreamEntities: List<String>) {
         val kafkaRegistry = getKafkaRegistry()
         upstreamEntities.forEach { entity ->
@@ -107,8 +108,6 @@ class RedisService(
         redisTemplate.opsForValue().set("service-mappings", enhancedSerializedData)
     }
 
-
-
     //Todo: what about pseudo property paths?
     fun getCachedSearchResultsOrNullList(
         searchRequest: SearchRequest,
@@ -121,11 +120,12 @@ class RedisService(
         }
 
         val results = redisTemplate.executePipelined { connection ->
+            val stringCommands = connection.stringCommands()
             redisKeys.forEach { redisKey ->
-                connection.stringCommands().get(redisKey.toByteArray())
+                stringCommands.get(redisKey.toByteArray())
             }
+            null
         }
-
         return searchRequest.params.mapIndexed { index, param ->
             val cachedEntry = results[index]?.let { result ->
                 objectMapper.readValue(result.toString(), object : TypeReference<Map<String, Any>>() {})
