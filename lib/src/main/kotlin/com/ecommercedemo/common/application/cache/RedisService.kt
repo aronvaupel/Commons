@@ -112,8 +112,8 @@ open class RedisService(
     }
 
 
-    fun overwriteSearchResults(
-        entityName: String, searchRequest: SearchRequest, resultIds: List<UUID>
+    fun cachePartialSearchResult(
+        entityName: String, searchParam: SearchParam, resultIds: List<UUID>
     ) {
         val redisKeyPrefix = "search:$entityName"
         val newEntryMemoryUsage = calculateMemoryUsageOfNewEntry(resultIds)
@@ -123,20 +123,19 @@ open class RedisService(
         var freedMemory = 0L
         if (excess > 0) freedMemory = evictOldestEntries(excess)
 
-        searchRequest.params.forEach { param ->
-            val hashedParam = generateSearchCacheKey(param)
-            val redisKey = "$redisKeyPrefix:${param.path}:$hashedParam"
+        val hashedParam = generateSearchCacheKey(searchParam)
+        val redisKey = "$redisKeyPrefix:${searchParam.path}:$hashedParam"
 
-            val entry =
-                mapOf(
-                    "memoryUsage" to newEntryMemoryUsage.toString(),
-                    "result" to resultIds
-                )
+        val entry =
+            mapOf(
+                "memoryUsage" to newEntryMemoryUsage.toString(),
+                "result" to resultIds
+            )
 
-            redisTemplate.opsForValue().set(redisKey, objectMapper.writeValueAsString(entry))
+        redisTemplate.opsForValue().set(redisKey, objectMapper.writeValueAsString(entry))
 
-            redisTemplate.opsForZSet().add("ranking", redisKey, System.currentTimeMillis().toDouble())
-        }
+        redisTemplate.opsForZSet().add("ranking", redisKey, System.currentTimeMillis().toDouble())
+
 
         val updatedMemoryUsage = currentMemoryUsage + newEntryMemoryUsage - freedMemory
         redisTemplate.opsForValue().set("total-memory-usage", updatedMemoryUsage.toString())

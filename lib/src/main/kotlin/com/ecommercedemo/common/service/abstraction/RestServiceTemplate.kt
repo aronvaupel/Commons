@@ -197,14 +197,6 @@ abstract class RestServiceTemplate<T : BaseEntity>() : IRestService<T> {
             }
         }
 
-        if (cachedSearchResultsOrNullList.any { it == null }) {
-            redisService.overwriteSearchResults(
-                entityName = entityClass.simpleName!!,
-                searchRequest = request,
-                resultIds = result.map { it.id }
-            )
-        }
-
         val endTime = System.currentTimeMillis()
         log.info(
             "Search completed in ${endTime - startTime}ms. Found ${result.size}. Cache status: $cacheStatus. Entity: ${entityClass.simpleName}."
