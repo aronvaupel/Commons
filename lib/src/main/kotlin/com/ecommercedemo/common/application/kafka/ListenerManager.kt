@@ -22,7 +22,7 @@ import org.springframework.stereotype.Service
 @ConditionalOnClass(name = ["org.springframework.data.jpa.repository.JpaRepository"])
 @DependsOn("entityScanner")
 @Service
-class ListenerManager<T : BaseEntity> @Autowired constructor(
+open class ListenerManager<T : BaseEntity> @Autowired constructor(
     private val redisService: RedisService,
     private val entityScanner: EntityScanner,
     private val kafkaListenerContainerFactory: ConcurrentKafkaListenerContainerFactory<String, Any>,
