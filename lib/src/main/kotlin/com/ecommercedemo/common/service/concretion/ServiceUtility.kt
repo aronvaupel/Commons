@@ -18,7 +18,7 @@ import kotlin.reflect.jvm.isAccessible
 
 @Service
 @Suppress("UNCHECKED_CAST")
-class ServiceUtility<T : BaseEntity>(
+open class ServiceUtility<T : BaseEntity>(
     private val _pseudoPropertyRepository: _PseudoPropertyRepository,
     private val reflectionService: ReflectionService,
 ) {
