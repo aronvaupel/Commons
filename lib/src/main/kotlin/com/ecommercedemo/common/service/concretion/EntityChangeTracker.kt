@@ -3,10 +3,12 @@ package com.ecommercedemo.common.service.concretion
 import com.ecommercedemo.common.model.abstraction.AugmentableBaseEntity
 import com.ecommercedemo.common.model.abstraction.BaseEntity
 import com.fasterxml.jackson.databind.ObjectMapper
+import org.springframework.context.annotation.DependsOn
 import org.springframework.stereotype.Service
 import kotlin.reflect.jvm.isAccessible
 
 @Service
+@DependsOn("reflectionService")
 class EntityChangeTracker<T : BaseEntity>(
     private val reflectionService: ReflectionService,
 ) {
