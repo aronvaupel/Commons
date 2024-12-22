@@ -210,14 +210,14 @@ abstract class RestServiceTemplate<T : BaseEntity>() : IRestService<T> {
         request: SearchRequest
     ): List<T> {
         val intersectionOfCachedIds = redisService.resultIntersection(cachedSearchResultsOrNullList)
+        val cacheBasedRetrieval = getMultiple(intersectionOfCachedIds)
         val uncachedParams = request.params.filterNot { param ->
             cachedSearchResultsOrNullList.any { it?.first == param }
         }
-        val retrievedIds = retriever.executeSearch(
+        val computedRetrieval = retriever.executeSearch(
             SearchRequest(params = uncachedParams), entityClass
-        ).map { it.id }
-        val intersectionOfAllIds = retrievedIds.intersect(intersectionOfCachedIds.toSet()).toList()
-        return getMultiple(intersectionOfAllIds)
+        )
+        return computedRetrieval.intersect(cacheBasedRetrieval.toSet()).toList()
     }
 
     //Todo: below works, but needs two calls to the database and two calls to the cache
