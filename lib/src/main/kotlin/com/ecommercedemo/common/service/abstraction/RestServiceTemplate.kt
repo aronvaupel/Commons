@@ -209,15 +209,17 @@ abstract class RestServiceTemplate<T : BaseEntity>() : IRestService<T> {
         cachedSearchKeysList: List<Pair<SearchParam, List<UUID>>?>,
         request: SearchRequest
     ): List<T> {
-        println("Partial search with params: $cachedSearchKeysList and request: $request")
+        println("Partial search with params: ${cachedSearchKeysList.associate { it?.first to it?.second?.size }} and request: $request")
         val cachedIds = redisService.resultIntersection(cachedSearchKeysList)
         println("Intersecting cached ids: $cachedIds")
+        val uncachedParams = request.params.filterNot { param ->
+            cachedSearchKeysList.any { it?.first == param }
+        }
+        println("Uncached params: $uncachedParams")
         val retrievedIds = retriever.executeSearch(
-            SearchRequest(params = request.params.filterNot { param ->
-                cachedSearchKeysList.any { it?.first == param }
-            }), entityClass
+            SearchRequest(params = uncachedParams), entityClass
         ).map { it.id }
-        println("Retrieved ids: $retrievedIds")
+        println("Number retrieved ids: ${retrievedIds.size}")
         val intersectionCacheAndRetriever = cachedIds.intersect(retrievedIds.toSet()).toList()
         println("Final intersection: $intersectionCacheAndRetriever")
         return getMultiple(intersectionCacheAndRetriever)
