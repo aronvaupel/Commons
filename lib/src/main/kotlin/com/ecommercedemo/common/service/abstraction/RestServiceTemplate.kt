@@ -206,19 +206,35 @@ abstract class RestServiceTemplate<T : BaseEntity>() : IRestService<T> {
     }
 
     private fun computePartialSearch(
-        cachedSearchKeysList: List<Pair<SearchParam, List<UUID>>?>,
+        cachedSearchResultsOrNullList: List<Pair<SearchParam, List<UUID>>?>,
         request: SearchRequest
     ): List<T> {
+        val intersectionOfCachedIds = redisService.resultIntersection(cachedSearchResultsOrNullList)
         val uncachedParams = request.params.filterNot { param ->
-            cachedSearchKeysList.any { it?.first == param }
+            cachedSearchResultsOrNullList.any { it?.first == param }
         }
-        retriever.executeSearch(
+        val retrievedIds = retriever.executeSearch(
             SearchRequest(params = uncachedParams), entityClass
-        )
-        val updatedCachedSearchResultsOrNullList =
-            redisService.getCachedSearchResultsOrNullList(request, entityClass.simpleName!!)
-        return getMultiple(redisService.resultIntersection(updatedCachedSearchResultsOrNullList))
+        ).map { it.id }
+        val intersectionOfAllIds = retrievedIds.intersect(intersectionOfCachedIds.toSet()).toList()
+        return getMultiple(intersectionOfAllIds)
     }
+
+    //Todo: below works, but needs two calls to the database and two calls to the cache
+//    private fun computePartialSearch(
+//        cachedSearchKeysList: List<Pair<SearchParam, List<UUID>>?>,
+//        request: SearchRequest
+//    ): List<T> {
+//        val uncachedParams = request.params.filterNot { param ->
+//            cachedSearchKeysList.any { it?.first == param }
+//        }
+//        retriever.executeSearch(
+//            SearchRequest(params = uncachedParams), entityClass
+//        )
+//        val updatedCachedSearchResultsOrNullList =
+//            redisService.getCachedSearchResultsOrNullList(request, entityClass.simpleName!!)
+//        return getMultiple(redisService.resultIntersection(updatedCachedSearchResultsOrNullList))
+//    }
 
     private fun computeWholeSearch(request: SearchRequest): List<T> = retriever.executeSearch(request, entityClass)
 
