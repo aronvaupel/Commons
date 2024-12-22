@@ -5,7 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import org.springframework.stereotype.Service
 
 @Service
-class SearchParamConverter(private val objectMapper: ObjectMapper) {
+open class SearchParamConverter(private val objectMapper: ObjectMapper) {
 
     @CachingEligible
     fun convertAnyIfNeeded(value: Any?, expectedType: Class<*>): Any? {
