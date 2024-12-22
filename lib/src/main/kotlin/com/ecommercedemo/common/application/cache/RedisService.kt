@@ -129,6 +129,7 @@ open class RedisService(
         val entry =
             mapOf(
                 "memoryUsage" to newEntryMemoryUsage.toString(),
+                "size" to resultIds.size.toString(),
                 "result" to resultIds
             )
 
