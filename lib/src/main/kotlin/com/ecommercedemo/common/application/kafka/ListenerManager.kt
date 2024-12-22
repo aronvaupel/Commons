@@ -22,7 +22,7 @@ import org.springframework.stereotype.Service
 @ConditionalOnClass(name = ["org.springframework.data.jpa.repository.JpaRepository"])
 @DependsOn("entityScanner")
 @Service
-class ListenerManager<T: BaseEntity> @Autowired constructor(
+class ListenerManager<T : BaseEntity> @Autowired constructor(
     private val redisService: RedisService,
     private val entityScanner: EntityScanner,
     private val kafkaListenerContainerFactory: ConcurrentKafkaListenerContainerFactory<String, Any>,
@@ -38,7 +38,9 @@ class ListenerManager<T: BaseEntity> @Autowired constructor(
     @PostConstruct
     fun init() {
         if (serviceName.isBlank()) {
-            throw IllegalStateException("The service name is not configured. Please set 'spring.application.name' in your application.yml or properties.")
+            throw IllegalStateException(
+                "The service name is not configured. " +
+                        "Please set 'spring.application.name' in your application.yml or properties.")
         }
         log.info("Service name is: $serviceName")
 
@@ -48,6 +50,7 @@ class ListenerManager<T: BaseEntity> @Autowired constructor(
         manageListeners()
     }
 
+    //Todo: pollutes the log, count is broken
     @Scheduled(fixedRate = 30000, initialDelay = 10000)
     fun manageListeners() {
         if (downstreamEntities.isEmpty()) {
@@ -106,7 +109,6 @@ class ListenerManager<T: BaseEntity> @Autowired constructor(
         listenerContainers[topic] = listenerContainer
         log.info("Kafka listener started for topic: $topic with group ID: $groupId")
     }
-
 
 
     private fun stopKafkaListener(topic: String) {

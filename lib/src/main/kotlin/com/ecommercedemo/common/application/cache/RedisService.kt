@@ -28,7 +28,6 @@ open class RedisService(
 
     val log = KotlinLogging.logger {}
 
-    //Todo: use the other mapping
     fun registerAsTopics(upstreamEntities: List<String>) {
         val kafkaRegistry = getKafkaRegistry()
         upstreamEntities.forEach { entity ->
@@ -37,7 +36,7 @@ open class RedisService(
                 topicDetails == null -> kafkaRegistry.topics[entity] = TopicDetails(
                     Microservice(serviceName, 1), mutableSetOf()
                 )
-
+                //Fixme: this is broken
                 topicDetails.producer.name == serviceName -> topicDetails.producer.instanceCount += 1
 
                 else -> throw Exception(
@@ -96,7 +95,7 @@ open class RedisService(
     ): List<Pair<SearchParam, List<UUID>>?> {
         val redisKeyPrefix = "search:$entityName"
         return searchRequest.params.map { param ->
-            val paramHash = generateCacheKey(param)
+            val paramHash = generateSearchCacheKey(param)
             val redisKey = "$redisKeyPrefix:${param.path}:$paramHash"
 
             val existsInRanking = redisTemplate.opsForZSet().rank("ranking", redisKey) != null
@@ -125,7 +124,7 @@ open class RedisService(
         if (excess > 0) freedMemory = evictOldestEntries(excess)
 
         searchRequest.params.forEach { param ->
-            val hashedParam = generateCacheKey(param)
+            val hashedParam = generateSearchCacheKey(param)
             val redisKey = "$redisKeyPrefix:${param.path}:$hashedParam"
 
             val entry =
@@ -180,8 +179,17 @@ open class RedisService(
         return hashedKeySize + metadataSize + resultsSize + serializationOverhead
     }
 
-    private fun generateCacheKey(param: SearchParam): String {
+    private fun generateSearchCacheKey(param: SearchParam): String {
         return hash("${param.operator.name}:${param.searchValue}")
+    }
+
+    fun generateMethodCacheKey(methodName: String, args: Array<Any?>): String {
+        val argsHash = args.joinToString(",") { it.toString() }
+            .toByteArray()
+            .let { MessageDigest.getInstance("SHA-256").digest(it) }
+            .joinToString("") { "%02x".format(it) }
+
+        return "method:$methodName:$argsHash"
     }
 
     private fun hash(input: String): String {
