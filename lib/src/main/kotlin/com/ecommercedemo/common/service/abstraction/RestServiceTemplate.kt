@@ -209,17 +209,15 @@ abstract class RestServiceTemplate<T : BaseEntity>() : IRestService<T> {
         cachedSearchKeysList: List<Pair<SearchParam, List<UUID>>?>,
         request: SearchRequest
     ): List<T> {
-        val rawIdLists = cachedSearchKeysList.filterNotNull().map { it.second }.toMutableList()
         val uncachedParams = request.params.filterNot { param ->
             cachedSearchKeysList.any { it?.first == param }
         }
-        val retrievedIdList = retriever.executeSearch(
+        retriever.executeSearch(
             SearchRequest(params = uncachedParams), entityClass
-        ).map { it.id }
-        rawIdLists.add(retrievedIdList)
-        val finalIdList =
-            rawIdLists.reduceOrNull { acc, ids -> acc.intersect(ids.toSet()).toList() } ?: emptyList()
-        return getMultiple(finalIdList)
+        )
+        val updatedCachedSearchResultsOrNullList =
+            redisService.getCachedSearchResultsOrNullList(request, entityClass.simpleName!!)
+        return getMultiple(redisService.resultIntersection(updatedCachedSearchResultsOrNullList))
     }
 
     private fun computeWholeSearch(request: SearchRequest): List<T> = retriever.executeSearch(request, entityClass)
