@@ -10,7 +10,7 @@ import kotlin.reflect.full.primaryConstructor
 import kotlin.reflect.jvm.isAccessible
 
 @Service
-class ReflectionService {
+open class ReflectionService {
 
     @CachingEligible
     fun getMemberProperties(declaringClass: KClass<*>) = declaringClass.memberProperties
