@@ -207,7 +207,7 @@ abstract class RestServiceTemplate<T : BaseEntity>() : IRestService<T> {
 
         val endTime = System.currentTimeMillis()
         log.info(
-            "Search completed in ${endTime - startTime}ms. Cache status: $cacheStatus. Entity: ${entityClass.simpleName}."
+            "Search completed in ${endTime - startTime}ms. Found ${result.size}. Cache status: $cacheStatus. Entity: ${entityClass.simpleName}."
         )
 
         return result
@@ -216,11 +216,16 @@ abstract class RestServiceTemplate<T : BaseEntity>() : IRestService<T> {
     private fun computePartialSearch(
         cachedSearchKeysList: List<Pair<SearchParam, List<UUID>>?>,
         request: SearchRequest
-    ): List<T> = getMultiple(redisService.resultIntersection(cachedSearchKeysList)) + retriever.executeSearch(
-        SearchRequest(params = request.params.filterNot { param ->
-            cachedSearchKeysList.any { it?.first == param }
-        }), entityClass
-    )
+    ): List<T> {
+        val cachedIds = redisService.resultIntersection(cachedSearchKeysList)
+        val retrievedIds = retriever.executeSearch(
+            SearchRequest(params = request.params.filterNot { param ->
+                cachedSearchKeysList.any { it?.first == param }
+            }), entityClass
+        ).map { it.id }
+        val intersectionCacheAndRetriever = cachedIds.intersect(retrievedIds.toSet())
+        return getMultiple(intersectionCacheAndRetriever.toList())
+    }
 
     private fun computeWholeSearch(request: SearchRequest): List<T> = retriever.executeSearch(request, entityClass)
 
