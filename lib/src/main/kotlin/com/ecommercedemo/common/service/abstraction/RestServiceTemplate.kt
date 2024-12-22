@@ -209,20 +209,17 @@ abstract class RestServiceTemplate<T : BaseEntity>() : IRestService<T> {
         cachedSearchKeysList: List<Pair<SearchParam, List<UUID>>?>,
         request: SearchRequest
     ): List<T> {
-        println("Partial search with params: ${cachedSearchKeysList.associate { it?.first to it?.second?.size }} and request: $request")
-        val cachedIds = redisService.resultIntersection(cachedSearchKeysList)
-        println("Intersecting cached ids: $cachedIds")
+        val rawIdLists = cachedSearchKeysList.filterNotNull().map { it.second }.toMutableList()
         val uncachedParams = request.params.filterNot { param ->
             cachedSearchKeysList.any { it?.first == param }
         }
-        println("Uncached params: $uncachedParams")
-        val retrievedIds = retriever.executeSearch(
+        val retrievedIdList = retriever.executeSearch(
             SearchRequest(params = uncachedParams), entityClass
         ).map { it.id }
-        println("Number retrieved ids: ${retrievedIds.size}")
-        val intersectionCacheAndRetriever = cachedIds.intersect(retrievedIds.toSet()).toList()
-        println("Final intersection: $intersectionCacheAndRetriever")
-        return getMultiple(intersectionCacheAndRetriever)
+        rawIdLists.add(retrievedIdList)
+        val finalIdList =
+            rawIdLists.reduceOrNull { acc, ids -> acc.intersect(ids.toSet()).toList() } ?: emptyList()
+        return getMultiple(finalIdList)
     }
 
     private fun computeWholeSearch(request: SearchRequest): List<T> = retriever.executeSearch(request, entityClass)
