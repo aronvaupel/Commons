@@ -16,7 +16,7 @@ import java.lang.reflect.ParameterizedType
 
 @Suppress("UNCHECKED_CAST", "unused")
 @Service
-open class MainEventHandler<T: BaseEntity>(
+class MainEventHandler<T: BaseEntity>(
     private val applicationContext: ApplicationContext
 ) {
     private val log = KotlinLogging.logger {}

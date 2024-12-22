@@ -7,7 +7,7 @@ import kotlin.reflect.KClass
 import kotlin.reflect.jvm.javaType
 
 @Service
-open class TypeReAttacher(
+class TypeReAttacher(
     private val objectMapper: ObjectMapper,
     private val reflectionService: ReflectionService,
 ) {

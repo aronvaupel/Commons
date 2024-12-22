@@ -9,7 +9,7 @@ import kotlin.reflect.KClass
 
 @Service
 @Suppress("unused")
-open class SearchParamValidation(
+class SearchParamValidation(
     private val deserializer: SearchParamConverter,
     private val reflectionService: ReflectionService,
 ) {

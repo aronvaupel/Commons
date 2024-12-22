@@ -20,7 +20,8 @@ import kotlin.reflect.full.findAnnotation
 @Suppress("unused", "UNCHECKED_CAST")
 abstract class EventServiceTemplate<T : BaseEntity>() : IEventService<T> {
 
-    private var downstreamEntityClass: KClass<T>
+    private var downstreamEntityClass: KClass<T> = this::class.findAnnotation<EventServiceFor>()?.let { it.entity as KClass<T> }
+        ?: throw IllegalStateException("No valid annotation found on class ${this::class.simpleName}")
 
     @Autowired
     private lateinit var adapter: IEntityPersistenceAdapter<T>
@@ -33,11 +34,6 @@ abstract class EventServiceTemplate<T : BaseEntity>() : IEventService<T> {
 
     @Autowired
     private lateinit var typeReAttacher: TypeReAttacher
-
-    init {
-        downstreamEntityClass = this::class.findAnnotation<EventServiceFor>()?.let { it.entity as KClass<T> }
-            ?: throw IllegalStateException("No valid annotation found on class ${this::class.simpleName}")
-    }
 
 
     val log = KotlinLogging.logger {}

@@ -8,7 +8,7 @@ import kotlin.reflect.KClass
 
 @Service
 @Suppress("unused")
-open class Retriever(
+class Retriever(
     private val deserializer: SearchParamConverter,
     private val entityManager: EntityManager,
     private val pathResolver: PathResolver,
