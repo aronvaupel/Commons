@@ -11,7 +11,7 @@ import org.springframework.stereotype.Service
 
 
 @Service
-class PathResolver(
+open class PathResolver(
     private val validator: SearchParamValidation,
     private val converter: SearchParamConverter,
     private val _pseudoPropertyRepository: _PseudoPropertyRepository,
