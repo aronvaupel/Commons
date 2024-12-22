@@ -198,7 +198,9 @@ open class RedisService(
 
     //Todo: consider moving to RestServiceTemplate
     fun resultIntersection(cachedSearchKeysList: List<Pair<SearchParam, List<UUID>>?>): List<UUID> {
-        return cachedSearchKeysList.filterNotNull().map { it.second }
+        return if (cachedSearchKeysList.size == 1)
+            cachedSearchKeysList.first()?.second ?: emptyList()
+        else cachedSearchKeysList.filterNotNull().map { it.second }
             .reduceOrNull { acc, ids -> acc.intersect(ids.toSet()).toList() } ?: emptyList()
     }
 
