@@ -4,6 +4,7 @@ import com.ecommercedemo.common.application.cache.RedisService
 import com.ecommercedemo.common.controller.abstraction.request.SearchRequest
 import com.ecommercedemo.common.model.abstraction.BaseEntity
 import jakarta.persistence.EntityManager
+import mu.KotlinLogging
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.PageImpl
 import org.springframework.data.domain.PageRequest
@@ -19,12 +20,15 @@ class Retriever(
     private val redisService: RedisService,
     private val validator: SearchParamValidation
 ) {
+    val log = KotlinLogging.logger {}
 
     fun <T : BaseEntity> executeSearch(searchRequest: SearchRequest, entity: KClass<T>, page: Int, size: Int): Page<T> {
         val criteriaBuilder = entityManager.criteriaBuilder
         val criteriaQuery = criteriaBuilder.createQuery(entity.java)
         val root = criteriaQuery.from(entity.java)
         val pageable = PageRequest.of(page, size)
+        log.info("Pageable info: page = {}, size = {}", pageable.pageNumber, pageable.pageSize)
+
 
         val predicates = searchRequest.params.map { param ->
             val resolvedPathInfo = pathResolver.resolvePath(param, root)
@@ -51,7 +55,10 @@ class Retriever(
         countQuery.select(criteriaBuilder.count(countRoot)).where(*predicates.toTypedArray())
         val totalCount = entityManager.createQuery(countQuery).singleResult
 
-        return PageImpl(resultList, pageable, totalCount)
+        val pageImpl = PageImpl(resultList, pageable, totalCount)
+        log.info("PageImpl: content size = {}, total count = {}", resultList.size, totalCount)
+
+        return pageImpl
     }
 
 }
