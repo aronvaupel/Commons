@@ -75,8 +75,7 @@ abstract class EntityPersistenceAdapter<T : BaseEntity> : PersistencePort<T> {
     }
 
     override fun getAllPaged(page: Int, size: Int): Page<T> {
-        val result = repository.findAll(PageRequest.of(page, size))
-        log.info { "Entities fetched: $result" }
-        return result
+        val pageable = PageRequest.of(page, size)
+        return repository.findAll(pageable)
     }
 }

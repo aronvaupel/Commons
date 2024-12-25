@@ -24,6 +24,7 @@ class Retriever(
         val criteriaBuilder = entityManager.criteriaBuilder
         val criteriaQuery = criteriaBuilder.createQuery(entity.java)
         val root = criteriaQuery.from(entity.java)
+        val pageable = PageRequest.of(page, size)
 
         val predicates = searchRequest.params.map { param ->
             val resolvedPathInfo = pathResolver.resolvePath(param, root)
@@ -40,19 +41,16 @@ class Retriever(
 
         criteriaQuery.where(*predicates.toTypedArray())
 
-        val countQuery = criteriaBuilder.createQuery(Long::class.java).apply {
-            select(criteriaBuilder.count(root))
-            where(*predicates.toTypedArray())
-        }
+        val resultList = entityManager.createQuery(criteriaQuery)
+            .setFirstResult(pageable.offset.toInt())
+            .setMaxResults(pageable.pageSize)
+            .resultList
+
+        val countQuery = criteriaBuilder.createQuery(Long::class.java)
+        countQuery.select(criteriaBuilder.count(root)).where(*predicates.toTypedArray())
         val totalCount = entityManager.createQuery(countQuery).singleResult
 
-        val query = entityManager.createQuery(criteriaQuery)
-            .setFirstResult(page * size)
-            .setMaxResults(size)
-
-        val resultList = query.resultList
-
-        return PageImpl(resultList, PageRequest.of(page, size), totalCount)
+        return PageImpl(resultList, pageable, totalCount)
     }
 
 }
