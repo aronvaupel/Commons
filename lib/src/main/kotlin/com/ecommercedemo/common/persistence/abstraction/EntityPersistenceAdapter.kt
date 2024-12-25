@@ -1,6 +1,7 @@
 package com.ecommercedemo.common.persistence.abstraction
 
 import com.ecommercedemo.common.model.abstraction.BaseEntity
+import com.ecommercedemo.common.service.RestServiceFor
 import jakarta.persistence.EntityManager
 import jakarta.persistence.LockModeType
 import mu.KotlinLogging
@@ -11,17 +12,18 @@ import org.springframework.data.domain.PageRequest
 import org.springframework.data.jpa.repository.Lock
 import java.util.*
 import kotlin.reflect.KClass
+import kotlin.reflect.full.findAnnotation
 
+@Suppress("UNCHECKED_CAST")
 abstract class EntityPersistenceAdapter<T : BaseEntity> : PersistencePort<T> {
+    private var entityClass: KClass<T> = this::class.findAnnotation<RestServiceFor>()?.let { it.entity as KClass<T> }
+        ?: throw IllegalStateException("No valid annotation found on class ${this::class.simpleName}")
 
     @Autowired
     private lateinit var repository: EntityRepository<T, UUID>
 
     @Autowired
     private lateinit var entityManager: EntityManager
-
-    @Autowired
-    private lateinit var entityClass: KClass<T>
 
     val log = KotlinLogging.logger {}
 

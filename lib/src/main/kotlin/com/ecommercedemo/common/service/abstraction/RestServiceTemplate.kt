@@ -30,7 +30,7 @@ import kotlin.reflect.KClass
 import kotlin.reflect.full.findAnnotation
 
 @Suppress("UNCHECKED_CAST")
-abstract class RestServiceTemplate<T : BaseEntity>() : IRestService<T> {
+abstract class RestServiceTemplate<T : BaseEntity> : IRestService<T> {
     private var entityClass: KClass<T> = this::class.findAnnotation<RestServiceFor>()?.let { it.entity as KClass<T> }
         ?: throw IllegalStateException("No valid annotation found on class ${this::class.simpleName}")
 
