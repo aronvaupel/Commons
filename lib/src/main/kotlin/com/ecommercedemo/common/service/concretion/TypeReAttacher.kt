@@ -8,7 +8,6 @@ import kotlin.reflect.jvm.javaType
 
 @Service
 class TypeReAttacher(
-    private val objectMapper: ObjectMapper,
     private val reflectionService: ReflectionService,
 ) {
 
@@ -22,7 +21,7 @@ class TypeReAttacher(
             val typeReference = object : TypeReference<Any>() {
                 override fun getType() = kType.javaType
             }
-            objectMapper.convertValue(data[key], typeReference)
+            ObjectMapper().convertValue(data[key], typeReference)
         }
         return typedData
     }
