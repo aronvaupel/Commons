@@ -46,11 +46,11 @@ class Retriever(
             .setMaxResults(pageable.pageSize)
             .resultList
 
-        val countQuery = criteriaBuilder.createQuery(Long::class.java)
-        countQuery.select(criteriaBuilder.count(root)).where(*predicates.toTypedArray())
-        val totalCount = entityManager.createQuery(countQuery).singleResult
+//        val countQuery = criteriaBuilder.createQuery(Long::class.java)
+//        countQuery.select(criteriaBuilder.count(root)).where(*predicates.toTypedArray())
+//        val totalCount = entityManager.createQuery(countQuery).singleResult
 
-        return PageImpl(resultList, pageable, totalCount)
+        return PageImpl(resultList)
     }
 
 }
