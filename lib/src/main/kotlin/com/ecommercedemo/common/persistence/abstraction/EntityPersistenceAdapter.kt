@@ -73,4 +73,10 @@ abstract class EntityPersistenceAdapter<T : BaseEntity> : PersistencePort<T> {
 
         return PageImpl(resultList, PageRequest.of(page, size), totalCount)
     }
+
+    override fun getAllPaged(page: Int, size: Int): Page<T> {
+        val result = repository.findAll(PageRequest.of(page, size))
+        log.info { "Entities fetched: $result" }
+        return result
+    }
 }
