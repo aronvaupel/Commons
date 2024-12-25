@@ -19,7 +19,8 @@ open class RedisService(
     private val cachingUtility: CachingUtility,
     @Value("\${cache.memory.max-size}") private val maxMemory: Long,
     private val redisTemplate: StringRedisTemplate,
-    @Value("\${spring.application.name}") private val serviceName: String
+    @Value("\${spring.application.name}") private val serviceName: String,
+    private val objectMapper: ObjectMapper,
 ) {
 
     val log = KotlinLogging.logger {}
@@ -76,13 +77,13 @@ open class RedisService(
     }
 
     fun getKafkaRegistry(): KafkaTopicRegistry {
-        return ObjectMapper().readValue(
+        return objectMapper.readValue(
             redisTemplate.opsForValue().get("kafka-topic-registry") ?: "{}", KafkaTopicRegistry::class.java
         )
     }
 
     private fun saveKafkaRegistry(kafkaTopicRegistry: KafkaTopicRegistry) {
-        redisTemplate.opsForValue().set("kafka-topic-registry", ObjectMapper().writeValueAsString(kafkaTopicRegistry))
+        redisTemplate.opsForValue().set("kafka-topic-registry", objectMapper.writeValueAsString(kafkaTopicRegistry))
     }
 
     //Todo: what about pseudo property paths?
@@ -109,7 +110,7 @@ open class RedisService(
 
     fun <T>getCachedMethodResultOrThrow(methodName: String, args: List<Any?>, returnTypeReference: TypeReference<T> ): Any? {
         val redisKeyPrefix = "method:$methodName"
-        val argsAsString = ObjectMapper().writeValueAsString(args)
+        val argsAsString = objectMapper.writeValueAsString(args)
         val hashedArgs = cachingUtility.generateMethodCacheKey(methodName, argsAsString)
         val redisKey = "$redisKeyPrefix:$hashedArgs"
 
@@ -118,7 +119,7 @@ open class RedisService(
 
         redisTemplate.opsForZSet().add("ranking", redisKey, System.currentTimeMillis().toDouble())
 
-        return ObjectMapper().readValue(redisTemplate.opsForValue().get(redisKey), returnTypeReference)
+        return objectMapper.readValue(redisTemplate.opsForValue().get(redisKey), returnTypeReference)
     }
 
 
@@ -137,10 +138,10 @@ open class RedisService(
 
     fun cacheMethodResult(methodName: String, args: List<Any?>, result: Any?) {
         val redisKeyPrefix = "method:$methodName"
-        val argsAsString = ObjectMapper().writeValueAsString(args)
+        val argsAsString = objectMapper.writeValueAsString(args)
         val hashedArgs = cachingUtility.generateMethodCacheKey(methodName, argsAsString)
         val redisKey = "$redisKeyPrefix:$hashedArgs"
-        val resultAsString = ObjectMapper().writeValueAsString(result)
+        val resultAsString = objectMapper.writeValueAsString(result)
 
         val memoryData = cachingUtility.calculateMemoryUsageAndEvictIfNeeded(redisKey, resultAsString, maxMemory)
         cachingUtility.save(redisKey, resultAsString)
