@@ -90,10 +90,10 @@ open class RedisService(
         keyPrefix: String,
         hashedIdentifier: String,
         result: T,
-        hashFunction: (T) -> String
+        serializationMethod: (T) -> ByteArray
     ) {
         val redisKey = "$keyPrefix:$hashedIdentifier"
-        val entry = hashFunction(result)
+        val entry = serializationMethod(result)
 
         val memoryData = cachingUtility.calculateMemoryUsageAndEvictIfNeeded(redisKey, maxMemory)
         cachingUtility.save(redisKey, entry)
@@ -109,7 +109,7 @@ open class RedisService(
             keyPrefix = "search:$entityName",
             hashedIdentifier = cachingUtility.hashSearchRequest(request),
             result = searchResult,
-            hashFunction = cachingUtility::hashSerializedUuidList
+            serializationMethod = cachingUtility::serializeSearchResultToBytes
         )
     }
 
@@ -123,20 +123,22 @@ open class RedisService(
             keyPrefix = "method:$methodName",
             hashedIdentifier = cachingUtility.hashArgs(args),
             result = result,
-            hashFunction = cachingUtility::hashMethodResult
+            serializationMethod = cachingUtility::serializeMethodResultToBytes
         )
     }
 
     private fun <T> getCachedResultOrThrow(
         keyPrefix: String,
         hashedIdentifier: String,
-        deserializeFunction: (String) -> T
+        deserializeFunction: (ByteArray) -> T
     ): T {
         val redisKey = "$keyPrefix:$hashedIdentifier"
 
         if (redisTemplate.opsForZSet().rank("ranking", redisKey) != null) {
             redisTemplate.opsForZSet().add("ranking", redisKey, System.currentTimeMillis().toDouble())
-            val cachedValue = redisTemplate.opsForValue().get(redisKey) ?: throw NotCachedException()
+            val cachedValue = redisTemplate.execute { connection ->
+                connection.stringCommands().get(redisKey.toByteArray())
+            } ?: throw NotCachedException()
             return deserializeFunction(cachedValue)
         } else {
             throw NotCachedException()
@@ -151,7 +153,7 @@ open class RedisService(
         return getCachedResultOrThrow(
             keyPrefix = "method:$methodName",
             hashedIdentifier = cachingUtility.hashArgs(args),
-            deserializeFunction = { value -> objectMapper.readValue(value, returnTypeReference) }
+            deserializeFunction = { data -> cachingUtility.deserializeMethodResultFromBytes(data, returnTypeReference) }
         )
     }
 
@@ -162,9 +164,8 @@ open class RedisService(
         return getCachedResultOrThrow(
             keyPrefix = "search:$entityName",
             hashedIdentifier = cachingUtility.hashSearchRequest(searchRequest),
-            deserializeFunction = cachingUtility::bytesToUuidList
+            deserializeFunction = cachingUtility::deserializeSearchResultFromBytes
         )
     }
-
 
 }

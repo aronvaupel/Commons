@@ -3,7 +3,6 @@ package com.ecommercedemo.common.application.cache
 import com.ecommercedemo.common.application.exception.NullKeyInZSetException
 import com.ecommercedemo.common.application.validation.modification.ModificationType
 import com.ecommercedemo.common.controller.abstraction.request.SearchRequest
-import com.ecommercedemo.common.controller.abstraction.util.SearchParam
 import com.ecommercedemo.common.model.abstraction.BaseEntity
 import com.fasterxml.jackson.core.type.TypeReference
 import com.fasterxml.jackson.databind.ObjectMapper
@@ -21,8 +20,10 @@ class CachingUtility(
     private val objectMapper = ObjectMapper()
     private val log = KotlinLogging.logger {}
 
-    fun save(redisKey: String, hashedValue: String?) {
-        redisTemplate.opsForValue().set(redisKey, ObjectMapper().writeValueAsString(hashedValue))
+    fun save(redisKey: String, value: ByteArray) {
+        redisTemplate.execute { connection ->
+            connection.stringCommands().set(redisKey.toByteArray(), value)
+        }
 
         redisTemplate.opsForZSet().add("ranking", redisKey, System.currentTimeMillis().toDouble())
     }
@@ -72,7 +73,6 @@ class CachingUtility(
         return memoryFreed
     }
 
-
     private fun calculateMemoryUsageOfNewEntry(key: String): Long {
         val hashValueSize = 64L
         val stringSize = (key.length + hashValueSize)
@@ -80,13 +80,8 @@ class CachingUtility(
         return stringSize + zSetEntrySize
     }
 
-    fun <T: BaseEntity>hashSerializedUuidList(result: List<T>): String {
+    fun <T: BaseEntity>serializeSearchResultToBytes(result: List<T>): ByteArray {
         val uuids = result.map { it.id }
-        val serializedData = serializeSearchResultToBytes(uuids)
-        return hash(serializedData)
-    }
-
-    private fun serializeSearchResultToBytes(uuids: List<UUID>): ByteArray {
         return ByteBuffer.allocate(uuids.size * 16).apply {
             uuids.forEach { uuid ->
                 putLong(uuid.mostSignificantBits)
@@ -106,12 +101,7 @@ class CachingUtility(
         return uuids
     }
 
-    fun hashMethodResult(result: Any?): String {
-        val resultAsBytes = serializeMethodResultToBytes(result)
-        return hash(resultAsBytes)
-    }
-
-    private fun serializeMethodResultToBytes(result: Any?): ByteArray {
+    fun serializeMethodResultToBytes(result: Any?): ByteArray {
         return objectMapper.writeValueAsBytes(result)
     }
 
@@ -133,12 +123,6 @@ class CachingUtility(
         val digest = MessageDigest.getInstance("SHA-256")
         digest.update(data)
         return digest.digest().joinToString("") { "%02x".format(it) }
-    }
-
-
-    fun resultIntersection(cachedSearchSearchResultsOrNullList: List<Pair<SearchParam, List<UUID>>?>): List<UUID> {
-        return cachedSearchSearchResultsOrNullList.filterNotNull().map { it.second }
-            .reduceOrNull { acc, ids -> acc.intersect(ids.toSet()).toList() } ?: emptyList()
     }
 
     fun invalidateSearchCaches(

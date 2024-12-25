@@ -177,20 +177,30 @@ abstract class RestServiceTemplate<T : BaseEntity>() : IRestService<T> {
 
     override fun search(request: SearchRequest, page: Int, size: Int): Page<T> {
         val startTime = System.currentTimeMillis()
-        val result = mutableListOf<T>()
-        try {
+        return try {
             val cachedResult = redisService.getCachedSearchResultsOrThrow(request, entityClass.simpleName!!)
             log.info("Search cached. Returning cached result.")
-            result.addAll(getMultiple(cachedResult, page, size).content)
+            val paginated = getMultiple(cachedResult, page, size)
+            val endTime = System.currentTimeMillis()
+            logResult(endTime, startTime, paginated)
+            paginated
         } catch (e: NotCachedException) {
             log.info("Search not cached. Executing search.")
-            result.addAll(retriever.executeSearch(request, entityClass, page, size))
+            val paginated = retriever.executeSearch(request, entityClass, page, size)
+            val endTime = System.currentTimeMillis()
+            logResult(endTime, startTime, paginated)
+            paginated
         }
-        val endTime = System.currentTimeMillis()
+    }
+
+    private fun logResult(
+        endTime: Long,
+        startTime: Long,
+        paginated: Page<T>
+    ) {
         log.info(
-            "Search completed in ${endTime - startTime}ms. Found ${result.size}. Entity: ${entityClass.simpleName}."
+            "Search completed in ${endTime - startTime}ms. Retrieved ${paginated.size}. Entity: ${entityClass.simpleName}."
         )
-        return result
     }
 
     private fun saveAndEmitEvent(original: T?, updated: T, eventType: ModificationType): T {
