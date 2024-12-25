@@ -1,7 +1,6 @@
 package com.ecommercedemo.common.application.kafka
 
 import com.ecommercedemo.common.application.validation.modification.ModificationType
-import com.ecommercedemo.common.service.concretion.ReflectionService
 import com.ecommercedemo.common.service.concretion.TypeReAttacher
 import com.fasterxml.jackson.core.JsonParser
 import com.fasterxml.jackson.databind.DeserializationContext
@@ -16,7 +15,9 @@ import kotlin.reflect.KClass
 class EntityEventDeserializer(
     private val objectMapper: ObjectMapper,
     private val entityManagerFactory: EntityManagerFactory,
+    private val typeReAttacher: TypeReAttacher
 ) : JsonDeserializer<EntityEvent>() {
+
 
     override fun deserialize(parser: JsonParser, ctxt: DeserializationContext): EntityEvent {
         val rootNode = parser.codec.readTree<ObjectNode>(parser)
@@ -45,7 +46,7 @@ class EntityEventDeserializer(
                 propertiesNode,
                 objectMapper.typeFactory.constructMapType(Map::class.java, String::class.java, Any::class.java)
             )
-            TypeReAttacher(objectMapper, ReflectionService()).reAttachType(rawData, entityClass)
+            typeReAttacher.reAttachType(rawData, entityClass)
         } catch (e: Exception) {
             throw IllegalArgumentException("Failed to deserialize 'properties' for entity class: _$entityClassName", e)
         }

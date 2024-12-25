@@ -3,8 +3,7 @@ package com.ecommercedemo.common.application.cache
 import com.ecommercedemo.common.application.cache.keys.KafkaTopicRegistry
 import com.ecommercedemo.common.application.cache.values.Microservice
 import com.ecommercedemo.common.application.cache.values.TopicDetails
-import com.ecommercedemo.common.application.exception.NullKeyInZSetException
-import com.ecommercedemo.common.application.validation.modification.ModificationType
+import com.ecommercedemo.common.application.exception.NotCachedException
 import com.ecommercedemo.common.controller.abstraction.request.SearchRequest
 import com.ecommercedemo.common.controller.abstraction.util.SearchParam
 import com.fasterxml.jackson.core.type.TypeReference
@@ -14,15 +13,14 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.data.redis.core.StringRedisTemplate
 import org.springframework.stereotype.Service
-import java.security.MessageDigest
 import java.util.*
 
 @Service
-@Suppress("UNCHECKED_CAST")
 open class RedisService(
+    private val cachingUtility: CachingUtility,
+    @Value("\${cache.memory.max-size}") private val maxMemory: Long,
     @Autowired private val objectMapper: ObjectMapper,
     private val redisTemplate: StringRedisTemplate,
-    @Value("\${cache.memory.max-size}") private val maxMemory: Long,
     @Value("\${spring.application.name}") private val serviceName: String
 ) {
 
@@ -95,7 +93,7 @@ open class RedisService(
     ): List<Pair<SearchParam, List<UUID>>?> {
         val redisKeyPrefix = "search:$entityName"
         return searchRequest.params.map { param ->
-            val paramHash = generateSearchCacheKey(param)
+            val paramHash = cachingUtility.generateSearchCacheKey(param)
             val redisKey = "$redisKeyPrefix:${param.path}:$paramHash"
 
             val existsInRanking = redisTemplate.opsForZSet().rank("ranking", redisKey) != null
@@ -103,12 +101,26 @@ open class RedisService(
 
             redisTemplate.opsForZSet().add("ranking", redisKey, System.currentTimeMillis().toDouble())
 
-            val entry = objectMapper.readValue(
-                redisTemplate.opsForValue().get(redisKey),
-                object : TypeReference<Map<String, Any>>() {})
-            val result = entry["result"] as List<UUID>
+            val result =
+                (redisTemplate.opsForValue().get(redisKey) as String)
+                    .split(",")
+                    .map { UUID.fromString(it.trim()) }
             Pair(param, result)
         }
+    }
+
+    fun <T>getCachedMethodResultOrThrow(methodName: String, args: List<Any?>, returnTypeReference: TypeReference<T> ): Any? {
+        val redisKeyPrefix = "method:$methodName"
+        val argsAsString = objectMapper.writeValueAsString(args)
+        val hashedArgs = cachingUtility.generateMethodCacheKey(methodName, argsAsString)
+        val redisKey = "$redisKeyPrefix:$hashedArgs"
+
+        val existsInRanking = redisTemplate.opsForZSet().rank("ranking", redisKey) != null
+        if (!existsInRanking) throw NotCachedException()
+
+        redisTemplate.opsForZSet().add("ranking", redisKey, System.currentTimeMillis().toDouble())
+
+        return objectMapper.readValue(redisTemplate.opsForValue().get(redisKey), returnTypeReference)
     }
 
 
@@ -116,124 +128,25 @@ open class RedisService(
         entityName: String, searchParam: SearchParam, resultIds: List<UUID>
     ) {
         val redisKeyPrefix = "search:$entityName"
-        val newEntryMemoryUsage = calculateMemoryUsageOfNewEntry(resultIds)
-        val currentMemoryUsage = redisTemplate.opsForValue().get("total-memory-usage")?.toLong() ?: 0L
-
-        val excess = (currentMemoryUsage + newEntryMemoryUsage) - maxMemory
-        var freedMemory = 0L
-        if (excess > 0) freedMemory = evictOldestEntries(excess)
-
-        val hashedParam = generateSearchCacheKey(searchParam)
+        val hashedParam = cachingUtility.generateSearchCacheKey(searchParam)
         val redisKey = "$redisKeyPrefix:${searchParam.path}:$hashedParam"
+        val entry = resultIds.joinToString(",")
 
-        val entry =
-            mapOf(
-                "memoryUsage" to newEntryMemoryUsage.toString(),
-                "size" to resultIds.size.toString(),
-                "result" to resultIds
-            )
-
-        redisTemplate.opsForValue().set(redisKey, objectMapper.writeValueAsString(entry))
-
-        redisTemplate.opsForZSet().add("ranking", redisKey, System.currentTimeMillis().toDouble())
-
-
-        val updatedMemoryUsage = currentMemoryUsage + newEntryMemoryUsage - freedMemory
-        redisTemplate.opsForValue().set("total-memory-usage", updatedMemoryUsage.toString())
+        val memoryData = cachingUtility.calculateMemoryUsageAndEvictIfNeeded(redisKey, entry, maxMemory)
+        cachingUtility.save(redisKey, entry)
+        cachingUtility.updateMemoryUsage(memoryData)
     }
 
+    fun cacheMethodResult(methodName: String, args: List<Any?>, result: Any?) {
+        val redisKeyPrefix = "method:$methodName"
+        val argsAsString = objectMapper.writeValueAsString(args)
+        val hashedArgs = cachingUtility.generateMethodCacheKey(methodName, argsAsString)
+        val redisKey = "$redisKeyPrefix:$hashedArgs"
+        val resultAsString = objectMapper.writeValueAsString(result)
 
-    private fun evictOldestEntries(excess: Long): Long {
-        var memoryFreed = 0L
-        val zSetKey = "ranking"
-
-        redisTemplate.opsForZSet()
-            .rangeWithScores(zSetKey, 0, -1)
-            ?.iterator()?.run {
-                while (this.hasNext() && memoryFreed < excess) {
-                    val entry = this.next()
-                    val key = entry.value ?: throw NullKeyInZSetException("Null key in zSet", zSetKey, entry)
-
-                    val memoryUsage = redisTemplate.opsForValue().get(key)?.let {
-                        objectMapper.readValue(
-                            it,
-                            object : TypeReference<Map<String, Any>>() {})["memoryUsage"] as? Long ?: 0L
-                    } ?: 0L
-                    redisTemplate.delete(key)
-                    redisTemplate.opsForZSet().remove(zSetKey, key)
-
-                    memoryFreed += memoryUsage
-                }
-            } ?: log.info { "No entries to evict. Consider allocating more memory to the cache" }
-
-        return memoryFreed
-    }
-
-
-    private fun calculateMemoryUsageOfNewEntry(resultIds: List<UUID>): Long {
-        val hashedKeySize = 64L
-        val metadataSize = 16L
-        val resultsSize = resultIds.size * 36L
-        val serializationOverhead = (hashedKeySize + metadataSize + resultsSize) / 10 //approximation
-
-        return hashedKeySize + metadataSize + resultsSize + serializationOverhead
-    }
-
-    private fun generateSearchCacheKey(param: SearchParam): String {
-        return hash("${param.operator.name}:${param.searchValue}")
-    }
-
-    fun generateMethodCacheKey(methodName: String, args: Array<Any?>): String {
-        val argsHash = args.joinToString(",") { it.toString() }
-            .toByteArray()
-            .let { MessageDigest.getInstance("SHA-256").digest(it) }
-            .joinToString("") { "%02x".format(it) }
-
-        return "method:$methodName:$argsHash"
-    }
-
-    private fun hash(input: String): String {
-        return MessageDigest.getInstance("SHA-256").digest(input.toByteArray()).joinToString("") { "%02x".format(it) }
-    }
-
-    //Todo: consider moving to RestServiceTemplate
-    fun resultIntersection(cachedSearchSearchResultsOrNullList: List<Pair<SearchParam, List<UUID>>?>): List<UUID> {
-        return cachedSearchSearchResultsOrNullList.filterNotNull().map { it.second }
-            .reduceOrNull { acc, ids -> acc.intersect(ids.toSet()).toList() } ?: emptyList()
-    }
-
-    fun invalidateSearchCaches(
-        entityName: String, id: UUID, fields: Set<String>, modificationType: ModificationType
-    ) {
-        when (modificationType) {
-            ModificationType.CREATE, ModificationType.UPDATE -> invalidateWhenModified(entityName, fields)
-            ModificationType.DELETE -> invalidateWhenDeleted(entityName, id)
-        }
-    }
-
-
-    private fun invalidateWhenModified(entityName: String, modifiedFields: Set<String>) {
-        modifiedFields.forEach { fieldName ->
-            val fieldKeys = redisTemplate.keys("entities:$entityName:$fieldName:*")
-            fieldKeys.forEach { key ->
-                println("Invalidating key: $key")
-                redisTemplate.delete(key)
-            }
-        }
-    }
-
-    private fun invalidateWhenDeleted(entityName: String, entityId: UUID) {
-        val keysToCheck = redisTemplate.keys("entities:$entityName:*")
-        keysToCheck.forEach { key ->
-            val cachedIds = redisTemplate.opsForValue().get(key)?.let {
-                objectMapper.readValue(it, object : TypeReference<List<UUID>>() {})
-            }
-            if (cachedIds != null) {
-                val updatedIds = cachedIds.filterNot { it == entityId }
-                if (updatedIds.isEmpty()) redisTemplate.delete(key)
-                else redisTemplate.opsForValue().set(key, objectMapper.writeValueAsString(updatedIds))
-            }
-        }
+        val memoryData = cachingUtility.calculateMemoryUsageAndEvictIfNeeded(redisKey, resultAsString, maxMemory)
+        cachingUtility.save(redisKey, resultAsString)
+        cachingUtility.updateMemoryUsage(memoryData)
     }
 
 }

@@ -1,5 +1,6 @@
 package com.ecommercedemo.common.service.abstraction
 
+import com.ecommercedemo.common.application.cache.CachingUtility
 import com.ecommercedemo.common.application.cache.RedisService
 import com.ecommercedemo.common.application.exception.FailedToCreateException
 import com.ecommercedemo.common.application.exception.FailedToDeleteException
@@ -35,6 +36,9 @@ abstract class RestServiceTemplate<T : BaseEntity>() : IRestService<T> {
 
     @Autowired
     private lateinit var adapter: IEntityPersistenceAdapter<T>
+
+    @Autowired
+    private lateinit var cachingUtility: CachingUtility
 
     @Autowired
     private lateinit var entityChangeTracker: EntityChangeTracker<T>
@@ -81,7 +85,7 @@ abstract class RestServiceTemplate<T : BaseEntity>() : IRestService<T> {
                 eventType = ModificationType.CREATE
             )
 
-            redisService.invalidateSearchCaches(
+            cachingUtility.invalidateSearchCaches(
                 entityName = entityClass.simpleName!!,
                 id = result.id,
                 fields = request.properties.keys,
@@ -122,7 +126,7 @@ abstract class RestServiceTemplate<T : BaseEntity>() : IRestService<T> {
                 eventType = ModificationType.UPDATE
             )
 
-            redisService.invalidateSearchCaches(
+            cachingUtility.invalidateSearchCaches(
                 entityName = entityClass.simpleName!!,
                 id = result.id,
                 fields = request.properties.keys,
@@ -150,7 +154,7 @@ abstract class RestServiceTemplate<T : BaseEntity>() : IRestService<T> {
                 modificationType = ModificationType.DELETE,
                 properties = mutableMapOf()
             )
-            redisService.invalidateSearchCaches(
+            cachingUtility.invalidateSearchCaches(
                 entityName = entityClass.simpleName!!,
                 id = id,
                 fields = setOf(),
@@ -182,7 +186,7 @@ abstract class RestServiceTemplate<T : BaseEntity>() : IRestService<T> {
 
         when {
             cachedSearchResultsOrNullList.all { it != null } -> {
-                result = getMultiple(redisService.resultIntersection(cachedSearchResultsOrNullList))
+                result = getMultiple(cachingUtility.resultIntersection(cachedSearchResultsOrNullList))
                 cacheStatus = "FULLY_CACHED"
             }
 
@@ -209,7 +213,7 @@ abstract class RestServiceTemplate<T : BaseEntity>() : IRestService<T> {
         cachedSearchResultsOrNullList: List<Pair<SearchParam, List<UUID>>?>,
         request: SearchRequest
     ): List<T> {
-        val intersectionOfCachedIds = redisService.resultIntersection(cachedSearchResultsOrNullList)
+        val intersectionOfCachedIds = cachingUtility.resultIntersection(cachedSearchResultsOrNullList)
         val cacheBasedRetrieval = getMultiple(intersectionOfCachedIds)
         val uncachedParams = request.params.filterNot { param ->
             cachedSearchResultsOrNullList.any { it?.first == param }

@@ -44,7 +44,7 @@ class ServiceUtility<T : BaseEntity>(
         val instanceConstructorParams = createConstructorParams(entityConstructor, data)
 
         return entityConstructor.callBy(instanceConstructorParams).apply {
-            val memberProperties = reflectionService.getMemberProperties(this)
+            val memberProperties = reflectionService.getEntityMemberProperties(this)
             val remainingFields = data.filter {
                 !(it.key.startsWith("_")) && it.key !in instanceConstructorParams.keys.map { param -> param.name }
             }.map { it.key }
@@ -81,7 +81,7 @@ class ServiceUtility<T : BaseEntity>(
         }
 
         val entityProperties =
-            reflectionService.findMutableMemberProperties(entity)
+            reflectionService.findMutableProperties(entity)
 
         data.forEach { (key, value) ->
             val correspondingEntityProperty = entityProperties[key.removePrefix("_")]

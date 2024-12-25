@@ -3,22 +3,20 @@ package com.ecommercedemo.common.service.concretion
 import com.ecommercedemo.common.model.abstraction.AugmentableBaseEntity
 import com.ecommercedemo.common.model.abstraction.BaseEntity
 import com.fasterxml.jackson.databind.ObjectMapper
-import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import kotlin.reflect.jvm.isAccessible
 
 @Service
 
-class EntityChangeTracker<T : BaseEntity>{
-
-    @Autowired
-    private lateinit var reflectionService: ReflectionService
+class EntityChangeTracker<T : BaseEntity>(
+    private val reflectionService: ReflectionService
+){
 
     fun getChangedProperties(entityBefore: T?, entityAfter: T): MutableMap<String, Any?> {
         val changedProperties = mutableMapOf<String, Any?>()
         val propertiesBefore =
-            reflectionService.getMemberProperties(entityBefore)
-        reflectionService.getMemberProperties(entityAfter)?.forEach { property ->
+            reflectionService.getEntityMemberProperties(entityBefore)
+        reflectionService.getEntityMemberProperties(entityAfter)?.forEach { property ->
             val oldValue = entityBefore?.let { before ->
                 val matchingProperty = propertiesBefore?.firstOrNull { it.name == property.name }
                     ?: throw IllegalArgumentException("Property ${property.name} not found in entity before.")

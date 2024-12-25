@@ -15,7 +15,7 @@ class SearchParamValidation(
 ) {
     @CachingEligible
     fun validate(value: Any?, expectedType: Class<*>, declaringClass: KClass<*>, attributePath: String) {
-        if (value == null && reflectionService.getMemberProperties(declaringClass)
+        if (value == null && reflectionService.getClassMemberProperties(declaringClass)
                 .find { it.name == attributePath }
                 ?.returnType
                 ?.isMarkedNullable == true
