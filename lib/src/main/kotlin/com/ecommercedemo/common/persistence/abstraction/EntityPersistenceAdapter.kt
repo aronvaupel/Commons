@@ -1,7 +1,7 @@
 package com.ecommercedemo.common.persistence.abstraction
 
 import com.ecommercedemo.common.model.abstraction.BaseEntity
-import com.ecommercedemo.common.service.RestServiceFor
+import com.ecommercedemo.common.persistence.PersistenceAdapterFor
 import jakarta.persistence.EntityManager
 import jakarta.persistence.LockModeType
 import mu.KotlinLogging
@@ -16,7 +16,7 @@ import kotlin.reflect.full.findAnnotation
 
 @Suppress("UNCHECKED_CAST")
 abstract class EntityPersistenceAdapter<T : BaseEntity> : PersistencePort<T> {
-    private var entityClass: KClass<T> = this::class.findAnnotation<RestServiceFor>()?.let { it.entity as KClass<T> }
+    private var entityClass: KClass<T> = this::class.findAnnotation<PersistenceAdapterFor>()?.let { it.entity as KClass<T> }
         ?: throw IllegalStateException("No valid annotation found on class ${this::class.simpleName}")
 
     @Autowired
