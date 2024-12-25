@@ -6,9 +6,11 @@ import jakarta.persistence.LockModeType
 import mu.KotlinLogging
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.data.domain.Page
+import org.springframework.data.domain.PageImpl
 import org.springframework.data.domain.PageRequest
 import org.springframework.data.jpa.repository.Lock
 import java.util.*
+import kotlin.reflect.KClass
 
 abstract class EntityPersistenceAdapter<T : BaseEntity> : PersistencePort<T> {
 
@@ -17,6 +19,9 @@ abstract class EntityPersistenceAdapter<T : BaseEntity> : PersistencePort<T> {
 
     @Autowired
     private lateinit var entityManager: EntityManager
+
+    @Autowired
+    private lateinit var entityClass: KClass<T>
 
     val log = KotlinLogging.logger {}
 
@@ -48,13 +53,22 @@ abstract class EntityPersistenceAdapter<T : BaseEntity> : PersistencePort<T> {
         return repository.findById(id).orElseThrow { NoSuchElementException("Entity not found") }
     }
 
-    override fun getAllByIds(ids: List<UUID>, page: Int, size: Int): Page<T> {
-        val pageable = PageRequest.of(page, size)
-        return repository.findAllById(ids, pageable)
-    }
+    override fun getAllByIds(ids: List<UUID>, page: Int , size: Int): Page<T> {
+        val criteriaBuilder = entityManager.criteriaBuilder
+        val criteriaQuery = criteriaBuilder.createQuery(entityClass.java)
+        val root = criteriaQuery.from(entityClass.java)
 
-    override fun getAllPaged(page: Int, size: Int): Page<T> {
-        val pageable = PageRequest.of(page, size)
-        return repository.findAll(pageable)
+        criteriaQuery.select(root).where(root.get<UUID>("id").`in`(ids))
+
+        val query = entityManager.createQuery(criteriaQuery)
+        query.firstResult = page * size
+        query.maxResults = size
+        val resultList = query.resultList
+
+        val countQuery = criteriaBuilder.createQuery(Long::class.java)
+        countQuery.select(criteriaBuilder.count(root)).where(root.get<UUID>("id").`in`(ids))
+        val totalCount = entityManager.createQuery(countQuery).singleResult
+
+        return PageImpl(resultList, PageRequest.of(page, size), totalCount)
     }
 }
