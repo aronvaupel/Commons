@@ -14,12 +14,11 @@ import java.util.*
 @Service
 class CachingUtility(
     private val redisTemplate: StringRedisTemplate,
-    private val objectMapper: ObjectMapper
 ) {
     private val log = KotlinLogging.logger {}
 
     fun save(redisKey: String, entry: String) {
-        redisTemplate.opsForValue().set(redisKey, objectMapper.writeValueAsString(entry))
+        redisTemplate.opsForValue().set(redisKey, ObjectMapper().writeValueAsString(entry))
 
         redisTemplate.opsForZSet().add("ranking", redisKey, System.currentTimeMillis().toDouble())
     }
@@ -56,7 +55,7 @@ class CachingUtility(
                     val key = entry.value ?: throw NullKeyInZSetException("Null key in zSet", zSetKey, entry)
 
                     val memoryUsage = redisTemplate.opsForValue().get(key)?.let {
-                        objectMapper.readValue(
+                        ObjectMapper().readValue(
                             it,
                             object : TypeReference<Map<String, Any>>() {})["memoryUsage"] as? Long ?: 0L
                     } ?: 0L
@@ -113,7 +112,7 @@ class CachingUtility(
     }
 
 
-    fun invalidateWhenModified(entityName: String, modifiedFields: Set<String>) {
+    private fun invalidateWhenModified(entityName: String, modifiedFields: Set<String>) {
         modifiedFields.forEach { fieldName ->
             val fieldKeys = redisTemplate.keys("entities:$entityName:$fieldName:*")
             fieldKeys.forEach { key ->
@@ -123,16 +122,16 @@ class CachingUtility(
         }
     }
 
-    fun invalidateWhenDeleted(entityName: String, entityId: UUID) {
+    private fun invalidateWhenDeleted(entityName: String, entityId: UUID) {
         val keysToCheck = redisTemplate.keys("entities:$entityName:*")
         keysToCheck.forEach { key ->
             val cachedIds = redisTemplate.opsForValue().get(key)?.let {
-                objectMapper.readValue(it, object : TypeReference<List<UUID>>() {})
+                ObjectMapper().readValue(it, object : TypeReference<List<UUID>>() {})
             }
             if (cachedIds != null) {
                 val updatedIds = cachedIds.filterNot { it == entityId }
                 if (updatedIds.isEmpty()) redisTemplate.delete(key)
-                else redisTemplate.opsForValue().set(key, objectMapper.writeValueAsString(updatedIds))
+                else redisTemplate.opsForValue().set(key, ObjectMapper().writeValueAsString(updatedIds))
             }
         }
     }
