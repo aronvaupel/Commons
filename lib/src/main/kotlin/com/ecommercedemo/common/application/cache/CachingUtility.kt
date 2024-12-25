@@ -2,12 +2,15 @@ package com.ecommercedemo.common.application.cache
 
 import com.ecommercedemo.common.application.exception.NullKeyInZSetException
 import com.ecommercedemo.common.application.validation.modification.ModificationType
+import com.ecommercedemo.common.controller.abstraction.request.SearchRequest
 import com.ecommercedemo.common.controller.abstraction.util.SearchParam
+import com.ecommercedemo.common.model.abstraction.BaseEntity
 import com.fasterxml.jackson.core.type.TypeReference
 import com.fasterxml.jackson.databind.ObjectMapper
 import mu.KotlinLogging
 import org.springframework.data.redis.core.StringRedisTemplate
 import org.springframework.stereotype.Service
+import java.nio.ByteBuffer
 import java.security.MessageDigest
 import java.util.*
 
@@ -15,10 +18,11 @@ import java.util.*
 class CachingUtility(
     private val redisTemplate: StringRedisTemplate,
 ) {
+    private val objectMapper = ObjectMapper()
     private val log = KotlinLogging.logger {}
 
-    fun save(redisKey: String, entry: String) {
-        redisTemplate.opsForValue().set(redisKey, ObjectMapper().writeValueAsString(entry))
+    fun save(redisKey: String, hashedValue: String?) {
+        redisTemplate.opsForValue().set(redisKey, ObjectMapper().writeValueAsString(hashedValue))
 
         redisTemplate.opsForZSet().add("ranking", redisKey, System.currentTimeMillis().toDouble())
     }
@@ -30,10 +34,9 @@ class CachingUtility(
 
     fun calculateMemoryUsageAndEvictIfNeeded(
         redisKey: String,
-        resultAsString: String,
         maxMemory: Long
     ): Triple<Long, Long, Long> {
-        val newEntryMemoryUsage = calculateMemoryUsageOfNewEntry(redisKey, resultAsString)
+        val newEntryMemoryUsage = calculateMemoryUsageOfNewEntry(redisKey)
         val currentMemoryUsage = redisTemplate.opsForValue().get("total-memory-usage")?.toLong() ?: 0L
 
         val excess = (currentMemoryUsage + newEntryMemoryUsage) - maxMemory
@@ -70,33 +73,69 @@ class CachingUtility(
     }
 
 
-    private fun calculateMemoryUsageOfNewEntry(key: String, value: String): Long {
-        val stringSize = (key.length + value.length).toLong()
+    private fun calculateMemoryUsageOfNewEntry(key: String): Long {
+        val hashValueSize = 64L
+        val stringSize = (key.length + hashValueSize)
         val zSetEntrySize = key.length + 8L
         return stringSize + zSetEntrySize
     }
 
-    fun generateSearchCacheKey(param: SearchParam): String {
-        return hash("${param.operator.name}:${param.searchValue}")
+    fun <T: BaseEntity>hashSerializedUuidList(result: List<T>): String {
+        val uuids = result.map { it.id }
+        val serializedData = serializeSearchResultToBytes(uuids)
+        return hash(serializedData)
     }
 
-    fun generateMethodCacheKey(methodName: String, argsAsString: String): String {
-        return hash("method:$methodName:$argsAsString")
+    private fun serializeSearchResultToBytes(uuids: List<UUID>): ByteArray {
+        return ByteBuffer.allocate(uuids.size * 16).apply {
+            uuids.forEach { uuid ->
+                putLong(uuid.mostSignificantBits)
+                putLong(uuid.leastSignificantBits)
+            }
+        }.array()
     }
 
-    fun generateMethodCacheKey(methodName: String, args: Array<Any?>): String {
-        val argsHash = args.joinToString(",") { it.toString() }
-            .toByteArray()
-            .let { MessageDigest.getInstance("SHA-256").digest(it) }
-            .joinToString("") { "%02x".format(it) }
-
-        return "method:$methodName:$argsHash"
+    fun deserializeSearchResultFromBytes(data: ByteArray): List<UUID> {
+        val byteBuffer = ByteBuffer.wrap(data)
+        val uuids = mutableListOf<UUID>()
+        while (byteBuffer.remaining() >= 16) {
+            val mostSigBits = byteBuffer.long
+            val leastSigBits = byteBuffer.long
+            uuids.add(UUID(mostSigBits, leastSigBits))
+        }
+        return uuids
     }
-    private fun hash(input: String): String {
-        return MessageDigest.getInstance("SHA-256").digest(input.toByteArray()).joinToString("") { "%02x".format(it) }
+
+    fun hashMethodResult(result: Any?): String {
+        val resultAsBytes = serializeMethodResultToBytes(result)
+        return hash(resultAsBytes)
     }
 
-    //Todo: consider moving to RestServiceTemplate
+    private fun serializeMethodResultToBytes(result: Any?): ByteArray {
+        return objectMapper.writeValueAsBytes(result)
+    }
+
+    fun <T> deserializeMethodResultFromBytes(data: ByteArray, returnTypeReference: TypeReference<T>): T {
+        return objectMapper.readValue(data, returnTypeReference)
+    }
+
+    fun hashSearchRequest(request: SearchRequest): String {
+        val requestBytes = ObjectMapper().writeValueAsBytes(request)
+        return hash(requestBytes)
+    }
+
+    fun hashArgs(args: List<Any?>): String {
+        val argsBytes = ObjectMapper().writeValueAsBytes(args)
+        return hash(argsBytes)
+    }
+
+    private fun hash(data: ByteArray): String {
+        val digest = MessageDigest.getInstance("SHA-256")
+        digest.update(data)
+        return digest.digest().joinToString("") { "%02x".format(it) }
+    }
+
+
     fun resultIntersection(cachedSearchSearchResultsOrNullList: List<Pair<SearchParam, List<UUID>>?>): List<UUID> {
         return cachedSearchSearchResultsOrNullList.filterNotNull().map { it.second }
             .reduceOrNull { acc, ids -> acc.intersect(ids.toSet()).toList() } ?: emptyList()
@@ -110,7 +149,6 @@ class CachingUtility(
             ModificationType.DELETE -> invalidateWhenDeleted(entityName, id)
         }
     }
-
 
     private fun invalidateWhenModified(entityName: String, modifiedFields: Set<String>) {
         modifiedFields.forEach { fieldName ->

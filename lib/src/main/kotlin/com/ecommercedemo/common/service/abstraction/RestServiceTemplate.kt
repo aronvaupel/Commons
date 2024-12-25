@@ -5,15 +5,15 @@ import com.ecommercedemo.common.application.cache.RedisService
 import com.ecommercedemo.common.application.exception.FailedToCreateException
 import com.ecommercedemo.common.application.exception.FailedToDeleteException
 import com.ecommercedemo.common.application.exception.FailedToUpdateException
+import com.ecommercedemo.common.application.exception.NotCachedException
 import com.ecommercedemo.common.application.kafka.EntityEventProducer
 import com.ecommercedemo.common.application.validation.modification.ModificationType
 import com.ecommercedemo.common.controller.abstraction.request.CreateRequest
 import com.ecommercedemo.common.controller.abstraction.request.SearchRequest
 import com.ecommercedemo.common.controller.abstraction.request.UpdateRequest
 import com.ecommercedemo.common.controller.abstraction.util.Retriever
-import com.ecommercedemo.common.controller.abstraction.util.SearchParam
 import com.ecommercedemo.common.model.abstraction.BaseEntity
-import com.ecommercedemo.common.persistence.abstraction.IEntityPersistenceAdapter
+import com.ecommercedemo.common.persistence.abstraction.PersistencePort
 import com.ecommercedemo.common.service.RestServiceFor
 import com.ecommercedemo.common.service.concretion.EntityChangeTracker
 import com.ecommercedemo.common.service.concretion.ReflectionService
@@ -35,7 +35,7 @@ abstract class RestServiceTemplate<T : BaseEntity>() : IRestService<T> {
         ?: throw IllegalStateException("No valid annotation found on class ${this::class.simpleName}")
 
     @Autowired
-    private lateinit var adapter: IEntityPersistenceAdapter<T>
+    private lateinit var adapter: PersistencePort<T>
 
     @Autowired
     private lateinit var cachingUtility: CachingUtility
@@ -171,76 +171,27 @@ abstract class RestServiceTemplate<T : BaseEntity>() : IRestService<T> {
     override fun getSingle(id: UUID): T = adapter.getById(id)
 
     //Todo: Consider optional pagination
-    override fun getMultiple(ids: List<UUID>): List<T> = adapter.getAllByIds(ids)
+    override fun getMultiple(ids: List<UUID>, page: Int, size: Int): Page<T> = adapter.getAllByIds(ids, page, size)
 
     override fun getAllPaged(page: Int, size: Int): Page<T> = adapter.getAllPaged(page, size)
 
-    override fun search(request: SearchRequest): List<T> {
+    override fun search(request: SearchRequest, page: Int, size: Int): Page<T> {
         val startTime = System.currentTimeMillis()
-
-        val cachedSearchResultsOrNullList =
-            redisService.getCachedSearchResultsOrNullList(request, entityClass.simpleName!!)
-
-        val result: List<T>
-        val cacheStatus: String
-
-        when {
-            cachedSearchResultsOrNullList.all { it != null } -> {
-                result = getMultiple(cachingUtility.resultIntersection(cachedSearchResultsOrNullList))
-                cacheStatus = "FULLY_CACHED"
-            }
-
-            cachedSearchResultsOrNullList.all { it == null } -> {
-                result = computeWholeSearch(request)
-                cacheStatus = "UNCACHED"
-            }
-
-            else -> {
-                result = computePartialSearch(cachedSearchResultsOrNullList, request)
-                cacheStatus = "PARTIALLY_CACHED"
-            }
+        val result = mutableListOf<T>()
+        try {
+            val cachedResult = redisService.getCachedSearchResultsOrThrow(request, entityClass.simpleName!!)
+            log.info("Search cached. Returning cached result.")
+            result.addAll(getMultiple(cachedResult, page, size).content)
+        } catch (e: NotCachedException) {
+            log.info("Search not cached. Executing search.")
+            result.addAll(retriever.executeSearch(request, entityClass, page, size))
         }
-
         val endTime = System.currentTimeMillis()
         log.info(
-            "Search completed in ${endTime - startTime}ms. Found ${result.size}. Cache status: $cacheStatus. Entity: ${entityClass.simpleName}."
+            "Search completed in ${endTime - startTime}ms. Found ${result.size}. Entity: ${entityClass.simpleName}."
         )
-
         return result
     }
-
-    private fun computePartialSearch(
-        cachedSearchResultsOrNullList: List<Pair<SearchParam, List<UUID>>?>,
-        request: SearchRequest
-    ): List<T> {
-        val intersectionOfCachedIds = cachingUtility.resultIntersection(cachedSearchResultsOrNullList)
-        val cacheBasedRetrieval = getMultiple(intersectionOfCachedIds)
-        val uncachedParams = request.params.filterNot { param ->
-            cachedSearchResultsOrNullList.any { it?.first == param }
-        }
-        val computedRetrieval = retriever.executeSearch(
-            SearchRequest(params = uncachedParams), entityClass
-        )
-        return computedRetrieval.intersect(cacheBasedRetrieval.toSet()).toList()
-    }
-
-    //Todo: below works, but needs two calls to the database and two calls to the cache
-//    private fun computePartialSearch(
-//        cachedSearchKeysList: List<Pair<SearchParam, List<UUID>>?>,
-//        request: SearchRequest
-//    ): List<T> {
-//        val uncachedParams = request.params.filterNot { param ->
-//            cachedSearchKeysList.any { it?.first == param }
-//        }
-//        retriever.executeSearch(
-//            SearchRequest(params = uncachedParams), entityClass
-//        )
-//        val updatedCachedSearchResultsOrNullList =
-//            redisService.getCachedSearchResultsOrNullList(request, entityClass.simpleName!!)
-//        return getMultiple(redisService.resultIntersection(updatedCachedSearchResultsOrNullList))
-//    }
-
-    private fun computeWholeSearch(request: SearchRequest): List<T> = retriever.executeSearch(request, entityClass)
 
     private fun saveAndEmitEvent(original: T?, updated: T, eventType: ModificationType): T {
         val savedEntity = adapter.save(updated)

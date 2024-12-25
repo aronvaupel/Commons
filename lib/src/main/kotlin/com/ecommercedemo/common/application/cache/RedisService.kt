@@ -5,7 +5,7 @@ import com.ecommercedemo.common.application.cache.values.Microservice
 import com.ecommercedemo.common.application.cache.values.TopicDetails
 import com.ecommercedemo.common.application.exception.NotCachedException
 import com.ecommercedemo.common.controller.abstraction.request.SearchRequest
-import com.ecommercedemo.common.controller.abstraction.util.SearchParam
+import com.ecommercedemo.common.model.abstraction.BaseEntity
 import com.fasterxml.jackson.core.type.TypeReference
 import com.fasterxml.jackson.databind.ObjectMapper
 import mu.KotlinLogging
@@ -86,66 +86,85 @@ open class RedisService(
         redisTemplate.opsForValue().set("kafka-topic-registry", objectMapper.writeValueAsString(kafkaTopicRegistry))
     }
 
-    //Todo: what about pseudo property paths?
-    fun getCachedSearchResultsOrNullList(
-        searchRequest: SearchRequest, entityName: String
-    ): List<Pair<SearchParam, List<UUID>>?> {
-        val redisKeyPrefix = "search:$entityName"
-        return searchRequest.params.map { param ->
-            val paramHash = cachingUtility.generateSearchCacheKey(param)
-            val redisKey = "$redisKeyPrefix:${param.path}:$paramHash"
-
-            val existsInRanking = redisTemplate.opsForZSet().rank("ranking", redisKey) != null
-            if (!existsInRanking) return@map null
-
-            redisTemplate.opsForZSet().add("ranking", redisKey, System.currentTimeMillis().toDouble())
-
-            val result =
-                (redisTemplate.opsForValue().get(redisKey) as String)
-                    .split(",")
-                    .map { UUID.fromString(it.trim()) }
-            Pair(param, result)
-        }
-    }
-
-    fun <T>getCachedMethodResultOrThrow(methodName: String, args: List<Any?>, returnTypeReference: TypeReference<T> ): Any? {
-        val redisKeyPrefix = "method:$methodName"
-        val argsAsString = objectMapper.writeValueAsString(args)
-        val hashedArgs = cachingUtility.generateMethodCacheKey(methodName, argsAsString)
-        val redisKey = "$redisKeyPrefix:$hashedArgs"
-
-        val existsInRanking = redisTemplate.opsForZSet().rank("ranking", redisKey) != null
-        if (!existsInRanking) throw NotCachedException()
-
-        redisTemplate.opsForZSet().add("ranking", redisKey, System.currentTimeMillis().toDouble())
-
-        return objectMapper.readValue(redisTemplate.opsForValue().get(redisKey), returnTypeReference)
-    }
-
-
-    fun cachePartialSearchResult(
-        entityName: String, searchParam: SearchParam, resultIds: List<UUID>
+    private fun <T> cacheResult(
+        keyPrefix: String,
+        hashedIdentifier: String,
+        result: T,
+        hashFunction: (T) -> String
     ) {
-        val redisKeyPrefix = "search:$entityName"
-        val hashedParam = cachingUtility.generateSearchCacheKey(searchParam)
-        val redisKey = "$redisKeyPrefix:${searchParam.path}:$hashedParam"
-        val entry = resultIds.joinToString(",")
+        val redisKey = "$keyPrefix:$hashedIdentifier"
+        val entry = hashFunction(result)
 
-        val memoryData = cachingUtility.calculateMemoryUsageAndEvictIfNeeded(redisKey, entry, maxMemory)
+        val memoryData = cachingUtility.calculateMemoryUsageAndEvictIfNeeded(redisKey, maxMemory)
         cachingUtility.save(redisKey, entry)
         cachingUtility.updateMemoryUsage(memoryData)
     }
 
-    fun cacheMethodResult(methodName: String, args: List<Any?>, result: Any?) {
-        val redisKeyPrefix = "method:$methodName"
-        val argsAsString = objectMapper.writeValueAsString(args)
-        val hashedArgs = cachingUtility.generateMethodCacheKey(methodName, argsAsString)
-        val redisKey = "$redisKeyPrefix:$hashedArgs"
-        val resultAsString = objectMapper.writeValueAsString(result)
-
-        val memoryData = cachingUtility.calculateMemoryUsageAndEvictIfNeeded(redisKey, resultAsString, maxMemory)
-        cachingUtility.save(redisKey, resultAsString)
-        cachingUtility.updateMemoryUsage(memoryData)
+    fun <T : BaseEntity> cacheSearchResult(
+        entityName: String,
+        request: SearchRequest,
+        searchResult: List<T>
+    ) {
+        cacheResult(
+            keyPrefix = "search:$entityName",
+            hashedIdentifier = cachingUtility.hashSearchRequest(request),
+            result = searchResult,
+            hashFunction = cachingUtility::hashSerializedUuidList
+        )
     }
+
+
+    fun cacheMethodResult(
+        methodName: String,
+        args: List<Any?>,
+        result: Any?
+    ) {
+        cacheResult(
+            keyPrefix = "method:$methodName",
+            hashedIdentifier = cachingUtility.hashArgs(args),
+            result = result,
+            hashFunction = cachingUtility::hashMethodResult
+        )
+    }
+
+    private fun <T> getCachedResultOrThrow(
+        keyPrefix: String,
+        hashedIdentifier: String,
+        deserializeFunction: (String) -> T
+    ): T {
+        val redisKey = "$keyPrefix:$hashedIdentifier"
+
+        if (redisTemplate.opsForZSet().rank("ranking", redisKey) != null) {
+            redisTemplate.opsForZSet().add("ranking", redisKey, System.currentTimeMillis().toDouble())
+            val cachedValue = redisTemplate.opsForValue().get(redisKey) ?: throw NotCachedException()
+            return deserializeFunction(cachedValue)
+        } else {
+            throw NotCachedException()
+        }
+    }
+
+    fun <T> getCachedMethodResultOrThrow(
+        methodName: String,
+        args: List<Any?>,
+        returnTypeReference: TypeReference<T>
+    ): T {
+        return getCachedResultOrThrow(
+            keyPrefix = "method:$methodName",
+            hashedIdentifier = cachingUtility.hashArgs(args),
+            deserializeFunction = { value -> objectMapper.readValue(value, returnTypeReference) }
+        )
+    }
+
+    fun getCachedSearchResultsOrThrow(
+        searchRequest: SearchRequest,
+        entityName: String
+    ): List<UUID> {
+        return getCachedResultOrThrow(
+            keyPrefix = "search:$entityName",
+            hashedIdentifier = cachingUtility.hashSearchRequest(searchRequest),
+            deserializeFunction = cachingUtility::bytesToUuidList
+        )
+    }
+
 
 }

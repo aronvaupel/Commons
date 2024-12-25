@@ -11,9 +11,9 @@ import java.util.*
 interface IRestService<T: BaseEntity> {
     fun update(request: UpdateRequest): T?
     fun getSingle(id: UUID): T
-    fun getMultiple(ids: List<UUID>): List<T>
+    fun getMultiple(ids: List<UUID>, page: Int, size: Int): Page<T>
     fun getAllPaged(page: Int, size: Int): Page<T>
-    fun search(request: SearchRequest): List<T>
+    fun search(request: SearchRequest, page: Int, size: Int): Page<T>
     fun create(request: CreateRequest): T?
     fun delete(id: UUID) : HttpStatus
 }

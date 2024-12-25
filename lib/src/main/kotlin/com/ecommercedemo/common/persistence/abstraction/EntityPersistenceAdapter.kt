@@ -10,7 +10,7 @@ import org.springframework.data.domain.PageRequest
 import org.springframework.data.jpa.repository.Lock
 import java.util.*
 
-abstract class EntityPersistenceAdapter<T : BaseEntity> : IEntityPersistenceAdapter<T> {
+abstract class EntityPersistenceAdapter<T : BaseEntity> : PersistencePort<T> {
 
     @Autowired
     private lateinit var repository: EntityRepository<T, UUID>
@@ -19,6 +19,7 @@ abstract class EntityPersistenceAdapter<T : BaseEntity> : IEntityPersistenceAdap
     private lateinit var entityManager: EntityManager
 
     val log = KotlinLogging.logger {}
+
     override fun save(entity: T): T {
         val result = repository.save(entity) as T
         log.info { "Entity saved: $result" }
@@ -47,10 +48,10 @@ abstract class EntityPersistenceAdapter<T : BaseEntity> : IEntityPersistenceAdap
         return repository.findById(id).orElseThrow { NoSuchElementException("Entity not found") }
     }
 
-    override fun getAllByIds(ids: List<UUID>): List<T> {
-        return repository.findAllById(ids) as List<T>
+    override fun getAllByIds(ids: List<UUID>, page: Int, size: Int): Page<T> {
+        val pageable = PageRequest.of(page, size)
+        return repository.findAllById(ids, pageable)
     }
-
 
     override fun getAllPaged(page: Int, size: Int): Page<T> {
         val pageable = PageRequest.of(page, size)

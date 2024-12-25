@@ -5,7 +5,7 @@ import com.ecommercedemo.common.application.exception.FailedToDeleteByEventExcep
 import com.ecommercedemo.common.application.exception.FailedToUpdateByEventException
 import com.ecommercedemo.common.application.kafka.EntityEvent
 import com.ecommercedemo.common.model.abstraction.BaseEntity
-import com.ecommercedemo.common.persistence.abstraction.IEntityPersistenceAdapter
+import com.ecommercedemo.common.persistence.abstraction.PersistencePort
 import com.ecommercedemo.common.service.EventServiceFor
 import com.ecommercedemo.common.service.concretion.ReflectionService
 import com.ecommercedemo.common.service.concretion.ServiceUtility
@@ -24,7 +24,7 @@ abstract class EventServiceTemplate<T : BaseEntity>() : IEventService<T> {
         ?: throw IllegalStateException("No valid annotation found on class ${this::class.simpleName}")
 
     @Autowired
-    private lateinit var adapter: IEntityPersistenceAdapter<T>
+    private lateinit var adapter: PersistencePort<T>
 
     @Autowired
     private lateinit var serviceUtility: ServiceUtility<T>

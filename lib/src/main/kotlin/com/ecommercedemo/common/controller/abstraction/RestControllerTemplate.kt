@@ -48,23 +48,27 @@ abstract class RestControllerTemplate<T : BaseEntity> {
 
     @GetMapping
     open fun getMultiple(
-        @RequestParam ids: List<UUID>
-    ): ResponseEntity<List<T>> {
-        return ResponseEntity.ok(service.getMultiple(ids))
+        @RequestParam ids: List<UUID>,
+        @RequestParam(defaultValue = "0") page: Int,
+        @RequestParam(defaultValue = "1000") size: Int,
+    ): ResponseEntity<Page<T>> {
+        return ResponseEntity.ok(service.getMultiple(ids, page, size))
     }
 
     @GetMapping("/all")
     open fun getAllPaged(
-        @RequestParam page: Int,
-        @RequestParam size: Int
+        @RequestParam(defaultValue = "0") page: Int,
+        @RequestParam(defaultValue = "1000") size: Int,
     ): ResponseEntity<Page<T>> {
         return ResponseEntity.ok(service.getAllPaged(page, size))
     }
 
     @GetMapping("/search")
     open fun search(
-        @RequestBody request: SearchRequest
-    ): ResponseEntity<List<T>> {
-        return ResponseEntity.ok(service.search(request))
+        @RequestBody request: SearchRequest,
+        @RequestParam(defaultValue = "0") page: Int,
+        @RequestParam(defaultValue = "1000") size: Int,
+    ): ResponseEntity<Page<T>> {
+        return ResponseEntity.ok(service.search(request, page, size))
     }
 }

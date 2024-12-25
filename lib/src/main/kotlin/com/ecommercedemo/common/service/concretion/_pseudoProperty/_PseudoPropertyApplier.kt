@@ -3,7 +3,7 @@ package com.ecommercedemo.common.service.concretion._pseudoProperty
 import com.ecommercedemo.common.application.kafka.EntityEventProducer
 import com.ecommercedemo.common.application.validation.modification.ModificationType
 import com.ecommercedemo.common.model.abstraction.AugmentableBaseEntity
-import com.ecommercedemo.common.persistence.abstraction.IEntityPersistenceAdapter
+import com.ecommercedemo.common.persistence.abstraction.PersistencePort
 import com.ecommercedemo.common.service.CachingEligible
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.google.common.util.concurrent.RateLimiter
@@ -137,14 +137,14 @@ open class _PseudoPropertyApplier(
     }
 
     @CachingEligible
-    private fun getAdapter(entityClass: Class<*>): IEntityPersistenceAdapter<AugmentableBaseEntity> {
+    private fun getAdapter(entityClass: Class<*>): PersistencePort<AugmentableBaseEntity> {
         val adapterName = "${entityClass.simpleName.replaceFirstChar { it.lowercase(Locale.getDefault()) }}PersistenceAdapter"
         val adapter = try {
             beanFactory.getBean(adapterName)
         } catch (e: NoSuchBeanDefinitionException) {
             throw IllegalArgumentException("Adapter for entity class '${entityClass.simpleName}' not found.", e)
         }
-        return adapter as? IEntityPersistenceAdapter<AugmentableBaseEntity>
+        return adapter as? PersistencePort<AugmentableBaseEntity>
             ?: throw IllegalArgumentException("Adapter for '${entityClass.simpleName}' is not a IEntityPersistenceAdapter.")
     }
 
