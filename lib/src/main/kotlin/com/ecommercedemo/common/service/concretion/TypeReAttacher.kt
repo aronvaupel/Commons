@@ -1,5 +1,6 @@
 package com.ecommercedemo.common.service.concretion
 
+import com.ecommercedemo.common.application.SpringContextProvider
 import com.fasterxml.jackson.core.type.TypeReference
 import com.fasterxml.jackson.databind.ObjectMapper
 import org.springframework.stereotype.Service
@@ -21,7 +22,7 @@ class TypeReAttacher(
             val typeReference = object : TypeReference<Any>() {
                 override fun getType() = kType.javaType
             }
-            ObjectMapper().convertValue(data[key], typeReference)
+            SpringContextProvider.applicationContext.getBean(ObjectMapper::class.java).convertValue(data[key], typeReference)
         }
         return typedData
     }
