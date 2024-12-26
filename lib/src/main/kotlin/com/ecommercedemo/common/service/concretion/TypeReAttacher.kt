@@ -5,6 +5,7 @@ import com.ecommercedemo.common.application.cache.RedisService
 import com.ecommercedemo.common.application.exception.NotCachedException
 import com.fasterxml.jackson.core.type.TypeReference
 import com.fasterxml.jackson.databind.ObjectMapper
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import kotlin.reflect.KClass
 import kotlin.reflect.KType
@@ -13,9 +14,9 @@ import kotlin.reflect.jvm.javaType
 
 @Service
 class TypeReAttacher {
-    private val redisService: RedisService by lazy {
-        SpringContextProvider.applicationContext.getBean(RedisService::class.java)
-    }
+    @Autowired
+    private lateinit var redisService: RedisService
+
     val log = mu.KotlinLogging.logger {}
     private fun extractFieldTypesMap(entityClass: KClass<*>): Map<String, KType> {
         log.info { "Uses extractFieldTypesMap" }
