@@ -10,11 +10,13 @@ import com.fasterxml.jackson.core.type.TypeReference
 import com.fasterxml.jackson.databind.ObjectMapper
 import mu.KotlinLogging
 import org.springframework.beans.factory.annotation.Value
+import org.springframework.context.annotation.DependsOn
 import org.springframework.data.redis.core.StringRedisTemplate
 import org.springframework.stereotype.Service
 import java.util.*
 
 @Service
+@DependsOn("objectMapper")
 open class RedisService(
     private val cachingUtility: CachingUtility,
     @Value("\${cache.memory.max-size}") private val maxMemory: Long,
