@@ -12,9 +12,10 @@ import kotlin.reflect.full.memberProperties
 import kotlin.reflect.jvm.javaType
 
 @Service
-class TypeReAttacher {
+class TypeReAttacher(
+    private val redisService: RedisService
+) {
     val log = mu.KotlinLogging.logger {}
-    private val redisService: RedisService = SpringContextProvider.applicationContext.getBean(RedisService::class.java)
     private fun extractFieldTypesMap(entityClass: KClass<*>): Map<String, KType> {
         log.info { "Uses extractFieldTypesMap" }
         val start = System.currentTimeMillis()
