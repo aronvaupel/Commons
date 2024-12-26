@@ -116,7 +116,9 @@ class CachingUtility(
     }
 
     fun hashArgs(args: List<Any?>): String {
+        println("Hashing args: $args")
         val argsBytes = ObjectMapper().writeValueAsBytes(args)
+        println("Args bytes: $argsBytes")
         return hash(argsBytes)
     }
 
