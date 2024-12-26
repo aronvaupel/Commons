@@ -7,11 +7,9 @@ import com.ecommercedemo.common.model.abstraction.BaseEntity
 import com.fasterxml.jackson.core.type.TypeReference
 import com.fasterxml.jackson.databind.ObjectMapper
 import mu.KotlinLogging
-import org.springframework.data.domain.Page
-import org.springframework.data.domain.PageImpl
-import org.springframework.data.domain.PageRequest
 import org.springframework.data.redis.core.StringRedisTemplate
 import org.springframework.stereotype.Service
+import java.nio.ByteBuffer
 import java.security.MessageDigest
 import java.util.*
 
@@ -24,7 +22,7 @@ class CachingUtility(
 
     fun save(redisKey: String, value: ByteArray) {
         redisTemplate.execute { connection ->
-            connection.stringCommands().set(redisKey.toByteArray(), value)
+            connection.commands().set(redisKey.toByteArray(), value)
         }
 
         redisTemplate.opsForZSet().add("ranking", redisKey, System.currentTimeMillis().toDouble())
@@ -83,57 +81,34 @@ class CachingUtility(
         return keySize + zSetEntrySize + valueSize
     }
 
-//    fun <T: BaseEntity>serializeSearchResultToBytes(result: List<T>): ByteArray {
-//        println("Serializing search result to bytes")
-//        val uuids = result.map { it.id }
-//        val final =  ByteBuffer.allocate(uuids.size * 16).apply {
-//            uuids.forEach { uuid ->
-//                putLong(uuid.mostSignificantBits)
-//                putLong(uuid.leastSignificantBits)
-//            }
-//        }.array()
-//        println("Serialized search result to bytes: $final")
-//        return final
-//    }
 
-    fun <T : BaseEntity> serializeSearchResultToBytes(result: Page<T>): ByteArray {
-        val serializablePage = SerializablePage(
-            content = result.content,
-            page= result.pageable.pageNumber,
-            size = result.pageable.pageSize,
-            totalElements = result.totalElements,
-        )
-
-        return objectMapper.writeValueAsBytes(serializablePage)
+    fun <T : BaseEntity> serializeSearchResultToBytes(result: List<T>): ByteArray {
+        println("Serializing search result to bytes")
+        val uuids = result.map { it.id }
+        val final = ByteBuffer.allocate(uuids.size * 16).apply {
+            uuids.forEach { uuid ->
+                putLong(uuid.mostSignificantBits)
+                putLong(uuid.leastSignificantBits)
+            }
+        }.array()
+        println("Serialized search result to bytes: $final")
+        return final
     }
 
-//    fun deserializeSearchResultFromBytes(data: ByteArray): List<UUID> {
-//        println("Deserializing search result from bytes")
-//        val byteBuffer = ByteBuffer.wrap(data)
-//        val uuids = mutableListOf<UUID>()
-//        while (byteBuffer.remaining() >= 16) {
-//            val mostSigBits = byteBuffer.long
-//            val leastSigBits = byteBuffer.long
-//            uuids.add(UUID(mostSigBits, leastSigBits))
-//        }
-//        println("Deserialized search result from bytes: $uuids")
-//        return uuids
-//    }
 
-    fun <T : BaseEntity> deserializeSearchResultFromBytes(data: ByteArray): Page<T> {
-        val serializablePage: SerializablePage<T> = objectMapper.readValue(
-            data,
-            object : TypeReference<SerializablePage<T>>() {}
-        )
-
-        val pageable = PageRequest.of(serializablePage.page, serializablePage.size)
-
-        return PageImpl(
-            serializablePage.content,
-            pageable,
-            serializablePage.totalElements
-        )
+    fun deserializeSearchResultFromBytes(data: ByteArray): List<UUID> {
+        println("Deserializing search result from bytes")
+        val byteBuffer = ByteBuffer.wrap(data)
+        val uuids = mutableListOf<UUID>()
+        while (byteBuffer.remaining() >= 16) {
+            val mostSigBits = byteBuffer.long
+            val leastSigBits = byteBuffer.long
+            uuids.add(UUID(mostSigBits, leastSigBits))
+        }
+        println("Deserialized search result from bytes: $uuids")
+        return uuids
     }
+
 
     fun hashSearchRequest(request: SearchRequest): String {
         val requestBytes = objectMapper.writeValueAsBytes(request)

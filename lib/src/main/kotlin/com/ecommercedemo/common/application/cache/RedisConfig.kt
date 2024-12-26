@@ -28,8 +28,8 @@ open class RedisConfig {
     open fun redisTemplate(connectionFactory: RedisConnectionFactory): RedisTemplate<String, ByteArray> {
         return RedisTemplate<String, ByteArray>().apply {
             this.connectionFactory = connectionFactory
-            this.keySerializer = RedisSerializer.string() // String keys
-            this.valueSerializer = RedisSerializer.byteArray() // ByteArray values
+            this.keySerializer = RedisSerializer.string()
+            this.valueSerializer = RedisSerializer.byteArray()
             afterPropertiesSet()
         }
     }

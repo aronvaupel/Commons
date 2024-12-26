@@ -10,9 +10,9 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import mu.KotlinLogging
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.DependsOn
-import org.springframework.data.domain.Page
 import org.springframework.data.redis.core.StringRedisTemplate
 import org.springframework.stereotype.Service
+import java.util.*
 
 @Service
 @DependsOn("objectMapper")
@@ -106,7 +106,7 @@ open class RedisService(
     fun <T : BaseEntity> cacheSearchResult(
         entityName: String,
         request: SearchRequest,
-        searchResult: Page<T>
+        searchResult: List<T>
     ) {
         cacheResult(
             keyPrefix = "search:$entityName",
@@ -119,8 +119,8 @@ open class RedisService(
     private fun <T> getCachedResultOrThrow(
         keyPrefix: String,
         hashedIdentifier: String,
-        deserializeFunction: (ByteArray) -> Page<T>
-    ): Page<T> {
+        deserializeFunction: (ByteArray) -> T
+    ): T {
         println("entered getCachedResultOrThrow")
         val redisKey = "$keyPrefix:$hashedIdentifier"
         println("Redis key: $redisKey")
@@ -137,10 +137,10 @@ open class RedisService(
         }
     }
 
-    fun<T: BaseEntity> getCachedSearchResultsOrThrow(
+    fun getCachedSearchResultsOrThrow(
         searchRequest: SearchRequest,
         entityName: String
-    ): Page<T> {
+    ): List<UUID> {
         return getCachedResultOrThrow(
             keyPrefix = "search:$entityName",
             hashedIdentifier = cachingUtility.hashSearchRequest(searchRequest),
