@@ -9,6 +9,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import mu.KotlinLogging
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.PageImpl
+import org.springframework.data.domain.PageRequest
 import org.springframework.data.redis.core.StringRedisTemplate
 import org.springframework.stereotype.Service
 import java.security.MessageDigest
@@ -99,7 +100,8 @@ class CachingUtility(
 
         val serializablePage = SerializablePage(
             content = result.content,
-            pageable = result.pageable,
+            page= result.pageable.pageNumber,
+            size = result.pageable.pageSize,
             totalElements = result.totalElements,
         )
 
@@ -127,9 +129,11 @@ class CachingUtility(
             object : TypeReference<SerializablePage<T>>() {}
         )
 
+        val pageable = PageRequest.of(serializablePage.page, serializablePage.size)
+
         return PageImpl(
             serializablePage.content,
-            serializablePage.pageable,
+            pageable,
             serializablePage.totalElements
         )
     }
