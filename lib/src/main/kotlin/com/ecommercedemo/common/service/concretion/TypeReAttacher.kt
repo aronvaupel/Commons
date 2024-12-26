@@ -21,22 +21,22 @@ class TypeReAttacher(
         }
     }
 
-        fun reAttachType(
-            data: Map<String, Any?>,
-            entityClassName: String,
-        ): Map<String, Any?> {
-            val entityClass = resolveEntityClass(entityClassName)
-            val typesForDataKeys = extractFieldTypesMap(entityClass).filterKeys { data.containsKey(it) }
+    fun reAttachType(
+        data: Map<String, Any?>,
+        entityClassName: String,
+    ): Map<String, Any?> {
+        val entityClass = resolveEntityClass(entityClassName)
+        val typesForDataKeys = extractFieldTypesMap(entityClass).filterKeys { data.containsKey(it) }
 
-            val typedData: Map<String, Any?> = typesForDataKeys.mapValues { (key, kType) ->
-                val typeReference = object : TypeReference<Any>() {
-                    override fun getType() = kType.javaType
-                }
-                SpringContextProvider.applicationContext.getBean(ObjectMapper::class.java)
-                    .convertValue(data[key], typeReference)
+        val typedData: Map<String, Any?> = typesForDataKeys.mapValues { (key, kType) ->
+            val typeReference = object : TypeReference<Any>() {
+                override fun getType() = kType.javaType
             }
-            return typedData
+            SpringContextProvider.applicationContext.getBean(ObjectMapper::class.java)
+                .convertValue(data[key], typeReference)
         }
+        return typedData
+    }
 
     private fun resolveEntityClass(entityClassName: String): KClass<*> {
         val entityManager = entityManagerFactory.createEntityManager()
@@ -51,4 +51,4 @@ class TypeReAttacher(
         }
     }
 
-    }
+}

@@ -7,13 +7,11 @@ import com.fasterxml.jackson.databind.DeserializationContext
 import com.fasterxml.jackson.databind.JsonDeserializer
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.node.ObjectNode
-import jakarta.persistence.EntityManagerFactory
 import java.util.*
 
 
 class EntityEventDeserializer(
     private val objectMapper: ObjectMapper,
-    private val entityManagerFactory: EntityManagerFactory,
     private val typeReAttacher: TypeReAttacher
 ) : JsonDeserializer<EntityEvent>() {
 

@@ -68,6 +68,7 @@ abstract class RestServiceTemplate<T : BaseEntity> : IRestService<T> {
 
     @Transactional
     override fun create(request: CreateRequest): T? {
+        log.info { "Creating new entity of type ${entityClass.simpleName}" }
         try {
             val typedRequestProperties = typeReAttacher.reAttachType(
                 data = request.properties,
