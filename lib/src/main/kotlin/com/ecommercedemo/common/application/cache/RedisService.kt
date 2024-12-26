@@ -20,10 +20,10 @@ open class RedisService(
     @Value("\${cache.memory.max-size}") private val maxMemory: Long,
     private val redisTemplate: StringRedisTemplate,
     @Value("\${spring.application.name}") private val serviceName: String,
-    private val objectMapper: ObjectMapper,
 ) {
 
     val log = KotlinLogging.logger {}
+    private val objectMapper = ObjectMapper()
 
     fun registerAsTopics(upstreamEntities: List<String>) {
         val kafkaRegistry = getKafkaRegistry()

@@ -127,35 +127,6 @@ class ReflectionService(
         }
     }
 
-    fun <T: BaseEntity>extractFieldTypesMap(entityClass: KClass<T>): Map<String, KType> {
-        log.info { "Uses extractFieldTypesMap" }
-        val start = System.currentTimeMillis()
-        return try {
-            val fromCache = redisService.getCachedMethodResultOrThrow(
-                "extractFieldTypesMap",
-                listOf(entityClass),
-                object : TypeReference<Map<String, KType>>() {}
-            )
-            log.info { "Got from cache" }
-            val end = System.currentTimeMillis()
-            log.info { "Time elapsed: ${end - start} ms" }
-            fromCache
-        } catch (e: NotCachedException) {
-            val computed = entityClass.memberProperties.associate { property ->
-                property.name to property.returnType
-            }
-            redisService.cacheMethodResult(
-                "extractFieldTypesMap",
-                listOf(entityClass),
-                computed
-            )
-            log.info { "Saved to cache" }
-            val end = System.currentTimeMillis()
-            log.info { "Time elapsed: ${end - start} ms" }
-            computed
-        }
-    }
-
     fun <T : BaseEntity> getConstructorParams(entityConstructor: KFunction<T>): List<KParameter> {
         log.info { "Uses getConstructorParams" }
         val start = System.currentTimeMillis()
