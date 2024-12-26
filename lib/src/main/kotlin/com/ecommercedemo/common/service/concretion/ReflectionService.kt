@@ -101,6 +101,7 @@ class ReflectionService(
 
     fun <T : BaseEntity> findConstructorWithArgs(clazz: KClass<T>): KFunction<T> {
         log.info { "Attempting to find constructor args" }
+        log.info { "Clazz is $clazz" }
         val start = System.currentTimeMillis()
         return try {
             val fromCache = redisService.getCachedMethodResultOrThrow(

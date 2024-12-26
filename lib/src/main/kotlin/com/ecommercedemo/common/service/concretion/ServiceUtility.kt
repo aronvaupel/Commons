@@ -51,8 +51,8 @@ class ServiceUtility<T : BaseEntity>(
             val remainingFields = data.filter {
                 !(it.key.startsWith("_")) && it.key !in instanceConstructorParams.keys.map { param -> param.name }
             }.map { it.key }
-            memberProperties?.filter { it.name in remainingFields }?.filterIsInstance<KMutableProperty<*>>()
-                ?.onEach { it.isAccessible = true }?.forEach { it.setter.call(this, data[it.name]) }
+            memberProperties.filter { it.name in remainingFields }.filterIsInstance<KMutableProperty<*>>()
+                .onEach { it.isAccessible = true }.forEach { it.setter.call(this, data[it.name]) }
         }
     }
 
