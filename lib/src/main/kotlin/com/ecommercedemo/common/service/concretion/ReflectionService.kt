@@ -100,7 +100,7 @@ class ReflectionService(
     }
 
     fun <T : BaseEntity> findConstructorWithArgs(clazz: KClass<T>): KFunction<T> {
-        log.info { "Saved to cache" }
+        log.info { "Attempting to find constructor args" }
         val start = System.currentTimeMillis()
         return try {
             val fromCache = redisService.getCachedMethodResultOrThrow(
@@ -113,6 +113,7 @@ class ReflectionService(
             log.info { "Time elapsed: ${end - start} ms" }
             fromCache
         } catch (e: NotCachedException) {
+            println("No cache found, start computing")
             val computed = clazz.constructors.find { it.parameters.isNotEmpty() }
                 ?: throw IllegalArgumentException("No suitable constructor found for ${clazz.simpleName}")
             redisService.cacheMethodResult(

@@ -38,7 +38,7 @@ class TypeReAttacher(
             SpringContextProvider.applicationContext.getBean(ObjectMapper::class.java)
                 .convertValue(data[key], typeReference)
         }
-        println("Reattached type: $typedData")
+        println("Reattached data: $typedData")
         return typedData
     }
 

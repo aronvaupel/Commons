@@ -38,6 +38,7 @@ class ServiceUtility<T : BaseEntity>(
             instanceClass.isSubclassOf(IPseudoProperty::class) ->
                 validateTypeDescriptor(data[IPseudoProperty::typeDescriptor.name])
         }
+        println("When-blocked passed")
 
         val entityConstructor = reflectionService.findConstructorWithArgs(instanceClass)
         println("entityConstructor: $entityConstructor")
