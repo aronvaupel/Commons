@@ -22,6 +22,7 @@ open class RedisService(
     @Value("\${cache.memory.max-size}") private val maxMemory: Long,
     private val redisTemplate: StringRedisTemplate,
     @Value("\${spring.application.name}") private val serviceName: String,
+    private val objectMapper: ObjectMapper
 ) {
 
     val log = KotlinLogging.logger {}
@@ -79,13 +80,13 @@ open class RedisService(
     }
 
     fun getKafkaRegistry(): KafkaTopicRegistry {
-        return ObjectMapper().readValue(
+        return objectMapper.readValue(
             redisTemplate.opsForValue().get("kafka-topic-registry") ?: "{}", KafkaTopicRegistry::class.java
         )
     }
 
     private fun saveKafkaRegistry(kafkaTopicRegistry: KafkaTopicRegistry) {
-        redisTemplate.opsForValue().set("kafka-topic-registry", ObjectMapper().writeValueAsString(kafkaTopicRegistry))
+        redisTemplate.opsForValue().set("kafka-topic-registry", objectMapper.writeValueAsString(kafkaTopicRegistry))
     }
 
     private fun <T> cacheResult(
