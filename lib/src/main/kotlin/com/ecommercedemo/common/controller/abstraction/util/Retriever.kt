@@ -29,8 +29,6 @@ class Retriever(
         val criteriaQuery = criteriaBuilder.createQuery(Tuple::class.java)
         val root = criteriaQuery.from(entity.java)
         val pageable = PageRequest.of(page, size)
-        log.info("Pageable info: page = {}, size = {}", pageable.pageNumber, pageable.pageSize)
-
 
         val predicates = searchRequest.params.map { param ->
             val resolvedPathInfo = pathResolver.resolvePath(param, root)

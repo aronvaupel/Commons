@@ -4,6 +4,7 @@ import com.ecommercedemo.common.model.abstraction.BaseEntity
 import com.ecommercedemo.common.persistence.PersistenceAdapterFor
 import jakarta.persistence.EntityManager
 import jakarta.persistence.LockModeType
+import jakarta.persistence.Tuple
 import mu.KotlinLogging
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.data.domain.Page
@@ -57,21 +58,31 @@ abstract class EntityPersistenceAdapter<T : BaseEntity> : PersistencePort<T> {
 
     override fun getAllByIds(ids: List<UUID>, page: Int , size: Int): Page<T> {
         val criteriaBuilder = entityManager.criteriaBuilder
-        val criteriaQuery = criteriaBuilder.createQuery(entityClass.java)
+        val criteriaQuery = criteriaBuilder.createQuery(Tuple::class.java)
         val root = criteriaQuery.from(entityClass.java)
+        val pageable = PageRequest.of(page, size)
 
-        criteriaQuery.select(root).where(root.get<UUID>("id").`in`(ids))
 
-        val query = entityManager.createQuery(criteriaQuery)
-        query.firstResult = page * size
-        query.maxResults = size
-        val resultList = query.resultList
+        val entityAlias = "entity"
+        val countAlias = "totalCount"
 
-        val countQuery = criteriaBuilder.createQuery(Long::class.java)
-        countQuery.select(criteriaBuilder.count(root)).where(root.get<UUID>("id").`in`(ids))
-        val totalCount = entityManager.createQuery(countQuery).singleResult
+        criteriaQuery.multiselect(
+            root.alias(entityAlias),
+            criteriaBuilder.count(root).alias(countAlias)
+        )
+        criteriaQuery.groupBy(root.get<UUID>("id"))
+        criteriaQuery.where(root.get<UUID>("id").`in`(ids))
 
-        return PageImpl(resultList, PageRequest.of(page, size), totalCount)
+        val resultList = entityManager.createQuery(criteriaQuery)
+            .setFirstResult(pageable.offset.toInt())
+            .setMaxResults(pageable.pageSize)
+            .resultList
+
+
+        val entities = resultList.map { it.get("entity", entityClass.java) }
+        val totalCount = resultList.firstOrNull()?.get("totalCount", Long::class.java) ?: 0L
+
+        return PageImpl(entities, pageable, totalCount)
     }
 
     override fun getAllPaged(page: Int, size: Int): Page<T> {
