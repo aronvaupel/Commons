@@ -106,6 +106,7 @@ class CachingUtility(
     }
 
     fun <T> deserializeMethodResultFromBytes(data: ByteArray, returnTypeReference: TypeReference<T>): T {
+        println("Deserializing method result from bytes")
         return objectMapper.readValue(data, returnTypeReference)
     }
 

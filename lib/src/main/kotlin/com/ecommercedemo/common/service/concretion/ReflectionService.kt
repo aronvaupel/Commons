@@ -104,6 +104,7 @@ class ReflectionService(
         log.info { "Clazz is $clazz" }
         val start = System.currentTimeMillis()
         return try {
+            println("Attempting to retrieve from cache")
             val fromCache = redisService.getCachedMethodResultOrThrow(
                 "findConstructorWithArgs",
                 listOf(clazz),

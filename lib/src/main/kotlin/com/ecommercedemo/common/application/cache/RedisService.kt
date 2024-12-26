@@ -135,10 +135,13 @@ open class RedisService(
         hashedIdentifier: String,
         deserializeFunction: (ByteArray) -> T
     ): T {
+        println("entered getCachedResultOrThrow")
         val redisKey = "$keyPrefix:$hashedIdentifier"
+        println("Redis key: $redisKey")
 
         if (redisTemplate.opsForZSet().rank("ranking", redisKey) != null) {
             redisTemplate.opsForZSet().add("ranking", redisKey, System.currentTimeMillis().toDouble())
+            println("added to ranking")
             val cachedValue = redisTemplate.execute { connection ->
                 connection.stringCommands().get(redisKey.toByteArray())
             } ?: throw NotCachedException()
@@ -153,10 +156,13 @@ open class RedisService(
         args: List<Any?>,
         returnTypeReference: TypeReference<T>
     ): T {
+        println("Entered getCachedMethodResultOrThrow")
         return getCachedResultOrThrow(
             keyPrefix = "method:$methodName",
             hashedIdentifier = cachingUtility.hashArgs(args),
-            deserializeFunction = { data -> cachingUtility.deserializeMethodResultFromBytes(data, returnTypeReference) }
+            deserializeFunction = { data ->
+                cachingUtility.deserializeMethodResultFromBytes(data, returnTypeReference)
+            }
         )
     }
 
