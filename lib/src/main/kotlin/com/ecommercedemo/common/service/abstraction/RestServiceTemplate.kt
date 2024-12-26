@@ -187,6 +187,7 @@ abstract class RestServiceTemplate<T : BaseEntity> : IRestService<T> {
         } catch (e: NotCachedException) {
             log.info("Search not cached. Executing search.")
             val paginated = retriever.executeSearch(request, entityClass, page, size)
+            redisService.cacheSearchResult(entityClass.simpleName!!, request, paginated.content)
             val endTime = System.currentTimeMillis()
             logResult(endTime, startTime, paginated)
             paginated
