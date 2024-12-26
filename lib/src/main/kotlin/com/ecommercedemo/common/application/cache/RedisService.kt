@@ -95,6 +95,7 @@ open class RedisService(
         result: T,
         serializationMethod: (T) -> ByteArray
     ) {
+        println("entered cacheResult")
         val redisKey = "$keyPrefix:$hashedIdentifier"
         val entry = serializationMethod(result)
 
@@ -122,6 +123,7 @@ open class RedisService(
         args: List<Any?>,
         result: Any?
     ) {
+        println("entered cacheMethodResult")
         cacheResult(
             keyPrefix = "method:$methodName",
             hashedIdentifier = cachingUtility.hashArgs(args),
