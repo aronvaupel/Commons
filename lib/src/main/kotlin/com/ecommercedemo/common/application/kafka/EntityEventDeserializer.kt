@@ -45,12 +45,14 @@ class EntityEventDeserializer(
             throw IllegalArgumentException("Failed to deserialize 'properties' for entity class: _$entityClassName", e)
         }
 
-        return EntityEvent(
+        val result =  EntityEvent(
             entityClassName = entityClassName,
             id = id,
             type = type,
             properties = properties
         )
+        println("Deserialized entity event: $result")
+        return result
     }
 
 }
