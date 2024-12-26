@@ -127,7 +127,7 @@ class ReflectionService(
         }
     }
 
-    fun extractFieldTypesMap(entityClass: KClass<*>): Map<String, KType> {
+    fun <T: BaseEntity>extractFieldTypesMap(entityClass: KClass<T>): Map<String, KType> {
         log.info { "Uses extractFieldTypesMap" }
         val start = System.currentTimeMillis()
         return try {
