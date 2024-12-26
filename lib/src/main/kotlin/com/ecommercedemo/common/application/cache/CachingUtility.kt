@@ -7,9 +7,10 @@ import com.ecommercedemo.common.model.abstraction.BaseEntity
 import com.fasterxml.jackson.core.type.TypeReference
 import com.fasterxml.jackson.databind.ObjectMapper
 import mu.KotlinLogging
+import org.springframework.data.domain.Page
+import org.springframework.data.domain.PageImpl
 import org.springframework.data.redis.core.StringRedisTemplate
 import org.springframework.stereotype.Service
-import java.nio.ByteBuffer
 import java.security.MessageDigest
 import java.util.*
 
@@ -17,7 +18,6 @@ import java.util.*
 class CachingUtility(
     private val redisTemplate: StringRedisTemplate,
 ) {
-    private val objectMapper = ObjectMapper()
     private val log = KotlinLogging.logger {}
 
     fun save(redisKey: String, value: ByteArray) {
@@ -35,9 +35,10 @@ class CachingUtility(
 
     fun calculateMemoryUsageAndEvictIfNeeded(
         redisKey: String,
+        data: ByteArray,
         maxMemory: Long
     ): Triple<Long, Long, Long> {
-        val newEntryMemoryUsage = calculateMemoryUsageOfNewEntry(redisKey)
+        val newEntryMemoryUsage = calculateMemoryUsageOfNewEntry(redisKey, data)
         val currentMemoryUsage = redisTemplate.opsForValue().get("total-memory-usage")?.toLong() ?: 0L
 
         val excess = (currentMemoryUsage + newEntryMemoryUsage) - maxMemory
@@ -73,60 +74,54 @@ class CachingUtility(
         return memoryFreed
     }
 
-    //Fixme: no longer accurate
-    private fun calculateMemoryUsageOfNewEntry(key: String): Long {
-        val hashValueSize = 64L
-        val stringSize = (key.length + hashValueSize)
+    private fun calculateMemoryUsageOfNewEntry(key: String, data: ByteArray): Long {
+        val keySize = key.length.toLong()
+        val valueSize = data.size.toLong()
         val zSetEntrySize = key.length + 8L
-        return stringSize + zSetEntrySize
+        return keySize + zSetEntrySize + valueSize
     }
 
-    fun <T: BaseEntity>serializeSearchResultToBytes(result: List<T>): ByteArray {
-        println("Serializing search result to bytes")
-        val uuids = result.map { it.id }
-        val final =  ByteBuffer.allocate(uuids.size * 16).apply {
-            uuids.forEach { uuid ->
-                putLong(uuid.mostSignificantBits)
-                putLong(uuid.leastSignificantBits)
-            }
-        }.array()
-        println("Serialized search result to bytes: $final")
+//    fun <T: BaseEntity>serializeSearchResultToBytes(result: List<T>): ByteArray {
+//        println("Serializing search result to bytes")
+//        val uuids = result.map { it.id }
+//        val final =  ByteBuffer.allocate(uuids.size * 16).apply {
+//            uuids.forEach { uuid ->
+//                putLong(uuid.mostSignificantBits)
+//                putLong(uuid.leastSignificantBits)
+//            }
+//        }.array()
+//        println("Serialized search result to bytes: $final")
+//        return final
+//    }
+
+    fun <T : BaseEntity> serializeSearchResultToBytes(result: Page<T>): ByteArray {
+        val objectMapper = ObjectMapper()
+        val final = objectMapper.writeValueAsBytes(result)
         return final
     }
 
-    fun deserializeSearchResultFromBytes(data: ByteArray): List<UUID> {
-        println("Deserializing search result from bytes")
-        val byteBuffer = ByteBuffer.wrap(data)
-        val uuids = mutableListOf<UUID>()
-        while (byteBuffer.remaining() >= 16) {
-            val mostSigBits = byteBuffer.long
-            val leastSigBits = byteBuffer.long
-            uuids.add(UUID(mostSigBits, leastSigBits))
-        }
-        println("Deserialized search result from bytes: $uuids")
-        return uuids
-    }
+//    fun deserializeSearchResultFromBytes(data: ByteArray): List<UUID> {
+//        println("Deserializing search result from bytes")
+//        val byteBuffer = ByteBuffer.wrap(data)
+//        val uuids = mutableListOf<UUID>()
+//        while (byteBuffer.remaining() >= 16) {
+//            val mostSigBits = byteBuffer.long
+//            val leastSigBits = byteBuffer.long
+//            uuids.add(UUID(mostSigBits, leastSigBits))
+//        }
+//        println("Deserialized search result from bytes: $uuids")
+//        return uuids
+//    }
 
-    fun serializeMethodResultToBytes(result: Any?): ByteArray {
-        println("Serializing method result to bytes")
-        return objectMapper.writeValueAsBytes(result)
-    }
-
-    fun <T> deserializeMethodResultFromBytes(data: ByteArray, returnTypeReference: TypeReference<T>): T {
-        println("Deserializing method result from bytes")
-        return objectMapper.readValue(data, returnTypeReference)
+    fun <T : BaseEntity> deserializeSearchResultFromBytes(data: ByteArray): Page<T> {
+        val objectMapper = ObjectMapper()
+        val result = objectMapper.readValue(data, object : TypeReference<PageImpl<T>>() {})
+        return result
     }
 
     fun hashSearchRequest(request: SearchRequest): String {
         val requestBytes = ObjectMapper().writeValueAsBytes(request)
         return hash(requestBytes)
-    }
-
-    fun hashArgs(args: List<Any?>): String {
-        println("Hashing args: $args")
-        val argsBytes = ObjectMapper().writeValueAsBytes(args)
-        println("Args bytes: $argsBytes")
-        return hash(argsBytes)
     }
 
     private fun hash(data: ByteArray): String {

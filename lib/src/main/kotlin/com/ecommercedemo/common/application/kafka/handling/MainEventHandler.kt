@@ -8,7 +8,6 @@ import com.ecommercedemo.common.application.kafka.handling.abstraction.IEventTyp
 import com.ecommercedemo.common.application.kafka.handling.abstraction.IUpdateHandler
 import com.ecommercedemo.common.application.validation.modification.ModificationType
 import com.ecommercedemo.common.model.abstraction.BaseEntity
-import com.ecommercedemo.common.service.CachingEligible
 import mu.KotlinLogging
 import org.springframework.context.ApplicationContext
 import org.springframework.stereotype.Service
@@ -41,7 +40,6 @@ class MainEventHandler<T: BaseEntity>(
         return result
     }
 
-    @CachingEligible
     private fun <P : IEventTypeHandler<T>> getEntitySpecificUseCaseByEventType(
         processorType: Class<P>,
         entityClassName: String

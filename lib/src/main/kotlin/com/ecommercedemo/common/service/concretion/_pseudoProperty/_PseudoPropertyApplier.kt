@@ -4,7 +4,6 @@ import com.ecommercedemo.common.application.kafka.EntityEventProducer
 import com.ecommercedemo.common.application.validation.modification.ModificationType
 import com.ecommercedemo.common.model.abstraction.AugmentableBaseEntity
 import com.ecommercedemo.common.persistence.abstraction.PersistencePort
-import com.ecommercedemo.common.service.CachingEligible
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.google.common.util.concurrent.RateLimiter
 import jakarta.transaction.Transactional
@@ -136,7 +135,6 @@ open class _PseudoPropertyApplier(
         } while (pagedEntities.hasNext())
     }
 
-    @CachingEligible
     private fun getAdapter(entityClass: Class<*>): PersistencePort<AugmentableBaseEntity> {
         val adapterName = "${entityClass.simpleName.replaceFirstChar { it.lowercase(Locale.getDefault()) }}PersistenceAdapter"
         val adapter = try {

@@ -6,19 +6,18 @@ import com.ecommercedemo.common.application.cache.values.TopicDetails
 import com.ecommercedemo.common.application.exception.NotCachedException
 import com.ecommercedemo.common.controller.abstraction.request.SearchRequest
 import com.ecommercedemo.common.model.abstraction.BaseEntity
-import com.fasterxml.jackson.core.type.TypeReference
 import com.fasterxml.jackson.databind.ObjectMapper
 import mu.KotlinLogging
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.DependsOn
+import org.springframework.data.domain.Page
 import org.springframework.data.redis.core.StringRedisTemplate
 import org.springframework.stereotype.Service
-import java.util.*
 
 @Service
 @DependsOn("objectMapper")
 open class RedisService(
-    private val cachingUtility: CachingUtility,
+    val cachingUtility: CachingUtility,
     @Value("\${cache.memory.max-size}") private val maxMemory: Long,
     private val redisTemplate: StringRedisTemplate,
     @Value("\${spring.application.name}") private val serviceName: String,
@@ -99,7 +98,7 @@ open class RedisService(
         val redisKey = "$keyPrefix:$hashedIdentifier"
         val entry = serializationMethod(result)
 
-        val memoryData = cachingUtility.calculateMemoryUsageAndEvictIfNeeded(redisKey, maxMemory)
+        val memoryData = cachingUtility.calculateMemoryUsageAndEvictIfNeeded(redisKey, entry, maxMemory)
         cachingUtility.save(redisKey, entry)
         cachingUtility.updateMemoryUsage(memoryData)
     }
@@ -107,7 +106,7 @@ open class RedisService(
     fun <T : BaseEntity> cacheSearchResult(
         entityName: String,
         request: SearchRequest,
-        searchResult: List<T>
+        searchResult: Page<T>
     ) {
         cacheResult(
             keyPrefix = "search:$entityName",
@@ -117,26 +116,11 @@ open class RedisService(
         )
     }
 
-
-    fun cacheMethodResult(
-        methodName: String,
-        args: List<Any?>,
-        result: Any?
-    ) {
-        println("entered cacheMethodResult")
-        cacheResult(
-            keyPrefix = "method:$methodName",
-            hashedIdentifier = cachingUtility.hashArgs(args),
-            result = result,
-            serializationMethod = cachingUtility::serializeMethodResultToBytes
-        )
-    }
-
     private fun <T> getCachedResultOrThrow(
         keyPrefix: String,
         hashedIdentifier: String,
-        deserializeFunction: (ByteArray) -> T
-    ): T {
+        deserializeFunction: (ByteArray) -> Page<T>
+    ): Page<T> {
         println("entered getCachedResultOrThrow")
         val redisKey = "$keyPrefix:$hashedIdentifier"
         println("Redis key: $redisKey")
@@ -153,25 +137,10 @@ open class RedisService(
         }
     }
 
-    fun <T> getCachedMethodResultOrThrow(
-        methodName: String,
-        args: List<Any?>,
-        returnTypeReference: TypeReference<T>
-    ): T {
-        println("Entered getCachedMethodResultOrThrow")
-        return getCachedResultOrThrow(
-            keyPrefix = "method:$methodName",
-            hashedIdentifier = cachingUtility.hashArgs(args),
-            deserializeFunction = { data ->
-                cachingUtility.deserializeMethodResultFromBytes(data, returnTypeReference)
-            }
-        )
-    }
-
-    fun getCachedSearchResultsOrThrow(
+    fun<T: BaseEntity> getCachedSearchResultsOrThrow(
         searchRequest: SearchRequest,
         entityName: String
-    ): List<UUID> {
+    ): Page<T> {
         return getCachedResultOrThrow(
             keyPrefix = "search:$entityName",
             hashedIdentifier = cachingUtility.hashSearchRequest(searchRequest),

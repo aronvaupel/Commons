@@ -172,7 +172,6 @@ abstract class RestServiceTemplate<T : BaseEntity> : IRestService<T> {
 
     override fun getSingle(id: UUID): T = adapter.getById(id)
 
-    //Todo: Consider optional pagination
     override fun getMultiple(ids: List<UUID>, page: Int, size: Int): Page<T> = adapter.getAllByIds(ids, page, size)
 
     override fun getAllPaged(page: Int, size: Int): Page<T> = adapter.getAllPaged(page, size)
@@ -180,16 +179,15 @@ abstract class RestServiceTemplate<T : BaseEntity> : IRestService<T> {
     override fun search(request: SearchRequest, page: Int, size: Int): Page<T> {
         val startTime = System.currentTimeMillis()
         return try {
-            val cachedResult = redisService.getCachedSearchResultsOrThrow(request, entityClass.simpleName!!)
+            val result: Page<T> = redisService.getCachedSearchResultsOrThrow(request, entityClass.simpleName!!)
             log.info("Search cached. Returning cached result.")
-            val paginated = getMultiple(cachedResult, page, size)
             val endTime = System.currentTimeMillis()
-            logResult(endTime, startTime, paginated)
-            paginated
+            logResult(endTime, startTime, result)
+            result
         } catch (e: NotCachedException) {
             log.info("Search not cached. Executing search.")
             val paginated = retriever.executeSearch(request, entityClass, page, size)
-            redisService.cacheSearchResult(entityClass.simpleName!!, request, paginated.content)
+            redisService.cacheSearchResult(entityClass.simpleName!!, request, paginated)
             val endTime = System.currentTimeMillis()
             logResult(endTime, startTime, paginated)
             paginated
@@ -213,6 +211,5 @@ abstract class RestServiceTemplate<T : BaseEntity> : IRestService<T> {
         eventProducer.emit(entityClass.java.simpleName, savedEntity.id, eventType, changes)
         return savedEntity
     }
-
 
 }

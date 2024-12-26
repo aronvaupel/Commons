@@ -6,7 +6,6 @@ import com.ecommercedemo.common.model.abstraction.AugmentableBaseEntity
 import com.ecommercedemo.common.model.abstraction.BaseEntity
 import com.ecommercedemo.common.model.abstraction.IPseudoProperty
 import com.ecommercedemo.common.persistence.concretion._pseudoProperty._PseudoPropertyRepository
-import com.ecommercedemo.common.service.CachingEligible
 import org.springframework.stereotype.Service
 import kotlin.reflect.KClass
 import kotlin.reflect.KFunction
@@ -56,7 +55,6 @@ class ServiceUtility<T : BaseEntity>(
         }
     }
 
-    @CachingEligible
     private fun createConstructorParams(
         entityConstructor: KFunction<T>,
         data: Map<String, Any?>
@@ -139,13 +137,11 @@ class ServiceUtility<T : BaseEntity>(
     }
 
 
-    @CachingEligible
     private fun validateTypeDescriptor(value: Any?) {
         if (value == null) throw IllegalArgumentException("TypeDescriptor must be provided")
         if (value !is TypeDescriptor) throw IllegalArgumentException("TypeDescriptor must be a TypeDescriptor")
     }
 
-    @CachingEligible
     private fun validatePseudoProperties(
         entity: KClass<out AugmentableBaseEntity>, data: Map<String, Any?>, isUpdate: Boolean = false
     ) {
@@ -234,7 +230,6 @@ class ServiceUtility<T : BaseEntity>(
         else -> false
     }
 
-    @CachingEligible
     private fun getValidPseudoProperties(entityClass: KClass<out AugmentableBaseEntity>): List<IPseudoProperty> {
         return _pseudoPropertyRepository.findAllByEntitySimpleName(entityClass.simpleName!!)
     }

@@ -1,7 +1,6 @@
 package com.ecommercedemo.common.application.validation.type
 
 import com.ecommercedemo.common.controller.abstraction.util.*
-import com.ecommercedemo.common.service.CachingEligible
 import mu.KotlinLogging
 import java.math.BigDecimal
 import java.math.BigInteger
@@ -315,7 +314,6 @@ enum class ValueType(
     ANY(TypeCategory.GENERIC, Any::class.java),
     VOID(TypeCategory.GENERIC, Void::class.java);
 
-    @CachingEligible
     open fun validate(value: Any?, descriptor: TypeDescriptor): Boolean {
         if (descriptor.type != this) {
             throw IllegalArgumentException("Descriptor type mismatch. Expected: $this, Found: ${descriptor.type}")
@@ -336,7 +334,6 @@ enum class ValueType(
     }
 
     companion object {
-        @CachingEligible
         fun validateValueAgainstDescriptor(
             descriptor: TypeDescriptor,
             value: Any?,
@@ -418,7 +415,6 @@ enum class ValueType(
         }
     }
 
-    @CachingEligible
     fun validateMap(value: Any?, descriptor: TypeDescriptor.MapDescriptor, expectedMapType: Class<*>): Boolean {
         if (value !is Map<*, *>) return false
         if (!expectedMapType.isInstance(value)) {
@@ -438,7 +434,6 @@ enum class ValueType(
         }
     }
 
-    @CachingEligible
     fun validateCollection(value: Any?, descriptor: TypeDescriptor.CollectionDescriptor): Boolean {
         if (value !is Collection<*>) return false
 
@@ -455,7 +450,6 @@ enum class ValueType(
         }
     }
 
-    @CachingEligible
     fun validateComplexObject(value: Any?, descriptor: TypeDescriptor.ComplexObjectDescriptor): Boolean {
         if (value !is Map<*, *>) {
             throw IllegalArgumentException("Complex object value must be a Map.")
@@ -470,7 +464,6 @@ enum class ValueType(
         }
     }
 
-    @CachingEligible
     fun validateNumber(
         value: Any?,
         parseFunction: (String) -> Any,
@@ -489,7 +482,6 @@ enum class ValueType(
         }
     }
 
-    @CachingEligible
     fun validateTime(value: Any?, descriptor: TypeDescriptor.TimeDescriptor): Boolean {
         val log = KotlinLogging.logger {}
         if (value !is String) {
@@ -516,7 +508,6 @@ enum class ValueType(
         }
     }
 
-    @CachingEligible
     fun validateBool(value: Any?): Boolean {
         return when (value) {
             is Boolean -> true
@@ -525,7 +516,6 @@ enum class ValueType(
         }
     }
 
-    @CachingEligible
     private fun isNullable(value: Any?, descriptor: TypeDescriptor): Boolean {
         return if (value == null) {
             when (descriptor) {
