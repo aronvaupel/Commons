@@ -9,7 +9,6 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.node.ObjectNode
 import jakarta.persistence.EntityManagerFactory
 import java.util.*
-import kotlin.reflect.KClass
 
 
 class EntityEventDeserializer(
@@ -38,15 +37,12 @@ class EntityEventDeserializer(
             throw IllegalArgumentException("Properties' must be a JSON object")
         }
 
-        val entityClass = resolveEntityClass(entityClassName)
-
-
         val properties: Map<String, Any?> = try {
             val rawData: Map<String, Any?> = objectMapper.convertValue(
                 propertiesNode,
                 objectMapper.typeFactory.constructMapType(Map::class.java, String::class.java, Any::class.java)
             )
-            typeReAttacher.reAttachType(rawData, entityClass)
+            typeReAttacher.reAttachType(rawData, entityClassName)
         } catch (e: Exception) {
             throw IllegalArgumentException("Failed to deserialize 'properties' for entity class: _$entityClassName", e)
         }
@@ -57,20 +53,6 @@ class EntityEventDeserializer(
             type = type,
             properties = properties
         )
-    }
-
-    private fun resolveEntityClass(entityClassName: String): KClass<*> {
-        val prefixedClassName = "_$entityClassName"
-        val entityManager = entityManagerFactory.createEntityManager()
-        try {
-            val entityType = entityManager.metamodel.entities.find {
-                it.javaType.simpleName == prefixedClassName
-            } ?: throw IllegalArgumentException("Entity class not found for name: $prefixedClassName")
-
-            return entityType.javaType.kotlin
-        } catch (e: ClassNotFoundException) {
-            throw IllegalArgumentException("Entity class not found for name: $prefixedClassName", e)
-        }
     }
 
 }

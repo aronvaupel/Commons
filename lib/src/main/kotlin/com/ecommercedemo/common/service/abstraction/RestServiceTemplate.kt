@@ -71,7 +71,7 @@ abstract class RestServiceTemplate<T : BaseEntity> : IRestService<T> {
         try {
             val typedRequestProperties = typeReAttacher.reAttachType(
                 data = request.properties,
-                entityClass = entityClass
+                entityClassName = entityClass.simpleName!!
             )
 
             val newInstance = serviceUtility.createNewInstance(
@@ -108,7 +108,7 @@ abstract class RestServiceTemplate<T : BaseEntity> : IRestService<T> {
             entityManager.detach(original)
             val typedRequestProperties = typeReAttacher.reAttachType(
                 data = request.properties,
-                entityClass = entityClass
+                entityClassName = entityClass.simpleName!!
             )
             if (original::class != entityClass) {
                 throw IllegalArgumentException(
