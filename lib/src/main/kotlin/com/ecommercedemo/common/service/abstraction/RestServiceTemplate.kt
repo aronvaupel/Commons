@@ -70,11 +70,13 @@ abstract class RestServiceTemplate<T : BaseEntity> : IRestService<T> {
     override fun create(request: CreateRequest): T? {
         log.info { "Creating new entity of type ${entityClass.simpleName}" }
         try {
+            println("Attempting to reattach type for entity class: ${entityClass.simpleName}")
             val typedRequestProperties = typeReAttacher.reAttachType(
                 data = request.properties,
                 entityClassName = entityClass.simpleName!!
             )
 
+            println("Attempting to create new instance of type: ${entityClass.simpleName}")
             val newInstance = serviceUtility.createNewInstance(
                 instanceClass = entityClass,
                 data = typedRequestProperties
