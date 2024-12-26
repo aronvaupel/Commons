@@ -97,7 +97,6 @@ abstract class RestServiceTemplate<T : BaseEntity> : IRestService<T> {
         } catch (e: Exception) {
             log.warn { "Failed to create. Cause: ${e.message}" }
             log.debug { "${e.stackTrace}" }
-            //Todo: Annotate Exception with HttpStatus
             throw FailedToCreateException("Failed to create", e)
         }
     }
