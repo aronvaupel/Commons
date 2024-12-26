@@ -10,6 +10,7 @@ import org.springframework.data.domain.Page
 import org.springframework.data.domain.PageImpl
 import org.springframework.data.domain.PageRequest
 import org.springframework.stereotype.Service
+import java.util.*
 import kotlin.reflect.KClass
 
 @Service
@@ -50,7 +51,9 @@ class Retriever(
         criteriaQuery.multiselect(
             root.alias(entityAlias),
             criteriaBuilder.count(root).alias(countAlias)
-        ).where(*predicates.toTypedArray())
+        )
+        criteriaQuery.groupBy(root.get<UUID>("id"))
+        criteriaQuery.where(*predicates.toTypedArray())
 
         val resultList = entityManager.createQuery(criteriaQuery)
             .setFirstResult(pageable.offset.toInt())
@@ -58,8 +61,8 @@ class Retriever(
             .resultList
 
 
-        val entities = resultList.map { tuple -> tuple.get(entityAlias, entity.java) }
-        val totalCount = resultList.firstOrNull()?.get(countAlias, Long::class.java) ?: 0L
+        val entities = resultList.map { it.get("entity", entity.java) }
+        val totalCount = resultList.firstOrNull()?.get("totalCount", Long::class.java) ?: 0L
 
         return PageImpl(entities, pageable, totalCount)
     }
