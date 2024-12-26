@@ -201,7 +201,7 @@ abstract class RestServiceTemplate<T : BaseEntity> : IRestService<T> {
         paginated: Page<T>
     ) {
         log.info(
-            "Search completed in ${endTime - startTime}ms. Retrieved ${paginated.size}. Entity: ${entityClass.simpleName}."
+            "Search completed in ${endTime - startTime}ms. Retrieved ${paginated.content.size}. Entity: ${entityClass.simpleName}."
         )
     }
 
