@@ -18,6 +18,7 @@ import java.util.*
 @Service
 class CachingUtility(
     private val redisTemplate: StringRedisTemplate,
+    private val objectMapper: ObjectMapper,
 ) {
     private val log = KotlinLogging.logger {}
 
@@ -61,7 +62,7 @@ class CachingUtility(
                     val key = entry.value ?: throw NullKeyInZSetException("Null key in zSet", zSetKey, entry)
 
                     val memoryUsage = redisTemplate.opsForValue().get(key)?.let {
-                        ObjectMapper().readValue(
+                        objectMapper.readValue(
                             it,
                             object : TypeReference<Map<String, Any>>() {})["memoryUsage"] as? Long ?: 0L
                     } ?: 0L
@@ -96,8 +97,6 @@ class CachingUtility(
 //    }
 
     fun <T : BaseEntity> serializeSearchResultToBytes(result: Page<T>): ByteArray {
-        val objectMapper = ObjectMapper()
-
         val serializablePage = SerializablePage(
             content = result.content,
             page= result.pageable.pageNumber,
@@ -122,8 +121,6 @@ class CachingUtility(
 //    }
 
     fun <T : BaseEntity> deserializeSearchResultFromBytes(data: ByteArray): Page<T> {
-        val objectMapper = ObjectMapper()
-
         val serializablePage: SerializablePage<T> = objectMapper.readValue(
             data,
             object : TypeReference<SerializablePage<T>>() {}
@@ -139,7 +136,7 @@ class CachingUtility(
     }
 
     fun hashSearchRequest(request: SearchRequest): String {
-        val requestBytes = ObjectMapper().writeValueAsBytes(request)
+        val requestBytes = objectMapper.writeValueAsBytes(request)
         return hash(requestBytes)
     }
 
@@ -172,12 +169,12 @@ class CachingUtility(
         val keysToCheck = redisTemplate.keys("entities:$entityName:*")
         keysToCheck.forEach { key ->
             val cachedIds = redisTemplate.opsForValue().get(key)?.let {
-                ObjectMapper().readValue(it, object : TypeReference<List<UUID>>() {})
+                objectMapper.readValue(it, object : TypeReference<List<UUID>>() {})
             }
             if (cachedIds != null) {
                 val updatedIds = cachedIds.filterNot { it == entityId }
                 if (updatedIds.isEmpty()) redisTemplate.delete(key)
-                else redisTemplate.opsForValue().set(key, ObjectMapper().writeValueAsString(updatedIds))
+                else redisTemplate.opsForValue().set(key, objectMapper.writeValueAsString(updatedIds))
             }
         }
     }
