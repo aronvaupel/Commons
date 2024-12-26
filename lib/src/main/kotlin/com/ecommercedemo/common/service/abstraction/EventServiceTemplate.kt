@@ -57,7 +57,7 @@ abstract class EventServiceTemplate<T : BaseEntity>() : IEventService<T> {
     override fun updateByEvent(event: EntityEvent) {
         try {
             val original = adapter.getById(event.id)
-            val updated = serviceUtility.updateExistingEntity(event.properties, reflectionService.copy(original) as T)
+            val updated = serviceUtility.updateExistingEntity(event.properties, original.copy() as T)
             adapter.save(updated)
         } catch (e: Exception) {
             log.warn { "${e.message}" }

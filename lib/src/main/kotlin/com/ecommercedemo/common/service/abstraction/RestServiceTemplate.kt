@@ -119,7 +119,7 @@ abstract class RestServiceTemplate<T : BaseEntity> : IRestService<T> {
             }
             val updated = serviceUtility.updateExistingEntity(
                 data = typedRequestProperties,
-                entity = reflectionService.copy(original) as T
+                entity = original.copy() as T
             )
 
             val result = saveAndEmitEvent(
