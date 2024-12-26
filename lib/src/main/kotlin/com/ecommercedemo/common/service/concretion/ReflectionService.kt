@@ -23,7 +23,7 @@ class ReflectionService(
         return try {
             val fromCache = redisService.getCachedMethodResultOrThrow(
                 "getMemberProperties",
-                listOf(declaringClass),
+                listOf(declaringClass.simpleName),
                 object : TypeReference<Collection<KProperty1<out Any, *>>>() {}
             )
             log.info { "Got from cache" }
@@ -50,7 +50,7 @@ class ReflectionService(
         return try {
             val fromCache = redisService.getCachedMethodResultOrThrow(
                 "getMemberProperties",
-                listOf(entity),
+                listOf(entity?.javaClass?.simpleName),
                 object : TypeReference<List<KProperty1<T, *>>>() {}
             )
             log.info { "Got from cache" }
@@ -77,7 +77,7 @@ class ReflectionService(
         return try {
             val fromCache = redisService.getCachedMethodResultOrThrow(
                 "findMutableMemberProperties",
-                listOf(entity),
+                listOf(entity.javaClass.simpleName),
                 object : TypeReference<Map<String, KMutableProperty<*>>>() {}
             )
             log.info { "Got from cache" }
@@ -107,7 +107,7 @@ class ReflectionService(
             println("Attempting to retrieve from cache")
             val fromCache = redisService.getCachedMethodResultOrThrow(
                 "findConstructorWithArgs",
-                listOf(clazz),
+                listOf(clazz.simpleName),
                 object : TypeReference<KFunction<T>>() {}
             )
             log.info { "Got from cache" }
@@ -136,7 +136,7 @@ class ReflectionService(
         return try {
             val fromCache = redisService.getCachedMethodResultOrThrow(
                 "getConstructorParams",
-                listOf(entityConstructor),
+                listOf(entityConstructor.name),
                 object : TypeReference<List<KParameter>>() {}
             )
             log.info { "Got from cache" }
@@ -163,7 +163,7 @@ class ReflectionService(
         return try {
             val fromCache = redisService.getCachedMethodResultOrThrow(
                 "copy",
-                listOf(entity),
+                listOf(entity.javaClass.simpleName),
                 object : TypeReference<BaseEntity>() {}
             )
             log.info { "Got from cache" }
