@@ -21,11 +21,15 @@ class ReflectionService(
         log.info { "Uses getClassMemberProperties" }
         val start = System.currentTimeMillis()
         return try {
-            redisService.getCachedMethodResultOrThrow(
+            val fromCache = redisService.getCachedMethodResultOrThrow(
                 "getMemberProperties",
                 listOf(declaringClass),
                 object : TypeReference<Collection<KProperty1<out Any, *>>>() {}
             )
+            log.info { "Got from cache" }
+            val end = System.currentTimeMillis()
+            log.info { "Time elapsed: ${end - start} ms" }
+            fromCache
         } catch (e: NotCachedException) {
             val computed = declaringClass.memberProperties
             redisService.cacheMethodResult(
@@ -44,11 +48,15 @@ class ReflectionService(
         log.info { "Uses getEntityMemberProperties" }
         val start = System.currentTimeMillis()
         return try {
-            redisService.getCachedMethodResultOrThrow(
+            val fromCache = redisService.getCachedMethodResultOrThrow(
                 "getMemberProperties",
                 listOf(entity),
                 object : TypeReference<List<KProperty1<T, *>>>() {}
             )
+            log.info { "Got from cache" }
+            val end = System.currentTimeMillis()
+            log.info { "Time elapsed: ${end - start} ms" }
+            fromCache
         } catch (e: NotCachedException) {
             val computed = entity?.let { entity::class.memberProperties.filterIsInstance<KProperty1<T, *>>() }
             redisService.cacheMethodResult(
@@ -67,11 +75,15 @@ class ReflectionService(
         log.info { "Uses findMutableProperties" }
         val start = System.currentTimeMillis()
         return try {
-            redisService.getCachedMethodResultOrThrow(
+            val fromCache = redisService.getCachedMethodResultOrThrow(
                 "findMutableMemberProperties",
                 listOf(entity),
                 object : TypeReference<Map<String, KMutableProperty<*>>>() {}
-            ) as Map<String, KMutableProperty<*>>
+            )
+            log.info { "Got from cache" }
+            val end = System.currentTimeMillis()
+            log.info { "Time elapsed: ${end - start} ms" }
+            fromCache
         } catch (e: NotCachedException) {
             val computed =
                 entity::class.memberProperties.filterIsInstance<KMutableProperty<*>>().associateBy { it.name }
@@ -91,11 +103,15 @@ class ReflectionService(
         log.info { "Saved to cache" }
         val start = System.currentTimeMillis()
         return try {
-            redisService.getCachedMethodResultOrThrow(
+            val fromCache = redisService.getCachedMethodResultOrThrow(
                 "findConstructorWithArgs",
                 listOf(clazz),
                 object : TypeReference<KFunction<T>>() {}
             )
+            log.info { "Got from cache" }
+            val end = System.currentTimeMillis()
+            log.info { "Time elapsed: ${end - start} ms" }
+            fromCache
         } catch (e: NotCachedException) {
             val computed = clazz.constructors.find { it.parameters.isNotEmpty() }
                 ?: throw IllegalArgumentException("No suitable constructor found for ${clazz.simpleName}")
@@ -115,11 +131,15 @@ class ReflectionService(
         log.info { "Uses extractFieldTypesMap" }
         val start = System.currentTimeMillis()
         return try {
-            redisService.getCachedMethodResultOrThrow(
+            val fromCache = redisService.getCachedMethodResultOrThrow(
                 "extractFieldTypesMap",
                 listOf(entityClass),
                 object : TypeReference<Map<String, KType>>() {}
             )
+            log.info { "Got from cache" }
+            val end = System.currentTimeMillis()
+            log.info { "Time elapsed: ${end - start} ms" }
+            fromCache
         } catch (e: NotCachedException) {
             val computed = entityClass.memberProperties.associate { property ->
                 property.name to property.returnType
@@ -140,11 +160,15 @@ class ReflectionService(
         log.info { "Uses getConstructorParams" }
         val start = System.currentTimeMillis()
         return try {
-            redisService.getCachedMethodResultOrThrow(
+            val fromCache = redisService.getCachedMethodResultOrThrow(
                 "getConstructorParams",
                 listOf(entityConstructor),
                 object : TypeReference<List<KParameter>>() {}
             )
+            log.info { "Got from cache" }
+            val end = System.currentTimeMillis()
+            log.info { "Time elapsed: ${end - start} ms" }
+            fromCache
         } catch (e: NotCachedException) {
             val result = entityConstructor.parameters
             redisService.cacheMethodResult(
@@ -163,11 +187,15 @@ class ReflectionService(
         log.info { "Uses copy" }
         val start = System.currentTimeMillis()
         return try {
-            redisService.getCachedMethodResultOrThrow(
+            val fromCache = redisService.getCachedMethodResultOrThrow(
                 "copy",
                 listOf(entity),
                 object : TypeReference<BaseEntity>() {}
             )
+            log.info { "Got from cache" }
+            val end = System.currentTimeMillis()
+            log.info { "Time elapsed: ${end - start} ms" }
+            fromCache
         } catch (e: NotCachedException) {
             val constructor = entity::class.primaryConstructor
                 ?: throw IllegalStateException("No primary constructor for ${entity::class.simpleName}")

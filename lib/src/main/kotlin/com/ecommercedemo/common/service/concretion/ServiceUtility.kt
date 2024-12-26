@@ -40,11 +40,13 @@ class ServiceUtility<T : BaseEntity>(
         }
 
         val entityConstructor = reflectionService.findConstructorWithArgs(instanceClass)
+        println("entityConstructor: $entityConstructor")
 
         val instanceConstructorParams = createConstructorParams(entityConstructor, data)
 
         return entityConstructor.callBy(instanceConstructorParams).apply {
-            val memberProperties = reflectionService.getEntityMemberProperties(this)
+            val memberProperties = reflectionService.getClassMemberProperties(instanceClass)
+            println("memberProperties: $memberProperties")
             val remainingFields = data.filter {
                 !(it.key.startsWith("_")) && it.key !in instanceConstructorParams.keys.map { param -> param.name }
             }.map { it.key }
@@ -72,6 +74,7 @@ class ServiceUtility<T : BaseEntity>(
                     else -> throw IllegalArgumentException("Field ${param.name} must be provided and cannot be null.")
                 }
             }
+        println("instanceConstructorParams: $instanceConstructorParams")
         return instanceConstructorParams
     }
 
