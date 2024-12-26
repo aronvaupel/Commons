@@ -73,6 +73,7 @@ class CachingUtility(
         return memoryFreed
     }
 
+    //Fixme: no longer accurate
     private fun calculateMemoryUsageOfNewEntry(key: String): Long {
         val hashValueSize = 64L
         val stringSize = (key.length + hashValueSize)
@@ -81,16 +82,20 @@ class CachingUtility(
     }
 
     fun <T: BaseEntity>serializeSearchResultToBytes(result: List<T>): ByteArray {
+        println("Serializing search result to bytes")
         val uuids = result.map { it.id }
-        return ByteBuffer.allocate(uuids.size * 16).apply {
+        val final =  ByteBuffer.allocate(uuids.size * 16).apply {
             uuids.forEach { uuid ->
                 putLong(uuid.mostSignificantBits)
                 putLong(uuid.leastSignificantBits)
             }
         }.array()
+        println("Serialized search result to bytes: $final")
+        return final
     }
 
     fun deserializeSearchResultFromBytes(data: ByteArray): List<UUID> {
+        println("Deserializing search result from bytes")
         val byteBuffer = ByteBuffer.wrap(data)
         val uuids = mutableListOf<UUID>()
         while (byteBuffer.remaining() >= 16) {
@@ -98,10 +103,12 @@ class CachingUtility(
             val leastSigBits = byteBuffer.long
             uuids.add(UUID(mostSigBits, leastSigBits))
         }
+        println("Deserialized search result from bytes: $uuids")
         return uuids
     }
 
     fun serializeMethodResultToBytes(result: Any?): ByteArray {
+        println("Serializing method result to bytes")
         return objectMapper.writeValueAsBytes(result)
     }
 
