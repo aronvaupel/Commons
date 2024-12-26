@@ -10,13 +10,11 @@ import com.fasterxml.jackson.core.type.TypeReference
 import com.fasterxml.jackson.databind.ObjectMapper
 import mu.KotlinLogging
 import org.springframework.beans.factory.annotation.Value
-import org.springframework.context.annotation.DependsOn
 import org.springframework.data.redis.core.StringRedisTemplate
 import org.springframework.stereotype.Service
 import java.util.*
 
 @Service
-@DependsOn("objectMapper")
 open class RedisService(
     private val cachingUtility: CachingUtility,
     @Value("\${cache.memory.max-size}") private val maxMemory: Long,
@@ -25,7 +23,7 @@ open class RedisService(
 ) {
 
     val log = KotlinLogging.logger {}
-    private val objectMapper = ObjectMapper()
+
 
     fun registerAsTopics(upstreamEntities: List<String>) {
         val kafkaRegistry = getKafkaRegistry()
@@ -79,13 +77,13 @@ open class RedisService(
     }
 
     fun getKafkaRegistry(): KafkaTopicRegistry {
-        return objectMapper.readValue(
+        return ObjectMapper().readValue(
             redisTemplate.opsForValue().get("kafka-topic-registry") ?: "{}", KafkaTopicRegistry::class.java
         )
     }
 
     private fun saveKafkaRegistry(kafkaTopicRegistry: KafkaTopicRegistry) {
-        redisTemplate.opsForValue().set("kafka-topic-registry", objectMapper.writeValueAsString(kafkaTopicRegistry))
+        redisTemplate.opsForValue().set("kafka-topic-registry", ObjectMapper().writeValueAsString(kafkaTopicRegistry))
     }
 
     private fun <T> cacheResult(
