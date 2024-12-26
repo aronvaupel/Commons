@@ -96,8 +96,14 @@ class CachingUtility(
 
     fun <T : BaseEntity> serializeSearchResultToBytes(result: Page<T>): ByteArray {
         val objectMapper = ObjectMapper()
-        val final = objectMapper.writeValueAsBytes(result)
-        return final
+
+        val serializablePage = SerializablePage(
+            content = result.content,
+            pageable = result.pageable,
+            totalElements = result.totalElements,
+        )
+
+        return objectMapper.writeValueAsBytes(serializablePage)
     }
 
 //    fun deserializeSearchResultFromBytes(data: ByteArray): List<UUID> {
@@ -115,8 +121,17 @@ class CachingUtility(
 
     fun <T : BaseEntity> deserializeSearchResultFromBytes(data: ByteArray): Page<T> {
         val objectMapper = ObjectMapper()
-        val result = objectMapper.readValue(data, object : TypeReference<PageImpl<T>>() {})
-        return result
+
+        val serializablePage: SerializablePage<T> = objectMapper.readValue(
+            data,
+            object : TypeReference<SerializablePage<T>>() {}
+        )
+
+        return PageImpl(
+            serializablePage.content,
+            serializablePage.pageable,
+            serializablePage.totalElements
+        )
     }
 
     fun hashSearchRequest(request: SearchRequest): String {
