@@ -34,7 +34,7 @@ class ReflectionService(
             val computed = declaringClass.memberProperties
             redisService.cacheMethodResult(
                 "getMemberProperties",
-                listOf(declaringClass),
+                listOf(declaringClass.simpleName),
                 computed
             )
             log.info { "Saved to cache" }
@@ -61,7 +61,7 @@ class ReflectionService(
             val computed = entity?.let { entity::class.memberProperties.filterIsInstance<KProperty1<T, *>>() }
             redisService.cacheMethodResult(
                 "getMemberProperties",
-                listOf(entity),
+                listOf(entity?.javaClass?.simpleName),
                 computed
             )
             log.info { "Saved to cache" }
@@ -89,7 +89,7 @@ class ReflectionService(
                 entity::class.memberProperties.filterIsInstance<KMutableProperty<*>>().associateBy { it.name }
             redisService.cacheMethodResult(
                 "findMutableMemberProperties",
-                listOf(entity),
+                listOf(entity.javaClass.simpleName),
                 computed
             )
             log.info { "Saved to cache" }
@@ -120,7 +120,7 @@ class ReflectionService(
                 ?: throw IllegalArgumentException("No suitable constructor found for ${clazz.simpleName}")
             redisService.cacheMethodResult(
                 "findConstructorWithArgs",
-                listOf(clazz),
+                listOf(clazz.simpleName),
                 computed
             )
             log.info { "Saved to cache" }
@@ -147,7 +147,7 @@ class ReflectionService(
             val result = entityConstructor.parameters
             redisService.cacheMethodResult(
                 "getConstructorParams",
-                listOf(entityConstructor),
+                listOf(entityConstructor.name),
                 entityConstructor.parameters
             )
             log.info { "Saved to cache" }
@@ -214,7 +214,7 @@ class ReflectionService(
                 }
             redisService.cacheMethodResult(
                 "copy",
-                listOf(entity),
+                listOf(entity.javaClass.simpleName),
                 newInstance
             )
             log.info { "Saved to cache" }
