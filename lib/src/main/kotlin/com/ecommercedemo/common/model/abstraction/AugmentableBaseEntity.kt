@@ -38,15 +38,7 @@ abstract class AugmentableBaseEntity: BaseEntity() {
             if (oldKey == newKey) {
                 return
             }
-            if (!pseudoProperties.containsKey(oldKey)) {
-                if (pseudoProperties[oldKey] == null) {
-                    pseudoProperties = pseudoProperties.toMutableMap().apply {
-                        this[newKey] = this.remove(oldKey)
-                    }
-                } else {
-                    throw IllegalArgumentException("Key '$oldKey' does not exist in pseudoProperties.")
-                }
-            } else pseudoProperties = pseudoProperties.toMutableMap().apply {
+            pseudoProperties = pseudoProperties.toMutableMap().apply {
                 this[newKey] = this.remove(oldKey)
             }
         } catch (e: Exception) {
