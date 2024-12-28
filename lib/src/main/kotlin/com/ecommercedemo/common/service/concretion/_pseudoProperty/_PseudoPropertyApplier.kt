@@ -116,11 +116,7 @@ open class _PseudoPropertyApplier(
             if (pagedEntities.hasContent()) {
                 val entities = pagedEntities.content
 
-                entities.forEach { entity ->
-                    entity.getPseudoProperty(key)?.let {
-                        entity.removePseudoProperty(key)
-                    }
-                }
+                entities.forEach { it.removePseudoProperty(key) }
 
                 adapter.saveAll(entities)
                 entities.forEach { entity ->
