@@ -7,6 +7,7 @@ import com.ecommercedemo.common.persistence.abstraction.PersistencePort
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.google.common.util.concurrent.RateLimiter
 import jakarta.transaction.Transactional
+import mu.KotlinLogging
 import org.springframework.beans.factory.BeanFactory
 import org.springframework.beans.factory.NoSuchBeanDefinitionException
 import org.springframework.scheduling.annotation.Async
@@ -22,6 +23,8 @@ open class _PseudoPropertyApplier(
 ) {
     private val objectMapper = jacksonObjectMapper()
     private val rateLimiter = RateLimiter.create(100.0)
+
+    val log = KotlinLogging.logger {}
 
     @Async
     @Transactional
@@ -41,9 +44,8 @@ open class _PseudoPropertyApplier(
 
                 entities.forEach { entity ->
                     entity.getPseudoProperty(key)?.let {
-                        throw IllegalArgumentException(
-                            "Entity ${entity.id} already contains the key '$key'. Cannot override."
-                        )
+                       log.info { "Entities of type ${entityClass.simpleName} already contain the key '$key'. Cannot override." }
+                       return
                     } ?:entity.addPseudoProperty(key, null)
                 }
 
