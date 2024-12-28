@@ -1,6 +1,7 @@
 package com.ecommercedemo.common.service.concretion
 
 import com.ecommercedemo.common.application.SpringContextProvider
+import com.ecommercedemo.common.model.abstraction.BaseEntity
 import com.fasterxml.jackson.core.type.TypeReference
 import com.fasterxml.jackson.databind.ObjectMapper
 import jakarta.persistence.EntityManagerFactory
@@ -11,7 +12,7 @@ import kotlin.reflect.full.memberProperties
 import kotlin.reflect.jvm.javaType
 
 @Service
-
+@Suppress("UNCHECKED_CAST")
 class TypeReAttacher(
     private val entityManagerFactory: EntityManagerFactory
 ) {
@@ -32,15 +33,34 @@ class TypeReAttacher(
         println("Types for data keys: $typesForDataKeys")
 
         val typedData: Map<String, Any?> = typesForDataKeys.mapValues { (key, kType) ->
-            val typeReference = object : TypeReference<Any>() {
-                override fun getType() = kType.javaType
+            val rawValue = data[key]
+            if (rawValue == null) {
+                null
+            } else if (isBaseEntity(kType)) {
+                val nestedEntityClass = (kType.classifier as KClass<*>).simpleName!!
+                if (rawValue is Map<*, *>) {
+                    reAttachType(rawValue as Map<String, Any?>, nestedEntityClass)
+                } else {
+                    throw IllegalArgumentException("Field $key must be a map for nested type $nestedEntityClass.")
+                }
+            } else {
+                val typeReference = object : TypeReference<Any>() {
+                    override fun getType() = kType.javaType
+                }
+                SpringContextProvider.applicationContext.getBean(ObjectMapper::class.java)
+                    .convertValue(rawValue, typeReference)
             }
-            SpringContextProvider.applicationContext.getBean(ObjectMapper::class.java)
-                .convertValue(data[key], typeReference)
         }
+
         println("Reattached data: $typedData")
         return typedData
     }
+
+    private fun isBaseEntity(kType: KType): Boolean {
+        val classifier = kType.classifier as? KClass<*>
+        return classifier != null && BaseEntity::class.java.isAssignableFrom(classifier.java)
+    }
+
 
     private fun resolveEntityClass(entityClassName: String): KClass<*> {
         println("Resolving entity class for name: $entityClassName")
