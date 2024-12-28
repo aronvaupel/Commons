@@ -103,9 +103,10 @@ class ServiceUtility<T : BaseEntity>(
                 val nestedEntity = correspondingEntityProperty.getter.call(entity)
                     ?: propertyType.createInstance()
 
-                if (value !is Map<*, *>) {
-                    throw IllegalArgumentException("Field $key must be a nested object.")
+                if (value == null || !Map::class.java.isAssignableFrom(value::class.java)) {
+                    throw IllegalArgumentException("Field $key must be a nested object of type ${propertyType.simpleName}.")
                 }
+
 
                 val updatedSubEntity = recursivelyUpdateAllNested(
                     value as Map<String, Any?>,
