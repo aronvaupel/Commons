@@ -94,6 +94,7 @@ class ServiceUtility<T : BaseEntity>(
             reflectionService.findMutableProperties(entity)
 
         data.forEach { (key, value) ->
+            println("value is $value")
             val correspondingEntityProperty = entityProperties[key.removePrefix("_")]
                 ?: throw IllegalArgumentException("Field $key does not exist in the entity.")
             val propertyType = correspondingEntityProperty.returnType.classifier as KClass<*>
