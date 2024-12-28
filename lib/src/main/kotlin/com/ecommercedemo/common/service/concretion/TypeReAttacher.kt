@@ -34,21 +34,26 @@ class TypeReAttacher(
 
         val typedData: Map<String, Any?> = typesForDataKeys.mapValues { (key, kType) ->
             val rawValue = data[key]
-            if (rawValue == null) {
-                null
-            } else if (isBaseEntity(kType)) {
-                val nestedEntityClass = (kType.classifier as KClass<*>).simpleName!!
-                if (rawValue is Map<*, *>) {
-                    reAttachType(rawValue as Map<String, Any?>, nestedEntityClass)
-                } else {
-                    throw IllegalArgumentException("Field $key must be a map for nested type $nestedEntityClass.")
+            when {
+                rawValue == null -> null
+                isBaseEntity(kType) -> {
+                    val nestedEntityClass = (kType.classifier as KClass<*>)
+                    if (rawValue is Map<*, *>) {
+                        val nestedData = reAttachType(rawValue as Map<String, Any?>, nestedEntityClass.simpleName!!)
+                        SpringContextProvider.applicationContext.getBean(ObjectMapper::class.java)
+                            .convertValue(nestedData, nestedEntityClass.java)
+                    } else {
+                        throw IllegalArgumentException("Field $key must be a map for nested type ${nestedEntityClass.simpleName}.")
+                    }
                 }
-            } else {
-                val typeReference = object : TypeReference<Any>() {
-                    override fun getType() = kType.javaType
+
+                else -> {
+                    val typeReference = object : TypeReference<Any>() {
+                        override fun getType() = kType.javaType
+                    }
+                    SpringContextProvider.applicationContext.getBean(ObjectMapper::class.java)
+                        .convertValue(rawValue, typeReference)
                 }
-                SpringContextProvider.applicationContext.getBean(ObjectMapper::class.java)
-                    .convertValue(rawValue, typeReference)
             }
         }
 
