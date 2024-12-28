@@ -11,6 +11,7 @@ import kotlin.reflect.KClass
 import kotlin.reflect.KFunction
 import kotlin.reflect.KMutableProperty
 import kotlin.reflect.KParameter
+import kotlin.reflect.full.createInstance
 import kotlin.reflect.full.createType
 import kotlin.reflect.full.isSubclassOf
 import kotlin.reflect.jvm.isAccessible
@@ -78,6 +79,13 @@ class ServiceUtility<T : BaseEntity>(
     }
 
     fun updateExistingEntity(data: Map<String, Any?>, entity: T): T {
+        return recursivelyUpdateAllNested(data, entity)
+    }
+
+    private fun recursivelyUpdateAllNested(data: Map<String, Any?>, entity: Any): T {
+        if (entity !is BaseEntity) {
+            throw IllegalArgumentException("Entity must be a BaseEntity")
+        }
         if (entity is AugmentableBaseEntity) {
             validatePseudoProperties(entity::class as KClass<out AugmentableBaseEntity>, data, true)
         }
@@ -88,52 +96,68 @@ class ServiceUtility<T : BaseEntity>(
         data.forEach { (key, value) ->
             val correspondingEntityProperty = entityProperties[key.removePrefix("_")]
                 ?: throw IllegalArgumentException("Field $key does not exist in the entity.")
-
+            val propertyType = correspondingEntityProperty.returnType.classifier as KClass<*>
             correspondingEntityProperty.isAccessible = true
 
-            when {
-                value == null -> {
-                    if (!correspondingEntityProperty.returnType.isMarkedNullable) {
-                        throw IllegalArgumentException("Field $key cannot be set to null.")
-                    } else {
-                        correspondingEntityProperty.setter.call(entity, null)
-                    }
+            if (propertyType.isSubclassOf(BaseEntity::class)) {
+                val nestedEntity = correspondingEntityProperty.getter.call(entity)
+                    ?: propertyType.createInstance()
+
+                if (value !is Map<*, *>) {
+                    throw IllegalArgumentException("Field $key must be a nested object.")
                 }
 
-                key == AugmentableBaseEntity::pseudoProperties.name -> {
-                    if (entity is AugmentableBaseEntity) {
-                        val existingPseudoProperties = entity.pseudoProperties
+                val updatedSubEntity = recursivelyUpdateAllNested(
+                    value as Map<String, Any?>,
+                    nestedEntity as BaseEntity
+                )
 
-                        val mergedPseudoProperties = existingPseudoProperties + value as Map<String, Any?>
-
-                        correspondingEntityProperty.setter.call(entity, mergedPseudoProperties)
-                    } else {
-                        throw IllegalArgumentException("Entity does not support pseudoProperties")
+                correspondingEntityProperty.setter.call(entity, updatedSubEntity)
+            } else {
+                when {
+                    value == null -> {
+                        if (!correspondingEntityProperty.returnType.isMarkedNullable) {
+                            throw IllegalArgumentException("Field $key cannot be set to null.")
+                        } else {
+                            correspondingEntityProperty.setter.call(entity, null)
+                        }
                     }
-                }
 
-                key == IPseudoProperty::typeDescriptor.name -> {
-                    if (entity is IPseudoProperty) {
-                        validateTypeDescriptor(value)
+                    key == AugmentableBaseEntity::pseudoProperties.name -> {
+                        if (entity is AugmentableBaseEntity) {
+                            val existingPseudoProperties = entity.pseudoProperties
+
+                            val mergedPseudoProperties = existingPseudoProperties + value as Map<String, Any?>
+
+                            correspondingEntityProperty.setter.call(entity, mergedPseudoProperties)
+                        } else {
+                            throw IllegalArgumentException("Entity does not support pseudoProperties")
+                        }
+                    }
+
+                    key == IPseudoProperty::typeDescriptor.name -> {
+                        if (entity is IPseudoProperty) {
+                            validateTypeDescriptor(value)
+                            correspondingEntityProperty.setter.call(entity, value)
+                        } else {
+                            throw IllegalArgumentException("Entity does not support typeDescriptor")
+                        }
+                    }
+
+                    value::class.createType() != correspondingEntityProperty.returnType -> {
+                        throw IllegalArgumentException(
+                            "Field $key must be of type ${correspondingEntityProperty.returnType}."
+                        )
+                    }
+
+                    else -> {
                         correspondingEntityProperty.setter.call(entity, value)
-                    } else {
-                        throw IllegalArgumentException("Entity does not support typeDescriptor")
                     }
-                }
-
-                value::class.createType() != correspondingEntityProperty.returnType -> {
-                    throw IllegalArgumentException(
-                        "Field $key must be of type ${correspondingEntityProperty.returnType}."
-                    )
-                }
-
-                else -> {
-                    correspondingEntityProperty.setter.call(entity, value)
                 }
             }
         }
 
-        return entity
+        return entity as T
     }
 
 
@@ -151,7 +175,7 @@ class ServiceUtility<T : BaseEntity>(
         if (isUpdate && pseudoProperties == null) return
 
         if (pseudoProperties !is Map<*, *>)
-                throw IllegalArgumentException("PseudoProperties must be a Map")
+            throw IllegalArgumentException("PseudoProperties must be a Map")
 
 
         if (!isUpdate) {
