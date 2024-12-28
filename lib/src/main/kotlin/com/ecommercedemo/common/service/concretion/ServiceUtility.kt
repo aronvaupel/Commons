@@ -79,7 +79,7 @@ class ServiceUtility<T : BaseEntity>(
 
     fun updateExistingEntity(data: Map<String, Any?>, entity: T): T {
         if (entity is AugmentableBaseEntity) {
-            validatePseudoProperties(entity::class as KClass<out AugmentableBaseEntity>, data)
+            validatePseudoProperties(entity::class as KClass<out AugmentableBaseEntity>, data, true)
         }
 
         val entityProperties =
