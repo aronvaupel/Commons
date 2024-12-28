@@ -104,7 +104,7 @@ class ServiceUtility<T : BaseEntity>(
                     ?: propertyType.createInstance()
 
                 if (value == null || !Map::class.java.isAssignableFrom(value::class.java)) {
-                    throw IllegalArgumentException("Field $key must be a nested object of type ${propertyType.simpleName}.")
+                    throw IllegalArgumentException("Field $key must be a map and may only contain key that correspond to properties of $nestedEntity.")
                 }
 
 
