@@ -2,12 +2,14 @@ package com.ecommercedemo.common.service.concretion
 
 import com.ecommercedemo.common.application.SpringContextProvider
 import com.ecommercedemo.common.model.abstraction.BaseEntity
+import com.fasterxml.jackson.core.type.TypeReference
 import com.fasterxml.jackson.databind.ObjectMapper
 import jakarta.persistence.EntityManagerFactory
 import org.springframework.stereotype.Service
 import kotlin.reflect.KClass
 import kotlin.reflect.KType
 import kotlin.reflect.full.memberProperties
+import kotlin.reflect.jvm.javaType
 
 @Service
 @Suppress("UNCHECKED_CAST")
@@ -21,11 +23,16 @@ class TypeReAttacher(
         }
     }
 
-    fun reAttachType(data: Map<String, Any?>, entityClassName: String): Map<String, Any?> {
+    fun reAttachType(
+        data: Map<String, Any?>,
+        entityClassName: String,
+    ): Map<String, Any?> {
+        println("Reattaching type for entity class: $entityClassName")
         val entityClass = resolveEntityClass(entityClassName)
         val typesForDataKeys = extractFieldTypesMap(entityClass).filterKeys { data.containsKey(it) }
+        println("Types for data keys: $typesForDataKeys")
 
-        return typesForDataKeys.mapValues { (key, kType) ->
+        val typedData: Map<String, Any?> = typesForDataKeys.mapValues { (key, kType) ->
             val rawValue = data[key]
             if (rawValue == null) {
                 null
@@ -37,15 +44,16 @@ class TypeReAttacher(
                     throw IllegalArgumentException("Field $key must be a map for nested type $nestedEntityClass.")
                 }
             } else {
-                val expectedType = (kType.classifier as KClass<*>).java
-                if (rawValue is Map<*, *>) {
-                    SpringContextProvider.applicationContext.getBean(ObjectMapper::class.java)
-                        .convertValue(rawValue, expectedType)
-                } else {
-                    rawValue
+                val typeReference = object : TypeReference<Any>() {
+                    override fun getType() = kType.javaType
                 }
+                SpringContextProvider.applicationContext.getBean(ObjectMapper::class.java)
+                    .convertValue(rawValue, typeReference)
             }
         }
+
+        println("Reattached data: $typedData")
+        return typedData
     }
 
     private fun isBaseEntity(kType: KType): Boolean {
