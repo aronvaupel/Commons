@@ -6,7 +6,7 @@ plugins {
 }
 
 group = "com.github.aronvaupel"
-version = "6.4.3"
+version = "6.4.4"
 
 repositories {
     mavenCentral()
@@ -85,8 +85,8 @@ publishing {
             url = uri("https://maven.pkg.github.com/aronvaupel/Commons")
             credentials {
                 val env = loadEnv()
-                username = env["GITHUB_USERNAME"] ?: "aronvaupel"
-                password = env["GITHUB_TOKEN"] ?: "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"
+                username = env["GITHUB_USERNAME"] ?: ""
+                password = env["GITHUB_TOKEN"] ?: ""
             }
         }
     }
