@@ -1,4 +1,4 @@
-package com.ecommercedemo.common.controller
+package com.ecommercedemo.common.controller.annotation
 
 import kotlin.reflect.KClass
 

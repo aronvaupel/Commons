@@ -1,4 +1,4 @@
-package com.ecommercedemo.common.service
+package com.ecommercedemo.common.service.annotation
 
 import kotlin.reflect.KClass
 

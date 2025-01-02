@@ -1,4 +1,4 @@
-package com.ecommercedemo.common.application
+package com.ecommercedemo.common.application.springboot
 
 import org.springframework.context.annotation.ClassPathScanningCandidateComponentProvider
 import org.springframework.core.type.filter.AnnotationTypeFilter

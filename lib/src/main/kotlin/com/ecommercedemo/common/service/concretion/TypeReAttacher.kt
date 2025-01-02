@@ -1,6 +1,6 @@
 package com.ecommercedemo.common.service.concretion
 
-import com.ecommercedemo.common.application.SpringContextProvider
+import com.ecommercedemo.common.application.springboot.SpringContextProvider
 import com.ecommercedemo.common.model.abstraction.BaseEntity
 import com.fasterxml.jackson.core.type.TypeReference
 import com.fasterxml.jackson.databind.ObjectMapper

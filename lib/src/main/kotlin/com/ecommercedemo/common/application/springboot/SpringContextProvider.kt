@@ -1,4 +1,4 @@
-package com.ecommercedemo.common.application
+package com.ecommercedemo.common.application.springboot
 
 import org.springframework.context.ApplicationContext
 import org.springframework.context.ApplicationContextAware

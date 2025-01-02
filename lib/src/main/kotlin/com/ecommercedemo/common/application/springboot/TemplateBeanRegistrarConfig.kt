@@ -1,6 +1,5 @@
-package com.ecommercedemo.common.application
+package com.ecommercedemo.common.application.springboot
 
-import com.ecommercedemo.common.service.TemplateBeanRegistrar
 import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.Import
 

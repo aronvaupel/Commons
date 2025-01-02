@@ -1,4 +1,4 @@
-package com.ecommercedemo.common.application
+package com.ecommercedemo.common.application.springboot
 
 import com.ecommercedemo.common.application.kafka.DynamicTopicRegistration
 import com.ecommercedemo.common.service.concretion.EntityScanner

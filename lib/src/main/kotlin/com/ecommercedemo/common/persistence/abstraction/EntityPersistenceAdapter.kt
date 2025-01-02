@@ -1,7 +1,7 @@
 package com.ecommercedemo.common.persistence.abstraction
 
 import com.ecommercedemo.common.model.abstraction.BaseEntity
-import com.ecommercedemo.common.persistence.PersistenceAdapterFor
+import com.ecommercedemo.common.persistence.annotation.PersistenceAdapterFor
 import jakarta.persistence.EntityManager
 import jakarta.persistence.LockModeType
 import jakarta.persistence.Tuple

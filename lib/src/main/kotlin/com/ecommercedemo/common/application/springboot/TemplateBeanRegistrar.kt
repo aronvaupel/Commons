@@ -1,9 +1,9 @@
-package com.ecommercedemo.common.service
+package com.ecommercedemo.common.application.springboot
 
-import com.ecommercedemo.common.application.ClassPathScanner
-import com.ecommercedemo.common.application.SpringContextProvider
-import com.ecommercedemo.common.controller.ControllerFor
-import com.ecommercedemo.common.persistence.PersistenceAdapterFor
+import com.ecommercedemo.common.controller.annotation.ControllerFor
+import com.ecommercedemo.common.persistence.annotation.PersistenceAdapterFor
+import com.ecommercedemo.common.service.annotation.EventServiceFor
+import com.ecommercedemo.common.service.annotation.RestServiceFor
 import org.springframework.beans.factory.support.BeanDefinitionBuilder
 import org.springframework.beans.factory.support.BeanDefinitionRegistry
 import org.springframework.context.annotation.ImportBeanDefinitionRegistrar

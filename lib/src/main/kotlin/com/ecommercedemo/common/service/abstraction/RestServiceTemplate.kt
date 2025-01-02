@@ -14,7 +14,7 @@ import com.ecommercedemo.common.controller.abstraction.request.UpdateRequest
 import com.ecommercedemo.common.controller.abstraction.util.Retriever
 import com.ecommercedemo.common.model.abstraction.BaseEntity
 import com.ecommercedemo.common.persistence.abstraction.PersistencePort
-import com.ecommercedemo.common.service.RestServiceFor
+import com.ecommercedemo.common.service.annotation.RestServiceFor
 import com.ecommercedemo.common.service.concretion.EntityChangeTracker
 import com.ecommercedemo.common.service.concretion.ReflectionService
 import com.ecommercedemo.common.service.concretion.ServiceUtility

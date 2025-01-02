@@ -1,4 +1,4 @@
-package com.ecommercedemo.common.persistence
+package com.ecommercedemo.common.persistence.annotation
 
 import kotlin.reflect.KClass
 

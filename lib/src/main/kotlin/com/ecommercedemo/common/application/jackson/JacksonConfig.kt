@@ -1,7 +1,8 @@
-package com.ecommercedemo.common.application
+package com.ecommercedemo.common.application.jackson
 
 import com.ecommercedemo.common.application.kafka.EntityEvent
 import com.ecommercedemo.common.application.kafka.EntityEventDeserializer
+import com.ecommercedemo.common.application.springboot.SpringContextProvider
 import com.ecommercedemo.common.service.concretion.TypeReAttacher
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.SerializationFeature

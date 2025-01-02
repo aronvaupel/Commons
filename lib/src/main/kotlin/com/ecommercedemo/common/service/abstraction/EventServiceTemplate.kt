@@ -6,7 +6,7 @@ import com.ecommercedemo.common.application.exception.FailedToUpdateByEventExcep
 import com.ecommercedemo.common.application.kafka.EntityEvent
 import com.ecommercedemo.common.model.abstraction.BaseEntity
 import com.ecommercedemo.common.persistence.abstraction.PersistencePort
-import com.ecommercedemo.common.service.EventServiceFor
+import com.ecommercedemo.common.service.annotation.EventServiceFor
 import com.ecommercedemo.common.service.concretion.ReflectionService
 import com.ecommercedemo.common.service.concretion.ServiceUtility
 import com.ecommercedemo.common.service.concretion.TypeReAttacher

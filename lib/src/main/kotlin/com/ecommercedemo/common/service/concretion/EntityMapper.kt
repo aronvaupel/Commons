@@ -1,6 +1,6 @@
 package com.ecommercedemo.common.service.concretion
 
-import com.ecommercedemo.common.application.ClassPathScanner
+import com.ecommercedemo.common.application.springboot.ClassPathScanner
 import jakarta.persistence.Entity
 import org.springframework.context.annotation.DependsOn
 import org.springframework.stereotype.Component

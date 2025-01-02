@@ -6,7 +6,6 @@ import jakarta.validation.ConstraintValidatorContext
 
 object OperatorTypeValidator : ConstraintValidator<ValidOperator, SearchParam> {
 
-    //Todo: is this right?
     override fun isValid(searchParam: SearchParam, context: ConstraintValidatorContext): Boolean {
         val operator = searchParam.operator
         val value = searchParam.searchValue
