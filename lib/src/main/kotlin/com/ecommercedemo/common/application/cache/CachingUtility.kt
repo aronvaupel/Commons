@@ -82,6 +82,7 @@ class CachingUtility(
     }
 
 
+    // Todo: is this even necessary? Take a look at the bean in RedisConfig
     fun <T : BaseEntity> serializeSearchResultToBytes(result: List<T>): ByteArray {
         println("Serializing search result to bytes")
         val uuids = result.map { it.id }

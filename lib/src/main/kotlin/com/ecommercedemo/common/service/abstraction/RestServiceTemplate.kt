@@ -23,6 +23,7 @@ import jakarta.persistence.EntityManager
 import jakarta.transaction.Transactional
 import mu.KotlinLogging
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.boot.autoconfigure.condition.ConditionalOnClass
 import org.springframework.data.domain.Page
 import org.springframework.http.HttpStatus
 import java.util.*
@@ -30,6 +31,7 @@ import kotlin.reflect.KClass
 import kotlin.reflect.full.findAnnotation
 
 @Suppress("UNCHECKED_CAST")
+@ConditionalOnClass(name = ["org.springframework.data.jpa.repository.JpaRepository"])
 abstract class RestServiceTemplate<T : BaseEntity> : IRestService<T> {
     private var entityClass: KClass<T> = this::class.findAnnotation<RestServiceFor>()?.let { it.entity as KClass<T> }
         ?: throw IllegalStateException("No valid annotation found on class ${this::class.simpleName}")

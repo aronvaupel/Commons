@@ -24,6 +24,7 @@ open class RedisConfig {
         return LettuceConnectionFactory(redisHost, redisPort)
     }
 
+    //Todo: is this still used anywhere?
     @Bean
     open fun redisTemplate(connectionFactory: RedisConnectionFactory): RedisTemplate<String, ByteArray> {
         return RedisTemplate<String, ByteArray>().apply {
