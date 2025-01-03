@@ -20,8 +20,8 @@ open class RedisConfig {
 
     @Bean
     open fun redisConnectionFactory(): RedisConnectionFactory {
-        val lettuceConnectionFactory = LettuceConnectionFactory(redisHost, redisPort)
-        return lettuceConnectionFactory
+        println("RedisConfig initialized with host=$redisHost and port=$redisPort")
+        return LettuceConnectionFactory(redisHost, redisPort)
     }
 
     @Bean
