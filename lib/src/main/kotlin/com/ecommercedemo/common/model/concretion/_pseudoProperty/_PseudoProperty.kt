@@ -9,9 +9,11 @@ import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.validation.constraints.NotBlank
 import org.hibernate.annotations.Type
+import org.springframework.boot.autoconfigure.condition.ConditionalOnClass
 
 @Suppress("unused", "ClassName")
 @Entity
+@ConditionalOnClass(name = ["org.springframework.data.jpa.repository.JpaRepository"])
 open class _PseudoProperty(
     @NotBlank
     @Column(name = "entity_simple_name", nullable = false)

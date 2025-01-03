@@ -2,11 +2,13 @@ package com.ecommercedemo.common.service.concretion
 
 import com.ecommercedemo.common.model.abstraction.BaseEntity
 import mu.KotlinLogging
+import org.springframework.boot.autoconfigure.condition.ConditionalOnClass
 import org.springframework.stereotype.Service
 import kotlin.reflect.*
 import kotlin.reflect.full.memberProperties
 
 @Service
+@ConditionalOnClass(name = ["org.springframework.data.jpa.repository.JpaRepository"])
 class ReflectionService {
     val log = KotlinLogging.logger {}
 

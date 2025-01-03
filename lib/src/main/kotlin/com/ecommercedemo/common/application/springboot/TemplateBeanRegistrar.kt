@@ -6,10 +6,12 @@ import com.ecommercedemo.common.service.annotation.EventServiceFor
 import com.ecommercedemo.common.service.annotation.RestServiceFor
 import org.springframework.beans.factory.support.BeanDefinitionBuilder
 import org.springframework.beans.factory.support.BeanDefinitionRegistry
+import org.springframework.boot.autoconfigure.condition.ConditionalOnClass
 import org.springframework.context.annotation.ImportBeanDefinitionRegistrar
 import org.springframework.core.type.AnnotationMetadata
 import java.util.*
 
+@ConditionalOnClass(name = ["org.springframework.data.jpa.repository.JpaRepository"])
 class TemplateBeanRegistrar : ImportBeanDefinitionRegistrar {
 
     override fun registerBeanDefinitions(metadata: AnnotationMetadata, registry: BeanDefinitionRegistry) {
