@@ -1,44 +1,24 @@
 package com.ecommercedemo.common.controller.abstraction
 
-import com.ecommercedemo.common.controller.abstraction.request.CreateRequest
 import com.ecommercedemo.common.controller.abstraction.request.SearchRequest
-import com.ecommercedemo.common.controller.abstraction.request.UpdateRequest
 import com.ecommercedemo.common.model.abstraction.BaseEntity
-import com.ecommercedemo.common.service.abstraction.RestServiceTemplate
+import com.ecommercedemo.common.service.abstraction.DownstreamRestServiceTemplate
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass
 import org.springframework.data.domain.Page
-import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
-import org.springframework.web.bind.annotation.*
+import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.bind.annotation.PathVariable
+import org.springframework.web.bind.annotation.RequestBody
+import org.springframework.web.bind.annotation.RequestParam
 import java.util.*
 
+
 @ConditionalOnClass(name = ["org.springframework.data.jpa.repository.JpaRepository"])
-abstract class RestControllerTemplate<T : BaseEntity> {
+abstract class DownstreamRestControllerTemplate<T : BaseEntity> {
 
     @Autowired
-    private lateinit var service: RestServiceTemplate<T>
-
-    @PostMapping
-    open fun create(
-        @RequestBody request: CreateRequest
-    ): ResponseEntity<T> {
-          return ResponseEntity.ok(service.create(request))
-    }
-
-    @PatchMapping
-    open fun update(
-        @RequestBody request: UpdateRequest
-    ): ResponseEntity<T> {
-        return ResponseEntity.ok(service.update(request))
-    }
-
-    @DeleteMapping("/{id}")
-    open fun delete(
-        @PathVariable id: UUID
-    ): ResponseEntity<HttpStatus> {
-        return ResponseEntity.ok(service.delete(id))
-    }
+    private lateinit var service: DownstreamRestServiceTemplate<T>
 
     @GetMapping("/{id}")
     open fun getSingle(
