@@ -6,6 +6,7 @@ import com.ecommercedemo.common.model.abstraction.AugmentableBaseEntity
 import com.ecommercedemo.common.model.abstraction.BaseEntity
 import com.ecommercedemo.common.model.abstraction.IPseudoProperty
 import com.ecommercedemo.common.persistence.concretion._pseudoProperty._PseudoPropertyRepository
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import kotlin.reflect.KClass
 import kotlin.reflect.KFunction
@@ -19,7 +20,7 @@ import kotlin.reflect.jvm.isAccessible
 @Service
 @Suppress("UNCHECKED_CAST")
 class ServiceUtility<T : BaseEntity>(
-    private val _pseudoPropertyRepository: _PseudoPropertyRepository,
+    @Autowired(required = false) private val _pseudoPropertyRepository: _PseudoPropertyRepository? = null ,
     private val reflectionService: ReflectionService,
 ) {
 
@@ -257,8 +258,7 @@ class ServiceUtility<T : BaseEntity>(
     }
 
     private fun getValidPseudoProperties(entityClass: KClass<out AugmentableBaseEntity>): List<IPseudoProperty> {
-        return _pseudoPropertyRepository.findAllByEntitySimpleName(entityClass.simpleName!!)
+        return _pseudoPropertyRepository?.findAllByEntitySimpleName(entityClass.simpleName!!) ?: listOf()
     }
-
 
 }
