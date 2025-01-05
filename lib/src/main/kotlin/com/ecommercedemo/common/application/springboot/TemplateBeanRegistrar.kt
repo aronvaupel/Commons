@@ -53,7 +53,7 @@ class TemplateBeanRegistrar : ImportBeanDefinitionRegistrar {
                 clazz.getAnnotation(EventServiceFor::class.java).entity
             }
 
-            else -> throw IllegalStateException("No valid annotation found on class ${clazz.name}")
+            else -> throw IllegalStateException("No valid annotation found on class ${clazz.name} in registrar")
         }
 
         val parentConstructor = clazz.superclass.constructors.firstOrNull()
