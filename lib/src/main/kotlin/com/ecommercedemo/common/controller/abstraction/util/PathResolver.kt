@@ -15,7 +15,7 @@ import org.springframework.stereotype.Service
 class PathResolver(
     private val validator: SearchParamValidation,
     private val converter: SearchParamConverter,
-    @Autowired(required = false) private val _pseudoPropertyRepository: _PseudoPropertyRepository,
+    @Autowired(required = false) private val _pseudoPropertyRepository: _PseudoPropertyRepository? = null,
     private val objectMapper: ObjectMapper,
     @Value("\${spring.application.name}") private val applicationName: String
 ) {
@@ -25,10 +25,10 @@ class PathResolver(
         var currentClass: Class<*> = root.javaType
 
         val registeredPseudoPropertyTypesMap =
-            if (applicationName != "pseudoproperty-service") _pseudoPropertyRepository.findAllByEntitySimpleName(
+            if (applicationName != "pseudoproperty-service") _pseudoPropertyRepository?.findAllByEntitySimpleName(
                 currentClass.simpleName
             )
-                .associate { it.key to it.typeDescriptor.type.typeInfo } else null
+                ?.associate { it.key to it.typeDescriptor.type.typeInfo } else null
 
         segments.forEachIndexed { index, segment ->
             validator.validateFieldExistsAndIsAccessible(segment, currentClass)
