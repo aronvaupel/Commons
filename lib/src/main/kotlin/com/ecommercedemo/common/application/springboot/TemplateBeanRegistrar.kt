@@ -4,6 +4,7 @@ import com.ecommercedemo.common.controller.annotation.ControllerFor
 import com.ecommercedemo.common.persistence.annotation.PersistenceAdapterFor
 import com.ecommercedemo.common.service.annotation.EventServiceFor
 import com.ecommercedemo.common.service.annotation.RestServiceFor
+import mu.KotlinLogging
 import org.springframework.beans.factory.support.BeanDefinitionBuilder
 import org.springframework.beans.factory.support.BeanDefinitionRegistry
 import org.springframework.context.annotation.ImportBeanDefinitionRegistrar
@@ -11,6 +12,8 @@ import org.springframework.core.type.AnnotationMetadata
 import java.util.*
 
 class TemplateBeanRegistrar : ImportBeanDefinitionRegistrar {
+
+    val log = KotlinLogging.logger {}
 
     override fun registerBeanDefinitions(metadata: AnnotationMetadata, registry: BeanDefinitionRegistry) {
         val scanner = ClassPathScanner()
@@ -65,6 +68,8 @@ class TemplateBeanRegistrar : ImportBeanDefinitionRegistrar {
 
         val beanDefinition = BeanDefinitionBuilder.genericBeanDefinition(clazz)
         dependencies.forEach { dep -> beanDefinition.addConstructorArgValue(dep) }
+        val normalizedBeanName = clazz.simpleName.replaceFirstChar { it.lowercase(Locale.getDefault()) }
+        log.info("Registering bean with name: $normalizedBeanName")
         registry.registerBeanDefinition(
             clazz.simpleName.replaceFirstChar { it.lowercase(Locale.getDefault()) },
             beanDefinition.beanDefinition
