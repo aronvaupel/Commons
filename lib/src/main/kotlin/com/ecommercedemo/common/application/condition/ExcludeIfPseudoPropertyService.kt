@@ -6,5 +6,5 @@ import org.springframework.core.type.AnnotatedTypeMetadata
 
 class ExcludeIfPseudoPropertyService : Condition {
     override fun matches(context: ConditionContext, metadata: AnnotatedTypeMetadata): Boolean =
-        context.environment.getProperty("spring.application.name") == "pseudoproperty-service"
+        context.environment.getProperty("spring.application.name") != "pseudoproperty-service"
 }
