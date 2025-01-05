@@ -1,6 +1,5 @@
 package com.ecommercedemo.common.service.concretion._pseudoProperty
 
-import com.ecommercedemo.common.application.condition.ExcludeIfPseudoPropertyService
 import com.ecommercedemo.common.application.kafka.EntityEventProducer
 import com.ecommercedemo.common.application.validation.modification.ModificationType
 import com.ecommercedemo.common.model.abstraction.AugmentableBaseEntity
@@ -11,14 +10,14 @@ import jakarta.transaction.Transactional
 import mu.KotlinLogging
 import org.springframework.beans.factory.BeanFactory
 import org.springframework.beans.factory.NoSuchBeanDefinitionException
-import org.springframework.context.annotation.Conditional
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.scheduling.annotation.Async
 import org.springframework.stereotype.Service
 import java.util.*
 
 @Service
 @Suppress("UNCHECKED_CAST", "unused", "ClassName")
-@Conditional(ExcludeIfPseudoPropertyService::class)
+@ConditionalOnProperty(name = ["pseudo-properties"], havingValue = "true", matchIfMissing = false)
 //Todo: rate limit for other methods as well
 open class _PseudoPropertyApplier(
     private val beanFactory: BeanFactory,
