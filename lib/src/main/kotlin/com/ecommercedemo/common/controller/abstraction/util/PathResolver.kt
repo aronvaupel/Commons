@@ -6,6 +6,8 @@ import com.ecommercedemo.common.persistence.concretion._pseudoProperty._PseudoPr
 import com.fasterxml.jackson.databind.ObjectMapper
 import jakarta.persistence.criteria.Path
 import jakarta.persistence.criteria.Root
+import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 
 
@@ -13,8 +15,9 @@ import org.springframework.stereotype.Service
 class PathResolver(
     private val validator: SearchParamValidation,
     private val converter: SearchParamConverter,
-    private val _pseudoPropertyRepository: _PseudoPropertyRepository,
-    private val objectMapper: ObjectMapper
+    @Autowired(required = false) private val _pseudoPropertyRepository: _PseudoPropertyRepository,
+    private val objectMapper: ObjectMapper,
+    @Value("\${spring.application.name}") private val applicationName: String
 ) {
     fun <T : BaseEntity> resolvePath(params: SearchParam, root: Root<T>): ResolvedSearchParam {
         val segments = params.path.split(".")
@@ -22,8 +25,10 @@ class PathResolver(
         var currentClass: Class<*> = root.javaType
 
         val registeredPseudoPropertyTypesMap =
-            _pseudoPropertyRepository.findAllByEntitySimpleName(currentClass.simpleName)
-                .associate { it.key to it.typeDescriptor.type.typeInfo }
+            if (applicationName != "pseudoproperty-service") _pseudoPropertyRepository.findAllByEntitySimpleName(
+                currentClass.simpleName
+            )
+                .associate { it.key to it.typeDescriptor.type.typeInfo } else null
 
         segments.forEachIndexed { index, segment ->
             validator.validateFieldExistsAndIsAccessible(segment, currentClass)
@@ -34,7 +39,7 @@ class PathResolver(
                     jsonSegment == params.path.substringAfterLast(".")
                 } ?: throw IllegalArgumentException("PseudoProperty not found")
 
-                val expectedType = registeredPseudoPropertyTypesMap[relevantSegment]
+                val expectedType = registeredPseudoPropertyTypesMap?.get(relevantSegment)
                     ?: throw IllegalArgumentException("PseudoProperty type not found")
 
                 val rawSegmentValue = converter.convertAnyIfNeeded(params.searchValue, expectedType)
