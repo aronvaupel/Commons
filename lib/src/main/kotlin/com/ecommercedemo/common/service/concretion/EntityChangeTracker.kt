@@ -3,12 +3,10 @@ package com.ecommercedemo.common.service.concretion
 import com.ecommercedemo.common.model.abstraction.AugmentableBaseEntity
 import com.ecommercedemo.common.model.abstraction.BaseEntity
 import com.fasterxml.jackson.databind.ObjectMapper
-import org.springframework.boot.autoconfigure.condition.ConditionalOnClass
 import org.springframework.stereotype.Service
 import kotlin.reflect.jvm.isAccessible
 
 @Service
-@ConditionalOnClass(name = ["org.springframework.data.jpa.repository.JpaRepository"])
 class EntityChangeTracker<T : BaseEntity>(
     private val reflectionService: ReflectionService
 ){

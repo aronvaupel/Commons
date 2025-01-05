@@ -6,12 +6,10 @@ import com.ecommercedemo.common.persistence.concretion._pseudoProperty._PseudoPr
 import com.fasterxml.jackson.databind.ObjectMapper
 import jakarta.persistence.criteria.Path
 import jakarta.persistence.criteria.Root
-import org.springframework.boot.autoconfigure.condition.ConditionalOnClass
 import org.springframework.stereotype.Service
 
 
 @Service
-@ConditionalOnClass(name = ["org.springframework.data.jpa.repository.JpaRepository"])
 class PathResolver(
     private val validator: SearchParamValidation,
     private val converter: SearchParamConverter,

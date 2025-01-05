@@ -10,12 +10,10 @@ import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.validation.constraints.NotBlank
 import org.hibernate.annotations.Type
-import org.springframework.boot.autoconfigure.condition.ConditionalOnClass
 import org.springframework.context.annotation.Conditional
 
 @Suppress("unused", "ClassName")
 @Entity
-@ConditionalOnClass(name = ["org.springframework.data.jpa.repository.JpaRepository"])
 @Conditional(ExcludeIfPseudoPropertyService::class)
 open class _PseudoProperty(
     @NotBlank

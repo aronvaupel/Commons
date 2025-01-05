@@ -3,13 +3,11 @@ package com.ecommercedemo.common.controller.abstraction.util
 import com.ecommercedemo.common.application.exception.InvalidAttributeException
 import com.ecommercedemo.common.application.exception.ValueTypeMismatchException
 import com.ecommercedemo.common.service.concretion.ReflectionService
-import org.springframework.boot.autoconfigure.condition.ConditionalOnClass
 import org.springframework.stereotype.Service
 import kotlin.reflect.KClass
 
 @Service
 @Suppress("unused")
-@ConditionalOnClass(name = ["org.springframework.data.jpa.repository.JpaRepository"])
 class SearchParamValidation(
     private val deserializer: SearchParamConverter,
     private val reflectionService: ReflectionService,

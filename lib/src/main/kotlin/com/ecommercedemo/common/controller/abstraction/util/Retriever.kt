@@ -6,7 +6,6 @@ import com.ecommercedemo.common.model.abstraction.BaseEntity
 import jakarta.persistence.EntityManager
 import jakarta.persistence.Tuple
 import mu.KotlinLogging
-import org.springframework.boot.autoconfigure.condition.ConditionalOnClass
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.PageImpl
 import org.springframework.data.domain.PageRequest
@@ -16,7 +15,6 @@ import kotlin.reflect.KClass
 
 @Service
 @Suppress("unused")
-@ConditionalOnClass(name = ["org.springframework.data.jpa.repository.JpaRepository"])
 class Retriever(
     private val deserializer: SearchParamConverter,
     private val entityManager: EntityManager,

@@ -5,7 +5,6 @@ import com.ecommercedemo.common.model.abstraction.BaseEntity
 import com.fasterxml.jackson.core.type.TypeReference
 import com.fasterxml.jackson.databind.ObjectMapper
 import jakarta.persistence.EntityManagerFactory
-import org.springframework.boot.autoconfigure.condition.ConditionalOnClass
 import org.springframework.stereotype.Service
 import kotlin.reflect.KClass
 import kotlin.reflect.KType
@@ -14,7 +13,6 @@ import kotlin.reflect.jvm.javaType
 
 @Service
 @Suppress("UNCHECKED_CAST")
-@ConditionalOnClass(name = ["org.springframework.data.jpa.repository.JpaRepository"])
 class TypeReAttacher(
     private val entityManagerFactory: EntityManagerFactory
 ) {

@@ -9,7 +9,6 @@ import org.apache.kafka.common.errors.WakeupException
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
-import org.springframework.boot.autoconfigure.condition.ConditionalOnClass
 import org.springframework.context.annotation.DependsOn
 import org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory
 import org.springframework.kafka.listener.ContainerProperties
@@ -19,7 +18,6 @@ import org.springframework.kafka.listener.MessageListenerContainer
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Service
 
-@ConditionalOnClass(name = ["org.springframework.data.jpa.repository.JpaRepository"])
 @DependsOn("entityScanner")
 @Service
 class ListenerManager<T : BaseEntity> @Autowired constructor(

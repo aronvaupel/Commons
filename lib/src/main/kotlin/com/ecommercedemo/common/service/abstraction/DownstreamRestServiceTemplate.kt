@@ -9,14 +9,12 @@ import com.ecommercedemo.common.persistence.abstraction.PersistencePort
 import com.ecommercedemo.common.service.annotation.RestServiceFor
 import mu.KotlinLogging
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.boot.autoconfigure.condition.ConditionalOnClass
 import org.springframework.data.domain.Page
 import java.util.*
 import kotlin.reflect.KClass
 import kotlin.reflect.full.findAnnotation
 
 @Suppress("UNCHECKED_CAST")
-@ConditionalOnClass(name = ["org.springframework.data.jpa.repository.JpaRepository"])
 abstract class DownstreamRestServiceTemplate<T : BaseEntity> : IDownstreamRestService<T> {
     private var entityClass: KClass<T> = this::class.findAnnotation<RestServiceFor>()?.let { it.entity as KClass<T> }
         ?: throw IllegalStateException("No valid annotation found on class ${this::class.simpleName}")

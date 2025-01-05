@@ -11,7 +11,6 @@ import jakarta.transaction.Transactional
 import mu.KotlinLogging
 import org.springframework.beans.factory.BeanFactory
 import org.springframework.beans.factory.NoSuchBeanDefinitionException
-import org.springframework.boot.autoconfigure.condition.ConditionalOnClass
 import org.springframework.context.annotation.Conditional
 import org.springframework.scheduling.annotation.Async
 import org.springframework.stereotype.Service
@@ -19,7 +18,6 @@ import java.util.*
 
 @Service
 @Suppress("UNCHECKED_CAST", "unused", "ClassName")
-@ConditionalOnClass(name = ["org.springframework.data.jpa.repository.JpaRepository"])
 @Conditional(ExcludeIfPseudoPropertyService::class)
 //Todo: rate limit for other methods as well
 open class _PseudoPropertyApplier(

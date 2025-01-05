@@ -4,7 +4,6 @@ import com.ecommercedemo.common.controller.abstraction.request.SearchRequest
 import com.ecommercedemo.common.model.abstraction.BaseEntity
 import com.ecommercedemo.common.service.abstraction.DownstreamRestServiceTemplate
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.boot.autoconfigure.condition.ConditionalOnClass
 import org.springframework.data.domain.Page
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.GetMapping
@@ -14,7 +13,6 @@ import org.springframework.web.bind.annotation.RequestParam
 import java.util.*
 
 
-@ConditionalOnClass(name = ["org.springframework.data.jpa.repository.JpaRepository"])
 abstract class DownstreamRestControllerTemplate<T : BaseEntity> {
 
     @Autowired

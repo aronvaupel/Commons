@@ -6,7 +6,6 @@ import com.ecommercedemo.common.model.abstraction.AugmentableBaseEntity
 import com.ecommercedemo.common.model.abstraction.BaseEntity
 import com.ecommercedemo.common.model.abstraction.IPseudoProperty
 import com.ecommercedemo.common.persistence.concretion._pseudoProperty._PseudoPropertyRepository
-import org.springframework.boot.autoconfigure.condition.ConditionalOnClass
 import org.springframework.stereotype.Service
 import kotlin.reflect.KClass
 import kotlin.reflect.KFunction
@@ -19,7 +18,6 @@ import kotlin.reflect.jvm.isAccessible
 
 @Service
 @Suppress("UNCHECKED_CAST")
-@ConditionalOnClass(name = ["org.springframework.data.jpa.repository.JpaRepository"])
 class ServiceUtility<T : BaseEntity>(
     private val _pseudoPropertyRepository: _PseudoPropertyRepository,
     private val reflectionService: ReflectionService,

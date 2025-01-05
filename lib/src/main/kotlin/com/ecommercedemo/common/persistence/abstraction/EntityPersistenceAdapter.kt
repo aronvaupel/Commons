@@ -7,7 +7,6 @@ import jakarta.persistence.LockModeType
 import jakarta.persistence.Tuple
 import mu.KotlinLogging
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.boot.autoconfigure.condition.ConditionalOnClass
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.PageImpl
 import org.springframework.data.domain.PageRequest
@@ -17,7 +16,6 @@ import kotlin.reflect.KClass
 import kotlin.reflect.full.findAnnotation
 
 @Suppress("UNCHECKED_CAST")
-@ConditionalOnClass(name = ["org.springframework.data.jpa.repository.JpaRepository"])
 abstract class EntityPersistenceAdapter<T : BaseEntity> : PersistencePort<T> {
     private var entityClass: KClass<T> = this::class.findAnnotation<PersistenceAdapterFor>()?.let { it.entity as KClass<T> }
         ?: throw IllegalStateException("No valid annotation found on class ${this::class.simpleName}")
