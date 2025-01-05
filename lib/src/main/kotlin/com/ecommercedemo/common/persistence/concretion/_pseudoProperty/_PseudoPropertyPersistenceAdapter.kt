@@ -1,6 +1,6 @@
 package com.ecommercedemo.common.persistence.concretion._pseudoProperty
 
-import com.ecommercedemo.common.application.condition.ExcludeIfPseudoPropertyEntityRegisteredCondition
+import com.ecommercedemo.common.application.condition.ExcludeIfPseudoPropertyService
 import com.ecommercedemo.common.model.concretion._pseudoProperty._PseudoProperty
 import com.ecommercedemo.common.persistence.abstraction.EntityPersistenceAdapter
 import com.ecommercedemo.common.persistence.annotation.PersistenceAdapterFor
@@ -12,5 +12,5 @@ import org.springframework.stereotype.Service
 @Service
 @PersistenceAdapterFor(_PseudoProperty::class)
 @ConditionalOnClass(name = ["org.springframework.data.jpa.repository.JpaRepository"])
-@Conditional(ExcludeIfPseudoPropertyEntityRegisteredCondition::class)
+@Conditional(ExcludeIfPseudoPropertyService::class)
 class _PseudoPropertyPersistenceAdapter : EntityPersistenceAdapter<_PseudoProperty>()

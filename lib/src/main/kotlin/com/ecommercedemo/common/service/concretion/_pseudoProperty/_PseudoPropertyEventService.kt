@@ -1,6 +1,6 @@
 package com.ecommercedemo.common.service.concretion._pseudoProperty
 
-import com.ecommercedemo.common.application.condition.ExcludeIfPseudoPropertyEntityRegisteredCondition
+import com.ecommercedemo.common.application.condition.ExcludeIfPseudoPropertyService
 import com.ecommercedemo.common.model.concretion._pseudoProperty._PseudoProperty
 import com.ecommercedemo.common.service.abstraction.EventServiceTemplate
 import com.ecommercedemo.common.service.annotation.EventServiceFor
@@ -12,5 +12,5 @@ import org.springframework.stereotype.Service
 @Service
 @EventServiceFor(_PseudoProperty::class)
 @ConditionalOnClass(name = ["org.springframework.data.jpa.repository.JpaRepository"])
-@Conditional(ExcludeIfPseudoPropertyEntityRegisteredCondition::class)
+@Conditional(ExcludeIfPseudoPropertyService::class)
 open class _PseudoPropertyEventService: EventServiceTemplate<_PseudoProperty>()

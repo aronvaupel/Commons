@@ -1,6 +1,6 @@
 package com.ecommercedemo.common.service.concretion._pseudoProperty
 
-import com.ecommercedemo.common.application.condition.ExcludeIfPseudoPropertyEntityRegisteredCondition
+import com.ecommercedemo.common.application.condition.ExcludeIfPseudoPropertyService
 import com.ecommercedemo.common.application.kafka.EntityEventProducer
 import com.ecommercedemo.common.application.validation.modification.ModificationType
 import com.ecommercedemo.common.model.abstraction.AugmentableBaseEntity
@@ -20,7 +20,7 @@ import java.util.*
 @Service
 @Suppress("UNCHECKED_CAST", "unused", "ClassName")
 @ConditionalOnClass(name = ["org.springframework.data.jpa.repository.JpaRepository"])
-@Conditional(ExcludeIfPseudoPropertyEntityRegisteredCondition::class)
+@Conditional(ExcludeIfPseudoPropertyService::class)
 //Todo: rate limit for other methods as well
 open class _PseudoPropertyApplier(
     private val beanFactory: BeanFactory,

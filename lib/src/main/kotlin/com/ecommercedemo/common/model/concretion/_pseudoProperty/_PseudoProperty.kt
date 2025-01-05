@@ -1,6 +1,6 @@
 package com.ecommercedemo.common.model.concretion._pseudoProperty
 
-import com.ecommercedemo.common.application.condition.ExcludeIfPseudoPropertyEntityRegisteredCondition
+import com.ecommercedemo.common.application.condition.ExcludeIfPseudoPropertyService
 import com.ecommercedemo.common.application.validation.type.ValueType
 import com.ecommercedemo.common.controller.abstraction.util.TypeDescriptor
 import com.ecommercedemo.common.model.abstraction.BaseEntity
@@ -16,7 +16,7 @@ import org.springframework.context.annotation.Conditional
 @Suppress("unused", "ClassName")
 @Entity
 @ConditionalOnClass(name = ["org.springframework.data.jpa.repository.JpaRepository"])
-@Conditional(ExcludeIfPseudoPropertyEntityRegisteredCondition::class)
+@Conditional(ExcludeIfPseudoPropertyService::class)
 open class _PseudoProperty(
     @NotBlank
     @Column(name = "entity_simple_name", nullable = false)
