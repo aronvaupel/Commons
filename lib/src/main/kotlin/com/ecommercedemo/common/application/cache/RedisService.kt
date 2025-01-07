@@ -6,7 +6,7 @@ import com.ecommercedemo.common.application.cache.values.TopicDetails
 import com.ecommercedemo.common.application.exception.NotCachedException
 import com.ecommercedemo.common.controller.abstraction.request.SearchRequest
 import com.ecommercedemo.common.model.abstraction.BaseEntity
-import com.ecommercedemo.common.model.concretion.Permission.Permission
+import com.ecommercedemo.common.model.concretion.permission.Permission
 import com.ecommercedemo.common.model.concretion.permissionuserassociation.PermissionUserAssociation
 import com.fasterxml.jackson.databind.ObjectMapper
 import mu.KotlinLogging

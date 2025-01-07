@@ -7,4 +7,4 @@ import org.springframework.stereotype.Service
 
 @Service
 @EventServiceFor(PermissionUserAssociation::class)
-class PermissionUserAssociationEventService : EventServiceTemplate<PermissionUserAssociation>()
+open class PermissionUserAssociationEventService : EventServiceTemplate<PermissionUserAssociation>()

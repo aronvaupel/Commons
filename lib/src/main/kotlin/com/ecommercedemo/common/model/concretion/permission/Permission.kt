@@ -1,4 +1,4 @@
-package com.ecommercedemo.common.model.concretion.Permission
+package com.ecommercedemo.common.model.concretion.permission
 
 import com.ecommercedemo.common.model.abstraction.BaseEntity
 import jakarta.persistence.Entity
