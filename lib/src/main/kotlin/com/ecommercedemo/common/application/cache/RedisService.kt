@@ -6,6 +6,8 @@ import com.ecommercedemo.common.application.cache.values.TopicDetails
 import com.ecommercedemo.common.application.exception.NotCachedException
 import com.ecommercedemo.common.controller.abstraction.request.SearchRequest
 import com.ecommercedemo.common.model.abstraction.BaseEntity
+import com.ecommercedemo.common.model.concretion.Permission.Permission
+import com.ecommercedemo.common.model.concretion.permissionuserassociation.PermissionUserAssociation
 import com.fasterxml.jackson.databind.ObjectMapper
 import mu.KotlinLogging
 import org.springframework.beans.factory.annotation.Value
@@ -32,12 +34,13 @@ open class RedisService(
         upstreamEntities.forEach { entity ->
             val topicDetails = kafkaRegistry.topics[entity]
             when {
-                topicDetails == null -> kafkaRegistry.topics[entity] = TopicDetails(
-                    Microservice(serviceName, 1), mutableSetOf()
-                )
-                //Fixme: this is broken
-                topicDetails.producer.name == serviceName -> topicDetails.producer.instanceCount += 1
+                topicDetails == null ->
+                    kafkaRegistry.topics[entity] = TopicDetails(
+                        Microservice(serviceName, 1), mutableSetOf()
+                    )
 
+                entity == Permission::class.simpleName -> return@forEach
+                entity == PermissionUserAssociation::class.simpleName -> return@forEach
                 else -> throw Exception(
                     "Topic $entity is already registered by another service. Only one source of truth is allowed"
                 )

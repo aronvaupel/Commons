@@ -1,4 +1,4 @@
-package com.ecommercedemo.common.controller.concretion
+package com.ecommercedemo.common.controller.concretion._pseudoproperty
 
 import com.ecommercedemo.common.controller.abstraction.DownstreamRestControllerTemplate
 import com.ecommercedemo.common.controller.annotation.ControllerFor

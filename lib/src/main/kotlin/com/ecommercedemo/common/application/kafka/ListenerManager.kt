@@ -51,6 +51,9 @@ class ListenerManager<T : BaseEntity> @Autowired constructor(
     //Todo: pollutes the log, count is broken
     @Scheduled(fixedRate = 30000, initialDelay = 10000)
     fun manageListeners() {
+        if (serviceName == "user-service") {
+            createKafkaListener("PermissionUserAssociation")
+        }
         if (downstreamEntities.isEmpty()) {
             log.warn("No downstream entities found. No listeners to manage.")
             return

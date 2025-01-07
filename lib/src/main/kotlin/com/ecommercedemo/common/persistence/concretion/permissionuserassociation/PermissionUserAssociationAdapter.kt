@@ -1,0 +1,10 @@
+package com.ecommercedemo.common.persistence.concretion.permissionuserassociation
+
+import com.ecommercedemo.common.model.concretion.permissionuserassociation.PermissionUserAssociation
+import com.ecommercedemo.common.persistence.abstraction.EntityPersistenceAdapter
+import com.ecommercedemo.common.persistence.annotation.PersistenceAdapterFor
+import org.springframework.stereotype.Service
+
+@Service
+@PersistenceAdapterFor(PermissionUserAssociation::class)
+class PermissionUserAssociationAdapter : EntityPersistenceAdapter<PermissionUserAssociation>()
