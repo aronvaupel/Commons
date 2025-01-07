@@ -9,17 +9,20 @@ import org.springframework.stereotype.Component
 class RepositoryScanner @Autowired constructor(
     private val applicationContext: ApplicationContext,
 ) {
-    private fun getEntityNames(filterCondition: (String) -> Boolean): List<String> {
+    private fun getPrimaryEntityNames(filterCondition: (String) -> Boolean): List<String> {
         return applicationContext.getBeanNamesForType(JpaRepository::class.java)
-            .map { it.dropLast(10) }
+            .map {
+                it.replaceFirstChar { c -> c.uppercase() }
+                it.dropLast(10) 
+            }
             .filter(filterCondition)
     }
 
     fun getUpstreamEntityNames(): List<String> {
-        return getEntityNames { !it.startsWith("_", ignoreCase = true) }
+        return getPrimaryEntityNames { !it.startsWith("_", ignoreCase = true) }
     }
 
     fun getDownstreamEntityNames(): List<String> {
-        return getEntityNames { it.startsWith("_", ignoreCase = true) }
+        return getPrimaryEntityNames { it.startsWith("_", ignoreCase = true) }
     }
 }
