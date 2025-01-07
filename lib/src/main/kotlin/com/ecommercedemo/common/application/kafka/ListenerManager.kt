@@ -18,7 +18,7 @@ import org.springframework.kafka.listener.MessageListenerContainer
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Service
 
-@DependsOn("entityScanner")
+@DependsOn("repositoryScanner")
 @Service
 class ListenerManager<T : BaseEntity> @Autowired constructor(
     private val redisService: RedisService,
