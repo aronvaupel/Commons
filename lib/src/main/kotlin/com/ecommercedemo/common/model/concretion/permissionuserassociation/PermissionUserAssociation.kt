@@ -5,6 +5,7 @@ import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.persistence.Table
 import jakarta.persistence.UniqueConstraint
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import java.util.*
 
 
@@ -15,6 +16,7 @@ import java.util.*
         UniqueConstraint(columnNames = ["service_of_origin", "permission_id", "user_id"])
     ]
 )
+@ConditionalOnProperty(name = ["permissions"], havingValue = "true", matchIfMissing = false)
 open class PermissionUserAssociation(
     @Column(name = "service_of_origin", nullable = false)
     var serviceOfOrigin: String = "",
