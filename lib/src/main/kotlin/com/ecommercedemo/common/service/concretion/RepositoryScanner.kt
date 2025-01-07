@@ -17,7 +17,7 @@ class RepositoryScanner @Autowired constructor(
                 if (it.startsWith("_")) {
                     it[0] + it[1].uppercase() + it.substring(2)
                 } else {
-                    it.replaceFirstChar { c -> c.uppercaseChar() }
+                    it.replaceFirstChar { c -> c.uppercase() }
                 }
 
                 it.dropLast(10)
