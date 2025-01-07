@@ -3,7 +3,7 @@ package com.ecommercedemo.common.application.kafka
 import com.ecommercedemo.common.application.cache.RedisService
 import com.ecommercedemo.common.application.kafka.handling.MainEventHandler
 import com.ecommercedemo.common.model.abstraction.BaseEntity
-import com.ecommercedemo.common.service.concretion.EntityScanner
+import com.ecommercedemo.common.service.concretion.RepositoryScanner
 import jakarta.annotation.PostConstruct
 import org.apache.kafka.common.errors.WakeupException
 import org.slf4j.LoggerFactory
@@ -22,7 +22,7 @@ import org.springframework.stereotype.Service
 @Service
 class ListenerManager<T : BaseEntity> @Autowired constructor(
     private val redisService: RedisService,
-    private val entityScanner: EntityScanner,
+    private val repositoryScanner: RepositoryScanner,
     private val kafkaListenerContainerFactory: ConcurrentKafkaListenerContainerFactory<String, Any>,
     private val mainEventHandler: MainEventHandler<T>,
     @Value("\${spring.application.name}") private val serviceName: String
@@ -43,7 +43,7 @@ class ListenerManager<T : BaseEntity> @Autowired constructor(
         log.info("Service name is: $serviceName")
 
         log.info("Scanning for downstream entities")
-        downstreamEntities = entityScanner.getDownstreamEntityNames()
+        downstreamEntities = repositoryScanner.getDownstreamRepositoryNames()
         log.info("Downstream entities found: $downstreamEntities")
         manageListeners()
     }
