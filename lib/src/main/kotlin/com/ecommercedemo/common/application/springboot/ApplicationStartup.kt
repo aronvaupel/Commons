@@ -14,7 +14,7 @@ class ApplicationStartup @Autowired constructor(
 
     @PostConstruct
     fun init() {
-        val upstreamEntityNames = repositoryScanner.getUpstreamRepositoryNames()
+        val upstreamEntityNames = repositoryScanner.getUpstreamEntityNames()
         dynamicTopicRegistration.declareKafkaTopics(upstreamEntityNames)
     }
 }

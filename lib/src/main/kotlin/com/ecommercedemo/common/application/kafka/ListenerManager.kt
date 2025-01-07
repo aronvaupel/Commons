@@ -43,7 +43,7 @@ class ListenerManager<T : BaseEntity> @Autowired constructor(
         log.info("Service name is: $serviceName")
 
         log.info("Scanning for downstream entities")
-        downstreamEntities = repositoryScanner.getDownstreamRepositoryNames()
+        downstreamEntities = repositoryScanner.getDownstreamEntityNames()
         log.info("Downstream entities found: $downstreamEntities")
         manageListeners()
     }
