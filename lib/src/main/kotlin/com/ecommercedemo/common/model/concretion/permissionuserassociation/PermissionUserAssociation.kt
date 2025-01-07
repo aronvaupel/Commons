@@ -19,9 +19,9 @@ import java.util.*
 @ConditionalOnProperty(name = ["permissions"], havingValue = "true", matchIfMissing = false)
 open class PermissionUserAssociation(
     @Column(name = "service_of_origin", nullable = false)
-    var serviceOfOrigin: String = "",
+    open var serviceOfOrigin: String = "",
     @Column(name = "permission_id", nullable = false)
-    var permissionId: UUID? = null,
+    open var permissionId: UUID? = null,
     @Column(name = "user_id", nullable = false)
-    var userId: UUID? = null
+    open var userId: UUID? = null
 ) : BaseEntity()

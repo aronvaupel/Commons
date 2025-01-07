@@ -7,7 +7,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 @Entity
 @ConditionalOnProperty(name = ["permissions"], havingValue = "true", matchIfMissing = false)
 open class Permission(
-    var serviceOfOrigin: String = "",
-    var label: String = "",
-    var description: String = ""
+    open var serviceOfOrigin: String = "",
+    open var label: String = "",
+    open var description: String = ""
 ) : BaseEntity()
