@@ -42,8 +42,8 @@ open class RedisService(
                             Microservice(serviceName, 1), mutableSetOf()
                         )
 
-                entity == Permission::class.simpleName
-                        || entity == PermissionUserAssociation::class.simpleName
+                entity == Permission::class.simpleName?.replaceFirstChar { it.lowercase() }
+                        || entity == PermissionUserAssociation::class.simpleName?.replaceFirstChar { it.lowercase() }
                         || topicDetails.producer.name == serviceName -> return@forEach
 
                 else -> throw Exception(
