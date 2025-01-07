@@ -35,12 +35,17 @@ open class RedisService(
             val topicDetails = kafkaRegistry.topics[entity]
             when {
                 topicDetails == null ->
-                    kafkaRegistry.topics[entity] = TopicDetails(
-                        Microservice(serviceName, 1), mutableSetOf()
-                    )
+                    if (entity == Permission::class.simpleName || entity == PermissionUserAssociation::class.simpleName) {
+                        kafkaRegistry.topics[entity] = null
+                    } else
+                        kafkaRegistry.topics[entity] = TopicDetails(
+                            Microservice(serviceName, 1), mutableSetOf()
+                        )
 
-                entity == Permission::class.simpleName -> return@forEach
-                entity == PermissionUserAssociation::class.simpleName -> return@forEach
+                entity == Permission::class.simpleName
+                        || entity == PermissionUserAssociation::class.simpleName
+                        || topicDetails.producer.name == serviceName -> return@forEach
+
                 else -> throw Exception(
                     "Topic $entity is already registered by another service. Only one source of truth is allowed"
                 )
@@ -54,7 +59,7 @@ open class RedisService(
     fun deregisterProducer(serviceName: String) {
         val kafkaTopics = getKafkaRegistry()
         kafkaTopics.topics.entries.removeIf { (_, topicDetails) ->
-            if (topicDetails.producer.name == serviceName) {
+            if (topicDetails != null && topicDetails.producer.name == serviceName) {
                 --topicDetails.producer.instanceCount == 0
             } else false
         }
