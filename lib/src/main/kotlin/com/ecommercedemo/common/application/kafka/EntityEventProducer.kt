@@ -31,9 +31,9 @@ class EntityEventProducer(
             )
 
             kafkaTemplate.send(topic, event)
-            log.info("Produced event for topic: $entityClassName, event: $event")
+            log.info("Produced event for topic: $topic, event: $event")
         } else {
-            throw IllegalArgumentException("Topic $entityClassName is not registered in Redis.")
+            throw IllegalArgumentException("Topic $topic is not registered in Redis.")
         }
     }
 
