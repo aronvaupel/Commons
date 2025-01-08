@@ -4,6 +4,7 @@ import com.ecommercedemo.common.application.validation.modification.Modification
 import com.ecommercedemo.common.model.concretion.permissionuserassociation.PermissionUserAssociation
 import com.ecommercedemo.common.service.concretion.TypeReAttacher
 import com.fasterxml.jackson.core.JsonParser
+import com.fasterxml.jackson.core.type.TypeReference
 import com.fasterxml.jackson.databind.DeserializationContext
 import com.fasterxml.jackson.databind.JsonDeserializer
 import com.fasterxml.jackson.databind.ObjectMapper
@@ -41,10 +42,11 @@ class EntityEventDeserializer(
                 PermissionUserAssociation::class.java.simpleName
             else "_$entityClassName"
         val properties: Map<String, Any?> = try {
-            val rawData: Map<String, Any?> = objectMapper.convertValue(
-                propertiesNode,
-                objectMapper.typeFactory.constructMapType(Map::class.java, String::class.java, Any::class.java)
-            )
+            val rawData: Map<String, Any?> = try {
+                objectMapper.readValue(propertiesNode.traverse(), object : TypeReference<Map<String, Any?>>() {})
+            } catch (e: Exception) {
+                throw RuntimeException("Failed to deserialize 'properties'", e)
+            }
 
             typeReAttacher.reAttachType(rawData, normalizedClassName)
         } catch (e: Exception) {
