@@ -38,7 +38,7 @@ class EntityEventDeserializer(
 
         val normalizedClassName =
             if (entityClassName == PermissionUserAssociation::class.java.simpleName)
-                PermissionUserAssociation::class.java.canonicalName
+                PermissionUserAssociation::class.java.simpleName
             else "_$entityClassName"
         val properties: Map<String, Any?> = try {
             val rawData: Map<String, Any?> = objectMapper.convertValue(
