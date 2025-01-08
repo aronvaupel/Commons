@@ -2,7 +2,6 @@ package com.ecommercedemo.common.service.concretion
 
 import com.ecommercedemo.common.model.abstraction.AugmentableBaseEntity
 import com.ecommercedemo.common.model.abstraction.BaseEntity
-import com.fasterxml.jackson.core.type.TypeReference
 import com.fasterxml.jackson.databind.ObjectMapper
 import jakarta.persistence.Embeddable
 import jakarta.persistence.Entity
@@ -89,7 +88,7 @@ class EntityChangeTracker<T : BaseEntity>(
 
             if (!isEqual) when {
                 isComplexObject(newValue) ->
-                    changedProperties[property.name] = serializeComplexObject(newValue)
+                    changedProperties[property.name] = objectMapper.writeValueAsString(newValue)
 
                 isMap(newValue) ->
                     changedProperties[property.name] = objectMapper.writeValueAsString(newValue)
@@ -113,15 +112,5 @@ class EntityChangeTracker<T : BaseEntity>(
 
     private fun isCollection(value: Any?): Boolean = value != null && value is Collection<*>
     private fun isMap(value: Any?): Boolean = value != null && value is Map<*, *>
-
-    private fun serializeComplexObject(value: Any?): Map<String, Any?>? {
-        return try {
-            objectMapper.convertValue(
-                value ?: return null,
-                object : TypeReference<Map<String, Any?>>() {})
-        } catch (e: Exception) {
-            mapOf("error" to "Failed to serialize object: ${e.message}")
-        }
-    }
 
 }
