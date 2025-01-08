@@ -3,6 +3,8 @@ package com.ecommercedemo.common.application.kafka
 import com.ecommercedemo.common.application.cache.RedisService
 import com.ecommercedemo.common.application.kafka.handling.MainEventHandler
 import com.ecommercedemo.common.model.abstraction.BaseEntity
+import com.ecommercedemo.common.model.concretion.permission.Permission
+import com.ecommercedemo.common.model.concretion.permissionuserassociation.PermissionUserAssociation
 import com.ecommercedemo.common.service.concretion.RepositoryScanner
 import jakarta.annotation.PostConstruct
 import org.apache.kafka.common.errors.WakeupException
@@ -52,7 +54,7 @@ class ListenerManager<T : BaseEntity> @Autowired constructor(
     @Scheduled(fixedRate = 30000, initialDelay = 10000)
     fun manageListeners() {
         if (serviceName == "user-service") {
-            createKafkaListener("PermissionUserAssociation")
+            createKafkaListener("permissionUserAssociation")
         }
         if (downstreamEntities.isEmpty()) {
             log.warn("No downstream entities found. No listeners to manage.")
@@ -63,22 +65,24 @@ class ListenerManager<T : BaseEntity> @Autowired constructor(
         log.info("Kafka topics fetched from Redis: $kafkaTopics")
 
         downstreamEntities.forEach { prefixedEntity ->
-            val entity = prefixedEntity.removePrefix("_")
-            val topicDetails = kafkaTopics.topics[entity]
+            val topic = prefixedEntity.removePrefix("_").replaceFirstChar { it.lowercaseChar() }
+            val topicDetails = kafkaTopics.topics[topic]
 
             if (topicDetails != null) {
-                if (!listenerContainers.containsKey(entity)) {
+                if (!listenerContainers.containsKey(topic)) {
                     try {
-                        createKafkaListener(entity)
-                        redisService.registerConsumer(entity)
-                        log.info("Listener successfully created and registered for topic: $entity")
+                        createKafkaListener(topic)
+                        redisService.registerConsumer(topic)
+                        log.info("Listener successfully created and registered for topic: $topic")
                     } catch (e: Exception) {
-                        log.error("Failed to create listener for topic: $entity", e)
+                        log.error("Failed to create listener for topic: $topic", e)
                     }
                 }
-            } else if (listenerContainers.containsKey(entity)) {
+            } else if (listenerContainers.containsKey(topic)
+                && topic != Permission::class.simpleName?.replaceFirstChar { it.lowercase() }
+                && topic != PermissionUserAssociation::class.simpleName?.replaceFirstChar { it.lowercase() }) {
                 stopKafkaListener(prefixedEntity)
-                log.info("Listener stopped for topic: $entity")
+                log.info("Listener stopped for topic: $topic")
             }
         }
     }
