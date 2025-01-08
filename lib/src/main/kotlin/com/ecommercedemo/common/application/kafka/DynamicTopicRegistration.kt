@@ -1,6 +1,7 @@
 package com.ecommercedemo.common.application.kafka
 
 import com.ecommercedemo.common.application.cache.RedisService
+import mu.KotlinLogging
 import org.apache.kafka.clients.admin.NewTopic
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
@@ -20,7 +21,10 @@ class DynamicTopicRegistration @Autowired constructor(
     @Value("\${kafka.default.replication-factor:1}")
     private val defaultReplicationFactor: Int = 1
 
+    val log = KotlinLogging.logger {}
+
     fun declareKafkaTopics(upstreamEntityNames: List<String>) {
+        log.info { "Registering Kafka topics: $upstreamEntityNames" }
         redisService.registerAsTopics(upstreamEntityNames)
         upstreamEntityNames.forEach { topicName ->
             val topic: NewTopic = TopicBuilder.name(topicName)
