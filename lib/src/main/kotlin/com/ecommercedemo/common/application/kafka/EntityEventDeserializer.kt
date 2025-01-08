@@ -43,11 +43,13 @@ class EntityEventDeserializer(
             else "_$entityClassName"
         val properties: Map<String, Any?> = try {
             val rawData: Map<String, Any?> = try {
-                objectMapper.readValue(propertiesNode.traverse(), object : TypeReference<Map<String, Any?>>() {})
+                val result  = objectMapper.readValue(propertiesNode.traverse(), object : TypeReference<Map<String, Any?>>() {})
+                println("Raw data from EntityEventDeserializer: $result")
+                result
             } catch (e: Exception) {
-                throw RuntimeException("Failed to deserialize 'properties'", e)
+                throw RuntimeException("ObjectMapper failed to deserialize 'properties'", e)
             }
-
+            println("Starting to re-attach types in EventDeserializer for properties of entity class: $normalizedClassName")
             typeReAttacher.reAttachType(rawData, normalizedClassName)
         } catch (e: Exception) {
             throw IllegalArgumentException("Failed to deserialize 'properties' for entity class: $normalizedClassName", e)
