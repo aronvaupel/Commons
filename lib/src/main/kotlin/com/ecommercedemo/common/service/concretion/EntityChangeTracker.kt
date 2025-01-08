@@ -43,6 +43,7 @@ class EntityChangeTracker<T : BaseEntity>(
             }
 
         }
+        println("Changed properties: $changedProperties")
         return changedProperties
     }
 
