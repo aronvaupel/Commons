@@ -27,8 +27,8 @@ class TypeReAttacher(
         data: Map<String, Any?>,
         entityClassName: String,
     ): Map<String, Any?> {
-        println("Reattaching type for entity class: $entityClassName")
         val entityClass = resolveEntityClass(entityClassName)
+        println("Reattaching type for entity class: ${entityClass.simpleName}")
         val typesForDataKeys = extractFieldTypesMap(entityClass).filterKeys { data.containsKey(it) }
         println("Types for data keys: $typesForDataKeys")
 

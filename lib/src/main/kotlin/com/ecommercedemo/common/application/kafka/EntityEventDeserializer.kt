@@ -1,6 +1,7 @@
 package com.ecommercedemo.common.application.kafka
 
 import com.ecommercedemo.common.application.validation.modification.ModificationType
+import com.ecommercedemo.common.model.concretion.permissionuserassociation.PermissionUserAssociation
 import com.ecommercedemo.common.service.concretion.TypeReAttacher
 import com.fasterxml.jackson.core.JsonParser
 import com.fasterxml.jackson.databind.DeserializationContext
@@ -35,17 +36,22 @@ class EntityEventDeserializer(
             throw IllegalArgumentException("Properties' must be a JSON object")
         }
 
+        val normalizedClassName =
+            if (entityClassName == PermissionUserAssociation::class.java.simpleName)
+                PermissionUserAssociation::class.java.canonicalName
+            else "_$entityClassName"
         val properties: Map<String, Any?> = try {
             val rawData: Map<String, Any?> = objectMapper.convertValue(
                 propertiesNode,
                 objectMapper.typeFactory.constructMapType(Map::class.java, String::class.java, Any::class.java)
             )
-            typeReAttacher.reAttachType(rawData, entityClassName)
+
+            typeReAttacher.reAttachType(rawData, normalizedClassName)
         } catch (e: Exception) {
-            throw IllegalArgumentException("Failed to deserialize 'properties' for entity class: _$entityClassName", e)
+            throw IllegalArgumentException("Failed to deserialize 'properties' for entity class: $normalizedClassName", e)
         }
 
-        val result =  EntityEvent(
+        val result = EntityEvent(
             entityClassName = entityClassName,
             id = id,
             type = type,
