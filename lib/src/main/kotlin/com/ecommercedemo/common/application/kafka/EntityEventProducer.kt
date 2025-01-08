@@ -22,7 +22,7 @@ class EntityEventProducer(
     ) {
         val kafkaRegistry = redisService.getKafkaRegistry()
         val topic = entityClassName.replaceFirstChar { it.lowercaseChar() }
-        if (kafkaRegistry.topics.containsKey(entityClassName)) {
+        if (kafkaRegistry.topics.containsKey(topic)) {
             val event = EntityEvent(
                 entityClassName = entityClassName,
                 id = id,
