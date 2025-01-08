@@ -21,7 +21,7 @@ class EntityEventProducer(
         properties: MutableMap<String, Any?>
     ) {
         val kafkaRegistry = redisService.getKafkaRegistry()
-
+        val topic = entityClassName.replaceFirstChar { it.lowercaseChar() }
         if (kafkaRegistry.topics.containsKey(entityClassName)) {
             val event = EntityEvent(
                 entityClassName = entityClassName,
@@ -30,7 +30,7 @@ class EntityEventProducer(
                 properties = properties
             )
 
-            kafkaTemplate.send(entityClassName, event)
+            kafkaTemplate.send(topic, event)
             log.info("Produced event for topic: $entityClassName, event: $event")
         } else {
             throw IllegalArgumentException("Topic $entityClassName is not registered in Redis.")
