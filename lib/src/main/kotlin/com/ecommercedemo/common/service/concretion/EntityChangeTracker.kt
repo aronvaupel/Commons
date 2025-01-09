@@ -1,7 +1,7 @@
 package com.ecommercedemo.common.service.concretion
 
-import com.ecommercedemo.common.model.abstraction.AugmentableBaseEntity
 import com.ecommercedemo.common.model.abstraction.BaseEntity
+import com.fasterxml.jackson.core.type.TypeReference
 import com.fasterxml.jackson.databind.ObjectMapper
 import jakarta.persistence.Embeddable
 import jakarta.persistence.Entity
@@ -9,48 +9,10 @@ import org.springframework.stereotype.Service
 import kotlin.reflect.jvm.isAccessible
 
 @Service
-@Suppress("UNCHECKED_CAST")
 class EntityChangeTracker<T : BaseEntity>(
     private val reflectionService: ReflectionService,
     private val objectMapper: ObjectMapper
 ) {
-
-//    fun getChangedProperties(entityBefore: T?, entityAfter: T): MutableMap<String, Any?> {
-//        val changedProperties = mutableMapOf<String, Any?>()
-//        val propertiesBefore =
-//            reflectionService.getEntityMemberProperties(entityBefore)
-//        reflectionService.getEntityMemberProperties(entityAfter)?.forEach { property ->
-//            val oldValue = entityBefore?.let { before ->
-//                val matchingProperty = propertiesBefore?.firstOrNull { it.name == property.name }
-//                    ?: throw IllegalArgumentException("Property ${property.name} not found in entity before.")
-//                matchingProperty.isAccessible = true
-//                if (before is AugmentableBaseEntity && property.name == AugmentableBaseEntity::pseudoProperties.name)
-//                    before.pseudoProperties
-//                else matchingProperty.get(before)
-//            }
-//
-//            val newValue = if (
-//                entityAfter is AugmentableBaseEntity
-//                && property.name == AugmentableBaseEntity::pseudoProperties.name
-//            )
-//                entityAfter.pseudoProperties
-//            else {
-//                property.isAccessible = true
-//                property.get(entityAfter)
-//            }
-//
-//            if (oldValue != newValue) {
-//                changedProperties[property.name] = if (property.name == AugmentableBaseEntity::pseudoProperties.name)
-//                    ObjectMapper().writeValueAsString(newValue)
-//                else
-//                    newValue
-//            }
-//
-//        }
-//        println("Changed properties: $changedProperties")
-//        return changedProperties
-//    }
-
     fun getChangedProperties(entityBefore: T?, entityAfter: T): MutableMap<String, Any?> {
         val changedProperties = mutableMapOf<String, Any?>()
         val propertiesBefore = reflectionService.getEntityMemberProperties(entityBefore)
@@ -71,36 +33,20 @@ class EntityChangeTracker<T : BaseEntity>(
                 get(entityAfter)
             }
 
-
             val isEqual = when {
                 oldValue == null || newValue == null -> oldValue == newValue
-                isComplexObject(oldValue) ->
-                    objectMapper.writeValueAsString(oldValue) == objectMapper.writeValueAsString(newValue)
-
-                isMap(oldValue) ->
-                    objectMapper.writeValueAsString(oldValue) == objectMapper.writeValueAsString(newValue)
-
-                isCollection(oldValue) ->
+                isComplexObject(oldValue) || isMap(oldValue) || isCollection(oldValue) ->
                     objectMapper.writeValueAsString(oldValue) == objectMapper.writeValueAsString(newValue)
 
                 else -> oldValue == newValue
             }
 
-            if (!isEqual) when {
+            if (!isEqual) changedProperties[property.name] = when {
                 isComplexObject(newValue) ->
-                    changedProperties[property.name] = objectMapper.writeValueAsString(newValue)
+                    objectMapper.convertValue(newValue, object : TypeReference<Map<String, Any?>>() {})
 
-                isMap(newValue) ->
-                    changedProperties[property.name] = objectMapper.writeValueAsString(newValue)
-
-                isCollection(newValue) ->
-                    changedProperties[property.name] = objectMapper.writeValueAsString(newValue)
-
-                property.name == AugmentableBaseEntity::pseudoProperties.name ->
-                    objectMapper.writeValueAsString(newValue)
-
-                else -> changedProperties[property.name] = newValue
-
+                isCollection(newValue) -> objectMapper.convertValue(newValue, object : TypeReference<List<Any?>>() {})
+                else -> newValue
             }
         }
         println("Changed properties: $changedProperties")

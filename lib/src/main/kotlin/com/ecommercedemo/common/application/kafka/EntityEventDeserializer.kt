@@ -41,18 +41,17 @@ class EntityEventDeserializer(
             if (entityClassName == PermissionUserAssociation::class.java.simpleName)
                 PermissionUserAssociation::class.java.simpleName
             else "_$entityClassName"
+
         val properties: Map<String, Any?> = try {
-            val rawData: Map<String, Any?> = try {
-                val result  = objectMapper.readValue(propertiesNode.traverse(), object : TypeReference<Map<String, Any?>>() {})
-                println("Raw data from EntityEventDeserializer: $result")
-                result
-            } catch (e: Exception) {
-                throw RuntimeException("ObjectMapper failed to deserialize 'properties'", e)
-            }
-            println("Starting to re-attach types in EventDeserializer for properties of entity class: $normalizedClassName")
+            val rawData: Map<String, Any?> =
+                objectMapper.readValue(propertiesNode.traverse(), object : TypeReference<Map<String, Any?>>() {})
+
             typeReAttacher.reAttachType(rawData, normalizedClassName)
         } catch (e: Exception) {
-            throw IllegalArgumentException("Failed to deserialize 'properties' for entity class: $normalizedClassName", e)
+            throw IllegalArgumentException(
+                "Failed to deserialize 'properties' into Map<String, Any?> based on entity class: $normalizedClassName",
+                e
+            )
         }
 
         val result = EntityEvent(
