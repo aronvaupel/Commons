@@ -3,14 +3,26 @@ plugins {
     alias(libs.plugins.kotlin.jvm)
     `java-library`
     `maven-publish`
+    id("io.spring.dependency-management") version "1.1.6"
 }
 
 group = "com.github.aronvaupel"
-version = "6.6.27"
+version = "7.0.0"
 
 repositories {
     mavenCentral()
+
+    maven {
+        url = uri("https://repo.spring.io/milestone")
+    }
+    maven {
+        url = uri("https://repo.spring.io/snapshot")
+    }
+
+    google()
 }
+
+extra["springCloudVersion"] = "2023.0.3"
 
 dependencies {
     implementation("com.fasterxml.jackson.module:jackson-module-jakarta-xmlbind-annotations:2.18.2")
@@ -36,6 +48,7 @@ dependencies {
     testImplementation("org.jetbrains.kotlin:kotlin-test")
     testImplementation("org.junit.jupiter:junit-jupiter:5.10.3")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+    implementation("org.springframework.cloud:spring-cloud-starter-netflix-eureka-client")
     //Fixme
     implementation("org.springframework.boot:spring-boot-starter-data-jpa:3.3.4")
     //Fixme
@@ -47,6 +60,12 @@ dependencies {
     implementation("org.springframework.kafka:spring-kafka:3.2.4")
     implementation("org.springframework:spring-orm:6.1.13")
     implementation("org.springframework:spring-tx:6.1.13")
+}
+
+dependencyManagement {
+    imports {
+        mavenBom("org.springframework.cloud:spring-cloud-dependencies:${property("springCloudVersion")}")
+    }
 }
 
 java {

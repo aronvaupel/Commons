@@ -50,7 +50,7 @@ class MainEventHandler<T: BaseEntity>(
                 ?.actualTypeArguments?.firstOrNull()
             firstTypeArgument?.typeName?.substringAfterLast(".") == "_$entityClassName"
         } ?: throw IllegalArgumentException(
-            "No processor of type ${processorType.simpleName} found for entity class: $entityClassName"
+            "No processor of type ${processorType.simpleName} found for entity class: _$entityClassName"
         )
     }
 }
