@@ -29,30 +29,40 @@ class ApplicationStartup @Autowired constructor(
     fun init() {
         val upstreamEntityNames = repositoryScanner.getUpstreamEntityNames()
         dynamicTopicRegistration.declareKafkaTopics(upstreamEntityNames)
-        val endpointRules = extractEndpointRBACRules()
-        val serviceRestriction = serviceLevelRestrictions.toSet()
-        registerRBACRulesToEureka(endpointRules, serviceRestriction)
+        val enrichedEndpointMetadata = extractEndpointRBACRules()
+        registerRBACRulesToEureka(enrichedEndpointMetadata)
     }
 
-    private fun extractEndpointRBACRules(): Map<String, Set<String>> {
-        val rules = mutableMapOf<String, Set<String>>()
+    private fun extractEndpointRBACRules(): List<EndpointMetadata> {
+        val endpointMetadata = mutableListOf<EndpointMetadata>()
         val controllerPackage = determineControllerPackage()
         val controllers = controllerPackage?.let {
             findClassesInPackage(controllerPackage).filter {
                 it.isAnnotationPresent(RestController::class.java)
             }
         }
+
         controllers?.forEach { controller ->
             for (method in controller.declaredMethods) {
                 val annotation = method.getAnnotation(AccessRestrictedToRoles::class.java)
-                if (annotation != null) {
-                    val endpoint = "${controller.simpleName}.${method.name}"
-                    rules[endpoint] = annotation.roles.toSet()
+                val requestMapping = method.getAnnotation(org.springframework.web.bind.annotation.RequestMapping::class.java)
+
+                requestMapping?.value?.forEach { path ->
+                    requestMapping.method.forEach { httpMethod ->
+                        endpointMetadata.add(
+                            EndpointMetadata(
+                                path = path,
+                                method = httpMethod.name,
+                                roles = (annotation?.roles?.toSet() ?: emptySet()) + serviceLevelRestrictions
+                            )
+                        )
+                    }
                 }
             }
         }
-        println("Extracted RBAC rules: $rules")
-        return rules
+
+        println("Extracted Endpoint Metadata: $endpointMetadata")
+        return endpointMetadata
     }
 
     private fun determineControllerPackage(): String? {
@@ -90,13 +100,11 @@ class ApplicationStartup @Autowired constructor(
     }
 
     private fun registerRBACRulesToEureka(
-        endpointRules: Map<String, Set<String>>,
-        serviceRestriction: Set<String>
+        enrichedEndpointMetadata: List<EndpointMetadata>
     ) {
         val metadata = mutableMapOf<String, String>()
-        metadata["endpoint-level-rbac"] = ObjectMapper().writeValueAsString(endpointRules)
-        metadata["service-level-rbac"] = ObjectMapper().writeValueAsString(serviceRestriction)
-        println("Registered RBAC rules to Eureka: $metadata")
+        metadata["endpoints"] = ObjectMapper().writeValueAsString(enrichedEndpointMetadata)
+        println("Registered Enriched Metadata to Eureka: $metadata")
         eurekaInstanceConfig.metadataMap.putAll(metadata)
     }
 }
