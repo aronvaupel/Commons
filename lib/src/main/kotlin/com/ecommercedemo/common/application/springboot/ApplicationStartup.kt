@@ -71,6 +71,7 @@ class ApplicationStartup @Autowired constructor(
                 val clazz = Class.forName(stackElement.className)
                 if (clazz.isAnnotationPresent(SpringBootApplication::class.java)) clazz else null
             }
+            println("Main class: $mainClass")
             val basePackage = Class.forName(mainClass?.name).`package`.name
             println("Base package: $basePackage")
             return "$basePackage.controller"
