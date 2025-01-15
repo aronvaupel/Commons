@@ -22,7 +22,7 @@ class ApplicationStartup @Autowired constructor(
     @Autowired
     private lateinit var eurekaInstanceConfig: EurekaInstanceConfig
 
-    @Value("\${security.service-restriction.roles}")
+    @Value("\${security.service-restriction.roles:[]}")
     private lateinit var serviceLevelRestrictions: List<String>
 
     @PostConstruct
