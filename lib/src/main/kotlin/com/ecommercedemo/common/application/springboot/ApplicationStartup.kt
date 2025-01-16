@@ -45,8 +45,7 @@ class ApplicationStartup @Autowired constructor(
             .filterNot { it.simpleName == "GatewayController" }
         println("Extracted Controllers: $controllers")
         controllers.forEach { controller ->
-            val classLevelRequestMapping = controller.getAnnotation(RequestMapping::class.java)
-            val basePath = classLevelRequestMapping?.value?.firstOrNull() ?: ""
+            val basePath = controller.getAnnotation(RequestMapping::class.java)?.value?.firstOrNull() ?: ""
 
             getAllMethods(controller).forEach { method ->
                 val accessAnnotation: AccessRestrictedToRoles? =
@@ -54,10 +53,10 @@ class ApplicationStartup @Autowired constructor(
 
                 method.annotations.forEach { annotation ->
                     if (annotation.annotationClass.simpleName?.endsWith("Mapping") == true) {
-                        val methodPath = extractAnnotationValue(annotation, "value") ?: ""
+                        val methodPath = extractMethodPath(annotation) ?: ""
                         val fullPath = combinePaths(basePath, methodPath)
 
-                        val httpMethod = extractAnnotationValue(annotation, "method") ?: ""
+                        val httpMethod = resolveHttpMethod(annotation)
 
                         val roles = (accessAnnotation?.roles?.toSet() ?: emptySet()) + serviceLevelRestrictions
 
@@ -86,23 +85,8 @@ class ApplicationStartup @Autowired constructor(
         return combined
     }
 
-    private fun extractAnnotationValue(annotation: Annotation, fieldName: String): String? {
-        return try {
-            val method = annotation.annotationClass.java.methods.find { it.name == fieldName }
-            if (method != null) {
-                when (val value = method.invoke(annotation)) {
-                    is Array<*> -> value.firstOrNull()?.toString() // Handle array values
-                    else -> value?.toString() // Handle other types
-                }
-            } else {
-                null
-            }.also { println("Extracted annotation value: $it") }
-        } catch (e: Exception) {
-            println("Extraction of annotation value failed: ${e.message}")
-            null
-        }
-    }
-
+    private fun extractMethodPath(annotation: Annotation) =
+        annotation.annotationClass.java.getMethod("value").invoke(annotation).toString()
 
     private fun registerRBACRulesToEureka(
         enrichedEndpointMetadata: List<EndpointMetadata>
@@ -121,6 +105,17 @@ class ApplicationStartup @Autowired constructor(
             currentClass = currentClass.superclass
         }
         return methods
+    }
+
+    private fun resolveHttpMethod(annotation: Annotation): String {
+        return when (annotation.annotationClass.simpleName) {
+            "GetMapping" -> "GET"
+            "PostMapping" -> "POST"
+            "PutMapping" -> "PUT"
+            "DeleteMapping" -> "DELETE"
+            "PatchMapping" -> "PATCH"
+            else -> throw IllegalArgumentException("Unsupported HTTP method annotation: $annotation")
+        }
     }
 
 }
