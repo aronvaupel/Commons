@@ -16,7 +16,6 @@ import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 import java.lang.reflect.Method
-import kotlin.reflect.KClass
 
 @Component
 class ApplicationStartup @Autowired constructor(
@@ -33,6 +32,7 @@ class ApplicationStartup @Autowired constructor(
 
     @PostConstruct
     fun init() {
+        println("SERVICE LEVEL RESTRICTIONS: $serviceLevelRestrictions")
         val upstreamEntityNames = repositoryScanner.getUpstreamEntityNames()
         dynamicTopicRegistration.declareKafkaTopics(upstreamEntityNames)
         val enrichedEndpointMetadata = extractEndpointMetadata()
@@ -63,7 +63,7 @@ class ApplicationStartup @Autowired constructor(
                                 method = resolveHttpMethod(annotation),
                                 roles = (accessAnnotation?.roles?.toSet() ?: emptySet()) + serviceLevelRestrictions,
                                 pathVariables = extractPathVariables(method),
-                                requestParams = extractRequestParams(method)
+                                requestParameters = extractRequestParams(method)
                             )
                         )
                     }
@@ -127,23 +127,25 @@ class ApplicationStartup @Autowired constructor(
         }
     }
 
-    private fun extractPathVariables(method: Method): Map<String, KClass<*>> {
+    private fun extractPathVariables(method: Method): List<PathVariableRepresentation> {
         return method.parameters
             .filter { it.isAnnotationPresent(PathVariable::class.java) }
-            .associate { param ->
-                val annotation = param.getAnnotation(PathVariable::class.java)
-                val name = annotation.name.ifBlank { param.name }
-                name to param.type.kotlin
+            .map {
+                PathVariableRepresentation(
+                    name = it.getAnnotation(PathVariable::class.java).name.ifBlank { it.name },
+                    typeSimpleName = it.type.kotlin.simpleName!!
+                )
             }
     }
 
-    private fun extractRequestParams(method: Method): Map<String, KClass<*>> {
+    private fun extractRequestParams(method: Method): List<RequestParamRepresentation> {
         return method.parameters
             .filter { it.isAnnotationPresent(RequestParam::class.java) }
-            .associate { param ->
-                val annotation = param.getAnnotation(RequestParam::class.java)
-                val name = annotation.name.ifBlank { param.name }
-                name to param.type.kotlin
+            .map {
+                RequestParamRepresentation(
+                    name = it.getAnnotation(RequestParam::class.java).name.ifBlank { it.name },
+                    typeSimpleName = it.type.kotlin.simpleName!!
+                )
             }
     }
 
