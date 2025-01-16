@@ -8,7 +8,6 @@ import com.netflix.appinfo.EurekaInstanceConfig
 import jakarta.annotation.PostConstruct
 import org.springframework.aop.framework.AopProxyUtils
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.ApplicationContext
 import org.springframework.stereotype.Component
 import org.springframework.web.bind.annotation.PathVariable
@@ -22,14 +21,13 @@ class ApplicationStartup @Autowired constructor(
     private val dynamicTopicRegistration: DynamicTopicRegistration,
     private val repositoryScanner: RepositoryScanner,
     private val applicationContext: ApplicationContext,
-    @Value("\${service-restricted-to-roles}")
-    private val serviceLevelRestrictions: List<String>,
+    private val serviceLevelAccess: ServiceLevelAccess,
     private val eurekaInstanceConfig: EurekaInstanceConfig
 ) {
 
     @PostConstruct
     fun init() {
-        println("SERVICE LEVEL RESTRICTIONS: $serviceLevelRestrictions")
+        println("SERVICE LEVEL RESTRICTIONS: $serviceLevelAccess")
         val upstreamEntityNames = repositoryScanner.getUpstreamEntityNames()
         dynamicTopicRegistration.declareKafkaTopics(upstreamEntityNames)
         val enrichedEndpointMetadata = extractEndpointMetadata()
@@ -58,7 +56,7 @@ class ApplicationStartup @Autowired constructor(
                             EndpointMetadata(
                                 path = combinePaths(basePath, extractMethodPath(annotation) ?: ""),
                                 method = resolveHttpMethod(annotation),
-                                roles = (accessAnnotation?.roles?.toSet().orEmpty() + serviceLevelRestrictions.toSet()),
+                                roles = (accessAnnotation?.roles?.toSet().orEmpty() + serviceLevelAccess.restrictedTo.toSet()),
                                 pathVariables = extractPathVariables(method),
                                 requestParameters = extractRequestParams(method)
                             )
