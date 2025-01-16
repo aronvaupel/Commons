@@ -21,15 +21,11 @@ import java.lang.reflect.Method
 class ApplicationStartup @Autowired constructor(
     private val dynamicTopicRegistration: DynamicTopicRegistration,
     private val repositoryScanner: RepositoryScanner,
-    private val applicationContext: ApplicationContext
+    private val applicationContext: ApplicationContext,
+    @Value("\${security.service-restriction.roles}")
+    private val serviceLevelRestrictions: List<String> = emptyList(),
+    private val eurekaInstanceConfig: EurekaInstanceConfig
 ) {
-
-    @Autowired
-    private lateinit var eurekaInstanceConfig: EurekaInstanceConfig
-
-    @Value("\${security.service-restriction.roles:[]}")
-    private lateinit var serviceLevelRestrictions: List<String>
-
     @PostConstruct
     fun init() {
         println("SERVICE LEVEL RESTRICTIONS: $serviceLevelRestrictions")
