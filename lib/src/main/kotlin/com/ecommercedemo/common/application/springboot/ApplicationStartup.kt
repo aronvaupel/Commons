@@ -6,8 +6,6 @@ import com.ecommercedemo.common.service.concretion.RepositoryScanner
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.netflix.appinfo.EurekaInstanceConfig
 import jakarta.annotation.PostConstruct
-import org.reflections.Reflections
-import org.reflections.scanners.Scanners
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.ApplicationContext
@@ -17,9 +15,9 @@ import org.springframework.web.bind.annotation.RestController
 
 @Component
 class ApplicationStartup @Autowired constructor(
-    private val context: ApplicationContext,
     private val dynamicTopicRegistration: DynamicTopicRegistration,
     private val repositoryScanner: RepositoryScanner,
+    private val applicationContext: ApplicationContext
 ) {
 
     @Autowired
@@ -38,14 +36,19 @@ class ApplicationStartup @Autowired constructor(
 
     private fun extractEndpointRBACRules(): List<EndpointMetadata> {
         val endpointMetadata = mutableListOf<EndpointMetadata>()
-        val controllers = findAllRestControllers().filterNot { it.simpleName == "GatewayController" }
+        val controllers = applicationContext.getBeansWithAnnotation(RestController::class.java)
+            .values
+            .map { it::class.java }
+            .toSet()
+            .filterNot { it.simpleName == "GatewayController" }
 
         controllers.forEach { controller ->
             val classLevelRequestMapping = controller.getAnnotation(RequestMapping::class.java)
             val basePath = classLevelRequestMapping?.value?.firstOrNull() ?: ""
 
             controller.declaredMethods.forEach { method ->
-                val accessAnnotation: AccessRestrictedToRoles? = method.getAnnotation(AccessRestrictedToRoles::class.java) ?: null
+                val accessAnnotation: AccessRestrictedToRoles? =
+                    method.getAnnotation(AccessRestrictedToRoles::class.java) ?: null
 
                 method.annotations.forEach { annotation ->
                     if (annotation.annotationClass.simpleName?.endsWith("Mapping") == true) {
@@ -91,17 +94,6 @@ class ApplicationStartup @Autowired constructor(
         }
     }
 
-
-    private fun findAllRestControllers(): Set<Class<*>> {
-        val reflections = Reflections(
-            "",
-            Scanners.TypesAnnotated
-        )
-        val controllers = reflections.getTypesAnnotatedWith(RestController::class.java)
-        println("Found Controllers: $controllers")
-        return controllers
-    }
-
     private fun registerRBACRulesToEureka(
         enrichedEndpointMetadata: List<EndpointMetadata>
     ) {
@@ -110,4 +102,5 @@ class ApplicationStartup @Autowired constructor(
         println("Registered Enriched Metadata to Eureka: $metadata")
         eurekaInstanceConfig.metadataMap.putAll(metadata)
     }
+
 }
