@@ -86,11 +86,14 @@ class ApplicationStartup @Autowired constructor(
 
     private fun extractAnnotationValue(annotation: Annotation, fieldName: String): String? {
         return try {
-            val value = annotation.annotationClass.java.getMethod(fieldName).invoke(annotation)?.toString()
-            println("Extracted Annotation Value: $value")
-            value
+            val method = annotation.annotationClass.java.getMethod(fieldName)
+            val value = method.invoke(annotation)
+            when (value) {
+                is Array<*> -> value.first()?.toString()
+                else -> value?.toString()
+            }.also { println("Extracted annotation value: $it") }
         } catch (e: Exception) {
-            println("Extraction of annotation value failed")
+            println("Extraction of annotation value failed: ${e.message}")
             null
         }
     }
