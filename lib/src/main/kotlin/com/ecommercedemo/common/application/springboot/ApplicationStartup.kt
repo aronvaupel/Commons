@@ -68,7 +68,9 @@ class ApplicationStartup @Autowired constructor(
     private fun determineControllerPackage(): String? {
         try {
             val mainClass = Thread.currentThread().stackTrace.firstNotNullOfOrNull { stackElement ->
+                println("Stackelement: $stackElement")
                 val clazz = Class.forName(stackElement.className)
+                println("Class: $clazz")
                 if (clazz.isAnnotationPresent(SpringBootApplication::class.java)) clazz else null
             }
             println("Main class: $mainClass")
