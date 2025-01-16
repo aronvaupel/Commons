@@ -22,7 +22,7 @@ class ApplicationStartup @Autowired constructor(
     private val dynamicTopicRegistration: DynamicTopicRegistration,
     private val repositoryScanner: RepositoryScanner,
     private val applicationContext: ApplicationContext,
-    @Value("\${service-restricted-to-roles:[]}")
+    @Value("\${service-restricted-to-roles}")
     private val serviceLevelRestrictions: List<String>,
     private val eurekaInstanceConfig: EurekaInstanceConfig
 ) {
