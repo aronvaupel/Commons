@@ -8,8 +8,8 @@ data class EndpointMetadata(
     val path: String,
     val method: String,
     val roles: Set<String>,
-    @JsonIgnore val pathVariables: Map<String, KClass<*>>,
-    @JsonIgnore val requestParams: Map<String, KClass<*>>
+    @JsonIgnore val pathVariables: Map<String, KClass<*>> = emptyMap(),
+    @JsonIgnore val requestParams: Map<String, KClass<*>> = emptyMap()
 ) {
     @JsonProperty("pathVariables")
     fun getPathVariableTypes(): Map<String, String> {
