@@ -85,8 +85,18 @@ class ApplicationStartup @Autowired constructor(
         return combined
     }
 
-    private fun extractMethodPath(annotation: Annotation) =
-        annotation.annotationClass.java.getMethod("value").invoke(annotation).toString()
+    private fun extractMethodPath(annotation: Annotation): String? {
+        return try {
+            val value = annotation.annotationClass.java.getMethod("value").invoke(annotation)
+            when (value) {
+                is Array<*> -> value.firstOrNull()?.toString()
+                else -> value?.toString()
+            }.also { println("Extracted method path: $it") }
+        } catch (e: Exception) {
+            println("Failed to extract method path: ${e.message}")
+            null
+        }
+    }
 
     private fun registerRBACRulesToEureka(
         enrichedEndpointMetadata: List<EndpointMetadata>
