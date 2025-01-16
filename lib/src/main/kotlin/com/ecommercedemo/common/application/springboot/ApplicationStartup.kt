@@ -6,6 +6,7 @@ import com.ecommercedemo.common.service.concretion.RepositoryScanner
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.netflix.appinfo.EurekaInstanceConfig
 import jakarta.annotation.PostConstruct
+import org.springframework.aop.framework.AopProxyUtils
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.ApplicationContext
@@ -38,10 +39,10 @@ class ApplicationStartup @Autowired constructor(
         val endpointMetadata = mutableListOf<EndpointMetadata>()
         val controllers = applicationContext.getBeansWithAnnotation(RestController::class.java)
             .values
-            .map { it::class.java }
+            .map { AopProxyUtils.ultimateTargetClass(it) }
             .toSet()
             .filterNot { it.simpleName == "GatewayController" }
-
+        println("Extracted Controllers: $controllers")
         controllers.forEach { controller ->
             val classLevelRequestMapping = controller.getAnnotation(RequestMapping::class.java)
             val basePath = classLevelRequestMapping?.value?.firstOrNull() ?: ""
