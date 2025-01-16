@@ -11,9 +11,12 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.ApplicationContext
 import org.springframework.stereotype.Component
+import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 import java.lang.reflect.Method
+import kotlin.reflect.KClass
 
 @Component
 class ApplicationStartup @Autowired constructor(
@@ -32,11 +35,11 @@ class ApplicationStartup @Autowired constructor(
     fun init() {
         val upstreamEntityNames = repositoryScanner.getUpstreamEntityNames()
         dynamicTopicRegistration.declareKafkaTopics(upstreamEntityNames)
-        val enrichedEndpointMetadata = extractEndpointRBACRules()
+        val enrichedEndpointMetadata = extractEndpointMetadata()
         registerRBACRulesToEureka(enrichedEndpointMetadata)
     }
 
-    private fun extractEndpointRBACRules(): List<EndpointMetadata> {
+    private fun extractEndpointMetadata(): List<EndpointMetadata> {
         val endpointMetadata = mutableListOf<EndpointMetadata>()
         val controllers = applicationContext.getBeansWithAnnotation(RestController::class.java)
             .values
@@ -53,18 +56,14 @@ class ApplicationStartup @Autowired constructor(
 
                 method.annotations.forEach { annotation ->
                     if (annotation.annotationClass.simpleName?.endsWith("Mapping") == true) {
-                        val methodPath = extractMethodPath(annotation) ?: ""
-                        val fullPath = combinePaths(basePath, methodPath)
-
-                        val httpMethod = resolveHttpMethod(annotation)
-
-                        val roles = (accessAnnotation?.roles?.toSet() ?: emptySet()) + serviceLevelRestrictions
 
                         endpointMetadata.add(
                             EndpointMetadata(
-                                path = fullPath,
-                                method = httpMethod,
-                                roles = roles
+                                path = combinePaths(basePath, extractMethodPath(annotation) ?: ""),
+                                method = resolveHttpMethod(annotation),
+                                roles = (accessAnnotation?.roles?.toSet() ?: emptySet()) + serviceLevelRestrictions,
+                                pathVariables = extractPathVariables(method),
+                                requestParams = extractRequestParams(method)
                             )
                         )
                     }
@@ -126,6 +125,26 @@ class ApplicationStartup @Autowired constructor(
             "PatchMapping" -> "PATCH"
             else -> throw IllegalArgumentException("Unsupported HTTP method annotation: $annotation")
         }
+    }
+
+    private fun extractPathVariables(method: Method): Map<String, KClass<*>> {
+        return method.parameters
+            .filter { it.isAnnotationPresent(PathVariable::class.java) }
+            .associate { param ->
+                val annotation = param.getAnnotation(PathVariable::class.java)
+                val name = annotation.name.ifBlank { param.name }
+                name to param.type.kotlin
+            }
+    }
+
+    private fun extractRequestParams(method: Method): Map<String, KClass<*>> {
+        return method.parameters
+            .filter { it.isAnnotationPresent(RequestParam::class.java) }
+            .associate { param ->
+                val annotation = param.getAnnotation(RequestParam::class.java)
+                val name = annotation.name.ifBlank { param.name }
+                name to param.type.kotlin
+            }
     }
 
 }
