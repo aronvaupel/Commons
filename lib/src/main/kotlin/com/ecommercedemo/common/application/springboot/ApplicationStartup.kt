@@ -13,6 +13,7 @@ import org.springframework.context.ApplicationContext
 import org.springframework.stereotype.Component
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
+import java.lang.reflect.Method
 
 @Component
 class ApplicationStartup @Autowired constructor(
@@ -47,7 +48,7 @@ class ApplicationStartup @Autowired constructor(
             val classLevelRequestMapping = controller.getAnnotation(RequestMapping::class.java)
             val basePath = classLevelRequestMapping?.value?.firstOrNull() ?: ""
 
-            controller.declaredMethods.forEach { method ->
+            getAllMethods(controller).forEach { method ->
                 val accessAnnotation: AccessRestrictedToRoles? =
                     method.getAnnotation(AccessRestrictedToRoles::class.java) ?: null
 
@@ -78,25 +79,30 @@ class ApplicationStartup @Autowired constructor(
 
 
     private fun combinePaths(basePath: String, methodPath: String): String {
+        val serviceName = applicationContext.environment.getProperty("spring.application.name") ?: "unknown"
         val combined =
-            (basePath.trimEnd('/') + "/" + methodPath.trimStart('/')).replace("//", "/")
+            ("/$serviceName" + basePath.trimEnd('/') + "/" + methodPath.trimStart('/')).replace("//", "/")
         println("Combined Paths: $combined")
         return combined
     }
 
     private fun extractAnnotationValue(annotation: Annotation, fieldName: String): String? {
         return try {
-            val method = annotation.annotationClass.java.getMethod(fieldName)
-            val value = method.invoke(annotation)
-            when (value) {
-                is Array<*> -> value.first()?.toString()
-                else -> value?.toString()
+            val method = annotation.annotationClass.java.methods.find { it.name == fieldName }
+            if (method != null) {
+                when (val value = method.invoke(annotation)) {
+                    is Array<*> -> value.firstOrNull()?.toString() // Handle array values
+                    else -> value?.toString() // Handle other types
+                }
+            } else {
+                null
             }.also { println("Extracted annotation value: $it") }
         } catch (e: Exception) {
             println("Extraction of annotation value failed: ${e.message}")
             null
         }
     }
+
 
     private fun registerRBACRulesToEureka(
         enrichedEndpointMetadata: List<EndpointMetadata>
@@ -105,6 +111,16 @@ class ApplicationStartup @Autowired constructor(
         metadata["endpoints"] = ObjectMapper().writeValueAsString(enrichedEndpointMetadata)
         println("Registered Enriched Metadata to Eureka: $metadata")
         eurekaInstanceConfig.metadataMap.putAll(metadata)
+    }
+
+    private fun getAllMethods(controller: Class<*>): List<Method> {
+        val methods = mutableListOf<Method>()
+        var currentClass: Class<*>? = controller
+        while (currentClass != null) {
+            methods.addAll(currentClass.declaredMethods)
+            currentClass = currentClass.superclass
+        }
+        return methods
     }
 
 }
