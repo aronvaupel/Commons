@@ -22,13 +22,10 @@ class ApplicationStartup @Autowired constructor(
     private val dynamicTopicRegistration: DynamicTopicRegistration,
     private val repositoryScanner: RepositoryScanner,
     private val applicationContext: ApplicationContext,
+    @Value("\${security.service-restriction.roles}")
+    private val serviceLevelRestrictions: List<String>?,
+    private val eurekaInstanceConfig: EurekaInstanceConfig
 ) {
-
-    @Autowired
-    private lateinit var eurekaInstanceConfig: EurekaInstanceConfig
-
-    @Value("\${security.service-restriction.roles:[]}")
-    private lateinit var serviceLevelRestrictions: List<String>
 
     @PostConstruct
     fun init() {
@@ -52,7 +49,7 @@ class ApplicationStartup @Autowired constructor(
 
             getAllMethods(controller).forEach { method ->
                 val accessAnnotation: AccessRestrictedToRoles? =
-                    method.getAnnotation(AccessRestrictedToRoles::class.java) ?: null
+                    method.getAnnotation(AccessRestrictedToRoles::class.java)
 
                 method.annotations.forEach { annotation ->
                     if (annotation.annotationClass.simpleName?.endsWith("Mapping") == true) {
@@ -61,7 +58,7 @@ class ApplicationStartup @Autowired constructor(
                             EndpointMetadata(
                                 path = combinePaths(basePath, extractMethodPath(annotation) ?: ""),
                                 method = resolveHttpMethod(annotation),
-                                roles = (accessAnnotation?.roles?.toSet() ?: emptySet()) + serviceLevelRestrictions,
+                                roles = (accessAnnotation?.roles?.toSet().orEmpty() + serviceLevelRestrictions?.toSet().orEmpty()),
                                 pathVariables = extractPathVariables(method),
                                 requestParameters = extractRequestParams(method)
                             )
