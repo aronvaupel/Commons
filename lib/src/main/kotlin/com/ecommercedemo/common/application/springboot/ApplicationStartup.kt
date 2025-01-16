@@ -6,15 +6,18 @@ import com.ecommercedemo.common.service.concretion.RepositoryScanner
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.netflix.appinfo.EurekaInstanceConfig
 import jakarta.annotation.PostConstruct
+import org.reflections.Reflections
+import org.reflections.scanners.Scanners
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
-import org.springframework.boot.autoconfigure.SpringBootApplication
+import org.springframework.context.ApplicationContext
 import org.springframework.stereotype.Component
+import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
-import java.io.File
 
 @Component
 class ApplicationStartup @Autowired constructor(
+    private val context: ApplicationContext,
     private val dynamicTopicRegistration: DynamicTopicRegistration,
     private val repositoryScanner: RepositoryScanner,
 ) {
@@ -35,25 +38,29 @@ class ApplicationStartup @Autowired constructor(
 
     private fun extractEndpointRBACRules(): List<EndpointMetadata> {
         val endpointMetadata = mutableListOf<EndpointMetadata>()
-        val controllerPackage = determineControllerPackage()
-        val controllers = controllerPackage?.let {
-            findClassesInPackage(controllerPackage).filter {
-                it.isAnnotationPresent(RestController::class.java)
-            }
-        }
+        val controllers = findAllRestControllers().filterNot { it.simpleName == "GatewayController" }
 
-        controllers?.forEach { controller ->
-            for (method in controller.declaredMethods) {
-                val annotation = method.getAnnotation(AccessRestrictedToRoles::class.java)
-                val requestMapping = method.getAnnotation(org.springframework.web.bind.annotation.RequestMapping::class.java)
+        controllers.forEach { controller ->
+            val classLevelRequestMapping = controller.getAnnotation(RequestMapping::class.java)
+            val basePath = classLevelRequestMapping?.value?.firstOrNull() ?: ""
 
-                requestMapping?.value?.forEach { path ->
-                    requestMapping.method.forEach { httpMethod ->
+            controller.declaredMethods.forEach { method ->
+                val accessAnnotation: AccessRestrictedToRoles? = method.getAnnotation(AccessRestrictedToRoles::class.java) ?: null
+
+                method.annotations.forEach { annotation ->
+                    if (annotation.annotationClass.simpleName?.endsWith("Mapping") == true) {
+                        val methodPath = extractAnnotationValue(annotation, "value") ?: ""
+                        val fullPath = combinePaths(basePath, methodPath)
+
+                        val httpMethod = extractAnnotationValue(annotation, "method") ?: ""
+
+                        val roles = (accessAnnotation?.roles?.toSet() ?: emptySet()) + serviceLevelRestrictions
+
                         endpointMetadata.add(
                             EndpointMetadata(
-                                path = path,
-                                method = httpMethod.name,
-                                roles = (annotation?.roles?.toSet() ?: emptySet()) + serviceLevelRestrictions
+                                path = fullPath,
+                                method = httpMethod,
+                                roles = roles
                             )
                         )
                     }
@@ -65,41 +72,34 @@ class ApplicationStartup @Autowired constructor(
         return endpointMetadata
     }
 
-    private fun determineControllerPackage(): String? {
-        try {
-            val mainClass = Thread.currentThread().stackTrace.firstNotNullOfOrNull { stackElement ->
-                println("Stackelement: $stackElement")
-                val clazz = Class.forName(stackElement.className)
-                println("Class: $clazz")
-                if (clazz.isAnnotationPresent(SpringBootApplication::class.java)) clazz else null
-            }
-            println("Main class: $mainClass")
-            val basePackage = Class.forName(mainClass?.name).`package`.name
-            println("Base package: $basePackage")
-            return "$basePackage.controller"
-        } catch (e: ClassNotFoundException) {
-            println("Could not determine base package.")
-            return null
+
+    private fun combinePaths(basePath: String, methodPath: String): String {
+        val combined =
+            (basePath.trimEnd('/') + "/" + methodPath.trimStart('/')).replace("//", "/")
+        println("Combined Paths: $combined")
+        return combined
+    }
+
+    private fun extractAnnotationValue(annotation: Annotation, fieldName: String): String? {
+        return try {
+            val value = annotation.annotationClass.java.getMethod(fieldName).invoke(annotation)?.toString()
+            println("Extracted Annotation Value: $value")
+            value
+        } catch (e: Exception) {
+            println("Extraction of annotation value failed")
+            null
         }
     }
 
 
-    private fun findClassesInPackage(basePackage: String): List<Class<*>> {
-        val packagePath = basePackage.replace('.', '/')
-        val classLoader = Thread.currentThread().contextClassLoader
-        val resources = classLoader.getResources(packagePath)
-
-        val classes = mutableListOf<Class<*>>()
-        while (resources.hasMoreElements()) {
-            val resource = resources.nextElement()
-            val files = File(resource.file).listFiles { _, name -> name.endsWith(".class") }
-            files?.forEach { file ->
-                val className = file.name.replace(".class", "")
-                classes.add(Class.forName("$basePackage.$className"))
-            }
-        }
-        println("Found following controller classes: $classes")
-        return classes
+    private fun findAllRestControllers(): Set<Class<*>> {
+        val reflections = Reflections(
+            "",
+            Scanners.TypesAnnotated
+        )
+        val controllers = reflections.getTypesAnnotatedWith(RestController::class.java)
+        println("Found Controllers: $controllers")
+        return controllers
     }
 
     private fun registerRBACRulesToEureka(
