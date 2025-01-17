@@ -7,7 +7,7 @@ plugins {
 }
 
 group = "com.github.aronvaupel"
-version = "7.3.0"
+version = "7.3.1"
 
 repositories {
     mavenCentral()
@@ -33,7 +33,6 @@ dependencies {
     implementation("io.hypersistence:hypersistence-utils-hibernate-63:3.9.0")
     implementation("org.hibernate:hibernate-core:6.6.3.Final")
     implementation("org.reflections:reflections:0.10.2")
-    implementation("io.jsonwebtoken:jjwt:0.9.1")
     implementation("io.github.microutils:kotlin-logging-jvm:3.0.5")
     implementation("jakarta.servlet:jakarta.servlet-api:5.0.0")
     implementation ("jakarta.validation:jakarta.validation-api:3.0.2")
