@@ -122,22 +122,22 @@ class ApplicationStartup @Autowired constructor(
         }
     }
 
-    private fun extractPathVariables(method: Method): List<PathVariableRepresentation> {
+    private fun extractPathVariables(method: Method): List<EndpointMethodParam> {
         return method.parameters
             .filter { it.isAnnotationPresent(PathVariable::class.java) }
             .map {
-                PathVariableRepresentation(
+                EndpointMethodParam(
                     name = it.getAnnotation(PathVariable::class.java).name.ifBlank { it.name },
                     typeSimpleName = it.type.kotlin.simpleName!!
                 )
             }
     }
 
-    private fun extractRequestParams(method: Method): List<RequestParamRepresentation> {
+    private fun extractRequestParams(method: Method): List<EndpointMethodParam> {
         return method.parameters
             .filter { it.isAnnotationPresent(RequestParam::class.java) }
             .map {
-                RequestParamRepresentation(
+                EndpointMethodParam(
                     name = it.getAnnotation(RequestParam::class.java).name.ifBlank { it.name },
                     typeSimpleName = it.type.kotlin.simpleName!!
                 )
