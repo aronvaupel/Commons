@@ -6,5 +6,5 @@ import org.springframework.stereotype.Component
 @Component
 @ConfigurationProperties(prefix = "service-level-access")
 data class ServiceLevelAccess(
-    val restrictedTo: List<String> = emptyList()
+    var restrictedTo: List<String> = emptyList()
 )
