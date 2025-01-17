@@ -4,7 +4,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties
 import org.springframework.stereotype.Component
 
 @Component
-@ConfigurationProperties(prefix = "access-restricted-to")
+@ConfigurationProperties(prefix = "service-level-access")
 data class ServiceLevelAccess(
     val restrictedTo: List<String> = emptyList()
 )
