@@ -56,7 +56,8 @@ class ApplicationStartup @Autowired constructor(
                             EndpointMetadata(
                                 path = combinePaths(basePath, extractMethodPath(annotation) ?: ""),
                                 method = resolveHttpMethod(annotation),
-                                roles = (accessAnnotation?.roles?.toSet().orEmpty() + serviceLevelAccess.restrictedTo.toSet()),
+                                roles = (accessAnnotation?.roles?.toSet()
+                                    .orEmpty() + serviceLevelAccess.restrictedTo.toSet()),
                                 pathVariables = extractPathVariables(method),
                                 requestParameters = extractRequestParams(method)
                             )
@@ -125,9 +126,10 @@ class ApplicationStartup @Autowired constructor(
     private fun extractPathVariables(method: Method): List<EndpointMethodParam> {
         return method.parameters
             .filter { it.isAnnotationPresent(PathVariable::class.java) }
-            .map {
+            .mapIndexed { index, it ->
                 EndpointMethodParam(
-                    name = it.getAnnotation(PathVariable::class.java).name.ifBlank { it.name },
+                    name = it.name,
+                    position = index,
                     typeSimpleName = it.type.kotlin.simpleName!!
                 )
             }
@@ -136,9 +138,10 @@ class ApplicationStartup @Autowired constructor(
     private fun extractRequestParams(method: Method): List<EndpointMethodParam> {
         return method.parameters
             .filter { it.isAnnotationPresent(RequestParam::class.java) }
-            .map {
+            .mapIndexed { index, it ->
                 EndpointMethodParam(
-                    name = it.getAnnotation(RequestParam::class.java).name.ifBlank { it.name },
+                    name = it.name,
+                    position = index,
                     typeSimpleName = it.type.kotlin.simpleName!!
                 )
             }
