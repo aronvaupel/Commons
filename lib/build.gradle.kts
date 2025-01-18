@@ -7,7 +7,7 @@ plugins {
 }
 
 group = "com.github.aronvaupel"
-version = "7.3.2"
+version = "7.3.3"
 
 repositories {
     mavenCentral()
@@ -53,7 +53,6 @@ dependencies {
     //Fixme
     implementation("org.springframework.boot:spring-boot-starter-data-redis:3.3.4")
     //Fixme
-    implementation("org.springframework.boot:spring-boot-starter-security:3.3.4")
     implementation("org.springframework.boot:spring-boot-starter-web:3.3.4")
     implementation("org.springframework.boot:spring-boot-starter-validation:3.3.4")
     implementation("org.springframework.kafka:spring-kafka:3.2.4")
