@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize
 import com.fasterxml.jackson.databind.annotation.JsonSerialize
 import com.fasterxml.jackson.datatype.jsr310.deser.LocalDateTimeDeserializer
 import com.fasterxml.jackson.datatype.jsr310.ser.LocalDateTimeSerializer
+import io.swagger.v3.oas.annotations.media.Schema
 import jakarta.persistence.*
 import java.time.LocalDateTime
 import java.util.*
@@ -15,15 +16,19 @@ import kotlin.reflect.jvm.isAccessible
 
 @MappedSuperclass
 @Suppress("unused", "JpaQlInspection")
+@Schema(description = "Base class for all entities with common fields.")
 abstract class BaseEntity{
+    @Schema(description = "Unique identifier for the entity.", example = "123e4567-e89b-12d3-a456-426614174000")
     @Id
     open var id: UUID = UUID.randomUUID()
 
+    @Schema(description = "Timestamp when the entity was created.", example = "2023-01-01T10:00:00Z")
     @Column(nullable = false, updatable = false)
     @JsonSerialize(using = LocalDateTimeSerializer::class)
     @JsonDeserialize(using = LocalDateTimeDeserializer::class)
     open var createdAt: LocalDateTime = LocalDateTime.now()
 
+    @Schema(description = "Timestamp when the entity was last updated.", example = "2023-01-02T15:00:00Z")
     @Column(nullable = false)
     @JsonSerialize(using = LocalDateTimeSerializer::class)
     @JsonDeserialize(using = LocalDateTimeDeserializer::class)

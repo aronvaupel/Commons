@@ -1,6 +1,7 @@
 package com.ecommercedemo.common.model.concretion.permissionuserassociation
 
 import com.ecommercedemo.common.model.abstraction.BaseEntity
+import io.swagger.v3.oas.annotations.media.Schema
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.persistence.Table
@@ -8,7 +9,7 @@ import jakarta.persistence.UniqueConstraint
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import java.util.*
 
-
+@Schema(description = "Represents a permission entity.")
 @Entity
 @Table(
     name = "permission_user_association",
