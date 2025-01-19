@@ -7,7 +7,7 @@ plugins {
 }
 
 group = "com.github.aronvaupel"
-version = "7.4.1"
+version = "7.4.2"
 
 repositories {
     mavenCentral()
@@ -48,6 +48,8 @@ dependencies {
     testImplementation("org.junit.jupiter:junit-jupiter:5.10.3")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
     implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.2")
+    implementation("org.webjars:webjars-locator-core")
+    implementation("org.webjars:swagger-ui")
     implementation("org.springframework.cloud:spring-cloud-starter-netflix-eureka-client")
     //Fixme
     implementation("org.springframework.boot:spring-boot-starter-data-jpa:3.3.4")
