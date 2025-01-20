@@ -7,7 +7,6 @@ import com.ecommercedemo.common.controller.annotation.AccessRestrictedToRoles
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.netflix.appinfo.EurekaInstanceConfig
 import org.springframework.aop.framework.AopProxyUtils
-import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.ApplicationContext
 import org.springframework.stereotype.Service
 import org.springframework.web.bind.annotation.PathVariable
@@ -22,9 +21,6 @@ class DiscoveryService(
     private val applicationContext: ApplicationContext,
     private val serviceLevelAccess: ServiceLevelAccess,
     private val eurekaInstanceConfig: EurekaInstanceConfig,
-    @Value("\${spring.application.name}")
-    private val applicationName: String,
-
 ) {
 
 
@@ -145,6 +141,6 @@ class DiscoveryService(
     private fun getOpenApiDocsUrl(): String {
         val serviceName = applicationContext.environment.getProperty("spring.application.name") ?: "unknown"
         val port = applicationContext.environment.getProperty("server.port") ?: "8080"
-        return "http://$serviceName:$port/v3/api-docs/$applicationName"
+        return "http://$serviceName:$port/v3/api-docs"
     }
 }
