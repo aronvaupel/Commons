@@ -6,6 +6,7 @@ import com.ecommercedemo.common.application.springboot.ServiceLevelAccess
 import com.ecommercedemo.common.controller.annotation.AccessRestrictedToRoles
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.netflix.appinfo.EurekaInstanceConfig
+import mu.KotlinLogging
 import org.springframework.aop.framework.AopProxyUtils
 import org.springframework.context.ApplicationContext
 import org.springframework.stereotype.Service
@@ -15,7 +16,6 @@ import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 import java.lang.reflect.Method
 
-@Suppress("HttpUrlsUsage")
 @Service
 class DiscoveryService(
     private val applicationContext: ApplicationContext,
@@ -23,6 +23,7 @@ class DiscoveryService(
     private val eurekaInstanceConfig: EurekaInstanceConfig,
 ) {
 
+    val log = KotlinLogging.logger {}
 
     fun extractEndpointMetadata(): List<EndpointMetadata> {
         val endpointMetadata = mutableListOf<EndpointMetadata>()
@@ -56,7 +57,7 @@ class DiscoveryService(
             }
         }
 
-        println("Extracted Endpoint Metadata: $endpointMetadata")
+        log.debug { "Extracted Endpoint Metadata: $endpointMetadata" }
         return endpointMetadata
     }
 
@@ -65,7 +66,6 @@ class DiscoveryService(
         val serviceName = applicationContext.environment.getProperty("spring.application.name") ?: "unknown"
         val combined =
             ("/$serviceName" + basePath.trimEnd('/') + "/" + methodPath.trimStart('/')).replace("//", "/")
-        println("Combined Paths: $combined")
         return combined
     }
 
@@ -77,7 +77,7 @@ class DiscoveryService(
                 else -> value?.toString()
             }.also { println("Extracted method path: $it") }
         } catch (e: Exception) {
-            println("Failed to extract method path: ${e.message}")
+            log.error("Failed to extract method path: ${e.message}")
             null
         }
     }
@@ -87,8 +87,7 @@ class DiscoveryService(
     ) {
         val metadata = mutableMapOf<String, String>()
         metadata["endpoints"] = ObjectMapper().writeValueAsString(enrichedEndpointMetadata)
-        metadata["openapi-docs"] = getOpenApiDocsUrl()
-        println("Registered Enriched Metadata to Eureka: $metadata")
+        log.debug {"Registered Enriched Metadata to Eureka: $metadata"}
         eurekaInstanceConfig.metadataMap.putAll(metadata)
     }
 
@@ -137,10 +136,4 @@ class DiscoveryService(
             }
     }
 
-
-    private fun getOpenApiDocsUrl(): String {
-        val serviceName = applicationContext.environment.getProperty("spring.application.name") ?: "unknown"
-        val port = applicationContext.environment.getProperty("server.port") ?: "8080"
-        return "http://$serviceName:$port/v3/api-docs"
-    }
 }

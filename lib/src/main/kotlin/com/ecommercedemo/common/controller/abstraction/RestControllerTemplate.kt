@@ -6,7 +6,6 @@ import com.ecommercedemo.common.controller.abstraction.request.UpdateRequest
 import com.ecommercedemo.common.model.abstraction.BaseEntity
 import com.ecommercedemo.common.service.abstraction.RestServiceTemplate
 import io.swagger.v3.oas.annotations.Operation
-import io.swagger.v3.oas.annotations.tags.Tag
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.data.domain.Page
 import org.springframework.http.HttpStatus
@@ -14,7 +13,6 @@ import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 import java.util.*
 
-@Tag(name = "Generic CRUD Operations", description = "Base CRUD operations for all entities.")
 @Suppress("unused")
 abstract class RestControllerTemplate<T : BaseEntity> {
 
@@ -53,7 +51,7 @@ abstract class RestControllerTemplate<T : BaseEntity> {
         return ResponseEntity.ok(service.getSingle(id))
     }
 
-    @Operation(summary = "Retrieve multiple entities by ID.")
+    @Operation(summary = "Retrieve multiple entities by ID. Returns a page of entities. Default values are page=0 and size=1000.")
     @GetMapping
     open fun getMultiple(
         @RequestParam ids: List<UUID>,
@@ -63,7 +61,7 @@ abstract class RestControllerTemplate<T : BaseEntity> {
         return ResponseEntity.ok(service.getMultiple(ids, page, size))
     }
 
-    @Operation(summary = "Retrieve all entities (paged).")
+    @Operation(summary = "Retrieve all entities. Returns a page of entities. Default values are page=0 and size=1000.")
     @GetMapping("/all")
     open fun getAllPaged(
         @RequestParam(defaultValue = "0") page: Int,
