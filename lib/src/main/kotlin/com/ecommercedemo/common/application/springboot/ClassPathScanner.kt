@@ -6,9 +6,9 @@ import org.springframework.stereotype.Service
 import kotlin.reflect.KClass
 
 @Service
-class ClassPathScanner {
+open class ClassPathScanner {
 
-    fun <A : Annotation> findClassesWithAnnotation(annotation: KClass<A>): Set<Class<*>> {
+    open fun <A : Annotation> findClassesWithAnnotation(annotation: KClass<A>): Set<Class<*>> {
         val scanner = ClassPathScanningCandidateComponentProvider(false)
         scanner.addIncludeFilter(AnnotationTypeFilter(annotation.java))
 

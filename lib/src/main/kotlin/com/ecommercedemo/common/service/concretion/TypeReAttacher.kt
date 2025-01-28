@@ -16,7 +16,7 @@ import kotlin.reflect.jvm.javaType
 class TypeReAttacher(
     private val entityManagerFactory: EntityManagerFactory
 ) {
-    private fun extractFieldTypesMap(entityClass: KClass<*>): Map<String, KType> {
+    fun extractFieldTypesMap(entityClass: KClass<*>): Map<String, KType> {
         println("Extracting field types for entity class: $entityClass")
         return entityClass.memberProperties.associate { property ->
             property.name to property.returnType
@@ -67,7 +67,7 @@ class TypeReAttacher(
     }
 
 
-    private fun resolveEntityClass(entityClassName: String): KClass<*> {
+    fun resolveEntityClass(entityClassName: String): KClass<*> {
         println("Resolving entity class for name: $entityClassName")
         val entityManager = entityManagerFactory.createEntityManager()
         try {

@@ -40,7 +40,7 @@ class TemplateBeanRegistrar : ImportBeanDefinitionRegistrar {
         }
     }
 
-    private fun registerWithEntityClass(
+    fun registerWithEntityClass(
         clazz: Class<*>,
         registry: BeanDefinitionRegistry,
     ) {

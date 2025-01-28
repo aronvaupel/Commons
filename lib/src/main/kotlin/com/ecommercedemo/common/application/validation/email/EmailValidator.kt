@@ -9,7 +9,9 @@ object EmailValidator : ConstraintValidator<ValidEmail, String> {
         if (email.isNullOrBlank()) return false
         if (email.length > 100) return false
 
-        val emailPattern = Regex("^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$")
+        val emailPattern = Regex(
+            "^(?!.*\\.\\.)(?!\\.)[A-Za-z0-9._%+-]+(?<!\\.)@[A-Za-z0-9-]+(\\.[A-Za-z0-9-]+)*\\.[A-Za-z]{2,}\$"
+        )
         return email.matches(emailPattern)
     }
 }

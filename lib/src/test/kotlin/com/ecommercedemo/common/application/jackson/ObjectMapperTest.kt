@@ -1,4 +1,4 @@
-package com.ecommercedemo.common.application
+package com.ecommercedemo.common.application.jackson
 
 
 import com.fasterxml.jackson.annotation.JsonCreator

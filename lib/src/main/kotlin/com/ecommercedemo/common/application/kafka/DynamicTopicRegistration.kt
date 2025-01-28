@@ -16,10 +16,10 @@ class DynamicTopicRegistration @Autowired constructor(
 ) {
 
     @Value("\${kafka.default.partitions:1}")
-    private val defaultPartitions: Int = 1
+    val defaultPartitions: Int = 1
 
     @Value("\${kafka.default.replication-factor:1}")
-    private val defaultReplicationFactor: Int = 1
+    val defaultReplicationFactor: Int = 1
 
     val log = KotlinLogging.logger {}
 

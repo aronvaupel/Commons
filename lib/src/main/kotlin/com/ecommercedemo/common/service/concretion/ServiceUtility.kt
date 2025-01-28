@@ -39,16 +39,13 @@ class ServiceUtility<T : BaseEntity>(
             instanceClass.isSubclassOf(IPseudoProperty::class) ->
                 validateTypeDescriptor(data[IPseudoProperty::typeDescriptor.name])
         }
-        println("When-blocked passed")
 
         val entityConstructor = reflectionService.findConstructorWithArgs(instanceClass)
-        println("entityConstructor: $entityConstructor")
 
         val instanceConstructorParams = createConstructorParams(entityConstructor, data)
 
         return entityConstructor.callBy(instanceConstructorParams).apply {
             val memberProperties = reflectionService.getClassMemberProperties(instanceClass)
-            println("memberProperties: $memberProperties")
             val remainingFields = data.filter {
                 !(it.key.startsWith("_")) && it.key !in instanceConstructorParams.keys.map { param -> param.name }
             }.map { it.key }
@@ -75,7 +72,6 @@ class ServiceUtility<T : BaseEntity>(
                     else -> throw IllegalArgumentException("Field ${param.name} must be provided and cannot be null.")
                 }
             }
-        println("instanceConstructorParams: $instanceConstructorParams")
         return instanceConstructorParams
     }
 
@@ -168,7 +164,7 @@ class ServiceUtility<T : BaseEntity>(
         if (value !is TypeDescriptor) throw IllegalArgumentException("TypeDescriptor must be a TypeDescriptor")
     }
 
-    private fun validatePseudoProperties(
+    fun validatePseudoProperties(
         entity: KClass<out AugmentableBaseEntity>, data: Map<String, Any?>, isUpdate: Boolean = false
     ) {
         val validPseudoProperties = getValidPseudoProperties(entity)

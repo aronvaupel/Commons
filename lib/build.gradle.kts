@@ -7,7 +7,7 @@ plugins {
 }
 
 group = "com.github.aronvaupel"
-version = "7.4.11"
+version = "7.5.0"
 
 repositories {
     mavenCentral()
@@ -39,6 +39,8 @@ dependencies {
     // This dependency is used internally, and not exposed to consumers on their own compile classpath.
     implementation(libs.guava)
     testImplementation(libs.junit.jupiter)
+    testImplementation("org.assertj:assertj-core:3.27.2")
+    testImplementation("org.mockito:mockito-core:5.0.0")
     api(libs.commons.math3)
     implementation("org.apache.commons:commons-math3:3.6.1")
     implementation("org.glassfish.jaxb:jaxb-runtime:2.3.1")

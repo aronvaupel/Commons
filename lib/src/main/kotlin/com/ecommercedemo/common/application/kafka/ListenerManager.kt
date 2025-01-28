@@ -31,8 +31,8 @@ class ListenerManager<T : BaseEntity> @Autowired constructor(
 ) {
     private val log = LoggerFactory.getLogger(ListenerManager::class.java)
 
-    private val listenerContainers = mutableMapOf<String, MessageListenerContainer>()
-    private lateinit var downstreamEntities: List<String>
+    val listenerContainers = mutableMapOf<String, MessageListenerContainer>()
+    lateinit var downstreamEntities: List<String>
 
     //Todo: can this be replaced with init block?
     @PostConstruct
@@ -87,7 +87,7 @@ class ListenerManager<T : BaseEntity> @Autowired constructor(
         }
     }
 
-    private fun createKafkaListener(topic: String) {
+    fun createKafkaListener(topic: String) {
         log.info("Creating Kafka listener for topic: $topic")
         val groupId = "$serviceName-$topic"
 
@@ -116,7 +116,7 @@ class ListenerManager<T : BaseEntity> @Autowired constructor(
     }
 
 
-    private fun stopKafkaListener(topic: String) {
+    fun stopKafkaListener(topic: String) {
         listenerContainers[topic]?.let { container ->
             try {
                 container.stop()

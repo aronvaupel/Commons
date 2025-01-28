@@ -12,7 +12,7 @@ class EntityEventProducer(
     private val kafkaTemplate: KafkaTemplate<String, Any>,
     private val redisService: RedisService,
 ) {
-    private val log = KotlinLogging.logger {}
+    val log = KotlinLogging.logger {}
 
     fun emit(
         entityClassName: String,
